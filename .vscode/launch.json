@@ -1,0 +1,22 @@
+{
+    "version": "0.2",
+    "configurations": [
+        {
+            "name": "Debug (nested session)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/usr/bin/Hyprland", // Path to your Hyprland executable
+            "args": [
+                "--config",
+                "~/.config/hypr/hyprlandd.conf"
+            ], // Command-line arguments if any
+            "cwd": "${workspaceFolder}/builddir",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb", 
+            "miDebuggerPath": "/usr/bin/gdb", // Path to your GDB executable
+            "preLaunchTask": "meson_compile", // Task to compile your C++ project, adjust this according to your setup
+            "stopAtEntry": false
+        }
+    ]
+}

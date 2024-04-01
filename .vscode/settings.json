@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "array": "cpp",
+        "string": "cpp",
+        "iterator": "cpp",
+        "memory": "cpp"
+    },
+    "C_Cpp.default.compileCommands": "/home/kzdkm/文档/Hyprspace/builddir/compile_commands.json",
+    "C_Cpp.default.configurationProvider": "mesonbuild.mesonbuild"
+}
