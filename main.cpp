@@ -1,34 +1,42 @@
+#include <hyprland/src/plugins/PluginSystem.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/plugins/HookSystem.hpp>
 #include <hyprland/src/Compositor.hpp>
+#include "global.hpp"
 #include "UI/Widget.hpp"
 
 using namespace std;
-
-inline HANDLE pHandle = NULL;
 
 APICALL EXPORT string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;
 }
 
-typedef void (*tRenderWorkspace)(void*, CMonitor*, CWorkspace*, timespec*, const CBox&);
-tRenderWorkspace oRenderWorkspace;
-CFunctionHook* renderWorkspaceHook;
+typedef void (*tRenderWorkspaceWindows)(void*, CMonitor*, CWorkspace*, timespec*);
+tRenderWorkspaceWindows oRenderWorkspaceWindows;
+CFunctionHook* renderWorkspaceWindowsHook;
 
 std::vector<CHyprspaceWidget*> g_overviewWidgets;
 
-void hkRenderWorkspace(void* thisptr, CMonitor* pMonitor, CWorkspace* pWorkspace, timespec* now, const CBox& geometry) {
-    (*(tRenderWorkspace)renderWorkspaceHook->m_pOriginal)(thisptr, pMonitor, pWorkspace, now, geometry);
-    g_pHyprOpenGL->m_RenderData.pWorkspace = pWorkspace;
+void hkRenderWorkspaceWindows(void* thisptr, CMonitor* pMonitor, CWorkspace* pWorkspace, timespec* now) {
     for (auto widget : g_overviewWidgets) {
         if (!widget) continue;
         if (!widget->getOwner()) continue;
         if (widget->getOwner() == pMonitor) {
-            widget->draw();
+            widget->draw(now);
             break;
         }
     }
-    g_pHyprOpenGL->m_RenderData.pWorkspace = nullptr;
+    (*(tRenderWorkspaceWindows)renderWorkspaceWindowsHook->m_pOriginal)(thisptr, pMonitor, pWorkspace, now);
+}
+
+void dispatchToggleOverview(std::string arg) {
+    auto currentMonitor = g_pCompositor->getMonitorFromCursor();
+
+    for (auto widget : g_overviewWidgets) {
+        if (!widget) continue;
+        if (widget->getOwner() == currentMonitor)
+            widget->isActive() ? widget->hide() : widget->show();
+    }
 }
 
 APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
@@ -36,9 +44,14 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
 
     Debug::log(LOG, "Loading overview plugin");
 
-    auto funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWorkspace");
-    renderWorkspaceHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkRenderWorkspace);
-    renderWorkspaceHook->hook();
+    if (!HyprlandAPI::addDispatcher(inHandle, "overview:toggle", dispatchToggleOverview)) return {};
+
+    auto funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWorkspaceWindows");
+    if (!funcSearch[0].address) return {};
+    renderWorkspaceWindowsHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkRenderWorkspaceWindows);
+    if (renderWorkspaceWindowsHook)
+        renderWorkspaceWindowsHook->hook();
+    else return {};
 
     // create a widget for each monitor
     for (auto& m : g_pCompositor->m_vMonitors) {
@@ -50,5 +63,5 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
 }
 
 APICALL EXPORT void PLUGIN_EXIT() {
-    renderWorkspaceHook->unhook();
+    renderWorkspaceWindowsHook->unhook();
 }

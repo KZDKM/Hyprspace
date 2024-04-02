@@ -3,11 +3,14 @@
 
 class CHyprspaceWidget {
 
-    bool isActive = false;
+    bool active = false;
 
     uint64_t ownerID;
+    timespec startTime;
+    bool hasStarted = false;
     CBox widgetBox;
-    CFunctionHook* renderWorkspaceHook;
+
+    CAnimatedVariable<float> curYOffset; // for slide-in animation
 
 public:
 
@@ -18,6 +21,8 @@ public:
 
     void show();
     void hide();
-    void draw();
+    void draw(timespec* time);
+
+    bool isActive();
 
 };
