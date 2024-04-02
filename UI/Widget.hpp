@@ -21,7 +21,8 @@ public:
 
     void show();
     void hide();
-    void draw(timespec* time);
+    void draw(timespec* time); // call before renderWorkspaceWindows
+    float reserveArea(); // call after arrangeLayersForMonitor
 
     bool isActive();
 
