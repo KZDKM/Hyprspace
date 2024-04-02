@@ -1,6 +1,6 @@
 # Hyprspace
 
-A plugin for Hyprland that implements a workspace overview feature similar to that of KDE Plasma and macOS Aqua, it provides a mouse-friendly way of workspace and window management.
+A plugin for Hyprland that implements a workspace overview feature similar to that of KDE Plasma and macOS, aims to provide a mouse-friendly way of workspace and window management.
 
 ## Configuration
 ### Dispatcher
@@ -13,10 +13,13 @@ A plugin for Hyprland that implements a workspace overview feature similar to th
 ## Goals (Sorted by priority)
 - [ ] Base features
     - [x] Overview interface
-    - [ ] Moving window with mouse
-    - [ ] Rearranging workspaces with mouse
-    - [ ] Creating new workspaces
-    - [ ] Config support
+        - [x] Workspace minimap
+        - [x] Workspace display
+        - [ ] Workspace name
+    - [ ] Mouse controls
+        - [ ] Moving window between workspaces
+        - [ ] Creating new workspaces
+    - [ ] Configurability
 - [ ] QoL features
     - [x] Animation support
     - [ ] aarch64 support (CFunctionHook reimpl.)
