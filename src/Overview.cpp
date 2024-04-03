@@ -1,13 +1,15 @@
-#include "Widget.hpp"
-#include "../global.hpp"
+#include "Overview.hpp"
+#include "Globals.hpp"
 
 constexpr int g_panelHeight = 150;
 constexpr int g_workspaceMargin = 12;
 constexpr bool g_workspacesCenterAlign = true;
 
+std::vector<CHyprspaceWidget*> g_overviewWidgets;
+
 CHyprspaceWidget::CHyprspaceWidget(uint64_t inOwnerID) {
     ownerID = inOwnerID;
-    curYOffset.create(g_pConfigManager->getAnimationPropertyConfig("windowsIn"), AVARDAMAGE_ENTIRE);
+    curYOffset.create(g_pConfigManager->getAnimationPropertyConfig("workspace"), AVARDAMAGE_ENTIRE);
     curYOffset.setValueAndWarp(g_panelHeight);
 }
 
@@ -59,6 +61,8 @@ bool CHyprspaceWidget::isActive() {
     return active;
 }
 
+// FIXME: window buffer doesnt scale down
+// FIXME: better downscaling
 void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, CWorkspace* pWorkspaceOverride, CBox rectOverride, timespec* time) {
     if (!pWindow || !pMonitor || !pWorkspaceOverride || !time) return;
 
@@ -120,12 +124,13 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, CWorkspace* pWorkspa
     //pWindow->m_pWLSurface.wlr()->current.scale = oScale;
 }
 
+// FIXME: better downscaling
 void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverride, timespec* time) {
     if (!pLayer || !pMonitor || !time) return;
 
     Vector2D oPosition = pLayer->realPosition.value();
     Vector2D oSize = pLayer->realSize.value();
-    float oAlpha = pLayer->alpha.value(); // set to 1 temporarily to show hidden top layer
+    float oAlpha = pLayer->alpha.value(); // set to 1 to show hidden top layer
 
     pLayer->realPosition.setValue(rectOverride.pos());
     pLayer->realSize.setValue(rectOverride.size());
@@ -172,7 +177,7 @@ void CHyprspaceWidget::draw(timespec* time) {
         }
     }
 
-    // render workspace boxes center aligned
+    // render workspace boxes
     int wsCount = workspaces.size();
     double monitorSizeScaleFactor = (g_panelHeight - 2 * g_workspaceMargin) / owner->vecTransformedSize.y; // scale box with panel height
     double workspaceBoxW = owner->vecTransformedSize.x * monitorSizeScaleFactor;
@@ -255,7 +260,7 @@ void CHyprspaceWidget::draw(timespec* time) {
                 }
 
 
-            // this layer is hidden for real workspace on toggle show
+            // this layer is hidden for real workspace when panel is displayed
             for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
                 CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
@@ -268,4 +273,15 @@ void CHyprspaceWidget::draw(timespec* time) {
 
         curWorkspaceRectOffsetX += workspaceBoxW + g_workspaceMargin;
     }
+}
+
+CHyprspaceWidget* CHyprspaceWidget::getWidgetForMonitor(CMonitor* pMonitor) {
+    for (auto widget : g_overviewWidgets) {
+        if (!widget) continue;
+        if (!widget->getOwner()) continue;
+        if (widget->getOwner() == pMonitor) {
+            return widget;
+        }
+    }
+    return nullptr;
 }
