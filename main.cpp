@@ -12,6 +12,7 @@ CFunctionHook* renderWorkspaceWindowsHook;
 CFunctionHook* arrangeLayersForMonitorHook;
 CFunctionHook* recalculateMonitorHook;
 CFunctionHook* changeWorkspaceHook;
+CFunctionHook* getWorkspaceRulesForHook;
 
 void* pRenderWindow;
 void* pRenderLayer;
@@ -20,15 +21,20 @@ APICALL EXPORT string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;
 }
 
-void hkRenderWorkspaceWindows(CHyprRenderer* thisptr, CMonitor* pMonitor, CWorkspace* pWorkspace, timespec* now) {
+CHyprspaceWidget* getWidgetForMonitor(CMonitor* pMonitor) {
     for (auto widget : g_overviewWidgets) {
         if (!widget) continue;
         if (!widget->getOwner()) continue;
         if (widget->getOwner() == pMonitor) {
-            widget->draw(now);
-            break;
+            return widget;
         }
     }
+    return nullptr;
+}
+
+void hkRenderWorkspaceWindows(CHyprRenderer* thisptr, CMonitor* pMonitor, CWorkspace* pWorkspace, timespec* now) {
+    auto widget = getWidgetForMonitor(pMonitor);
+    if (widget) widget->draw(now);
     (*(tRenderWorkspaceWindows)renderWorkspaceWindowsHook->m_pOriginal)(thisptr, pMonitor, pWorkspace, now);
 }
 
@@ -64,14 +70,8 @@ void hkRecalculateMonitor(void* thisptr, const int& monid) {
     if (!pMonitor) return;
 
     float oReservedTop = pMonitor->vecReservedTopLeft.y;
-    for (auto widget : g_overviewWidgets) {
-        if (!widget) continue;
-        if (!widget->getOwner()) continue;
-        if (widget->getOwner() == pMonitor) {
-            pMonitor->vecReservedTopLeft.y = widget->reserveArea();
-            break;
-        }
-    }
+    auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromID(monid));
+    if (widget) pMonitor->vecReservedTopLeft.y = widget->reserveArea();
     (*(tRecalculateMonitor)recalculateMonitorHook->m_pOriginal)(thisptr, monid);
     pMonitor->vecReservedTopLeft.y = oReservedTop;
 
@@ -80,24 +80,34 @@ void hkRecalculateMonitor(void* thisptr, const int& monid) {
 
 void hkChangeWorkspace(CMonitor* thisptr, CWorkspace* pWorkspace, bool internal, bool noMouseMove, bool noFocus) {
     (*(tChangeWorkspace)changeWorkspaceHook->m_pOriginal)(thisptr, pWorkspace, internal, noMouseMove, noFocus);
-    for (auto widget : g_overviewWidgets) {
-        if (!widget) continue;
-        if (!widget->getOwner()) continue;
-        if (widget->getOwner() == thisptr) {
-            if(widget->isActive()) widget->show();
-            break;
-        }
+    auto widget = getWidgetForMonitor(thisptr);
+    if (widget)
+        if (widget->isActive())
+            widget->show();
+}
+
+std::vector<SWorkspaceRule> hkGetWorkspaceRulesFor(CConfigManager* thisptr, CWorkspace* pWorkspace) {
+    auto oReturn = (*(tGetWorkspaceRulesFor)getWorkspaceRulesForHook->m_pOriginal)(thisptr, pWorkspace);
+    auto pMonitor = g_pCompositor->getMonitorFromID(pWorkspace->m_iMonitorID);
+    if (pMonitor->activeWorkspace == pWorkspace->m_iID) {
+        auto widget = getWidgetForMonitor(pMonitor);
+        if (widget)
+            if (widget->isActive()) {
+                auto rule = SWorkspaceRule();
+                rule.gapsIn = 50;
+                rule.gapsOut = 50;
+                oReturn.push_back(rule);
+            }
     }
+
+    return oReturn;
 }
 
 void dispatchToggleOverview(std::string arg) {
     auto currentMonitor = g_pCompositor->getMonitorFromCursor();
-
-    for (auto widget : g_overviewWidgets) {
-        if (!widget) continue;
-        if (widget->getOwner() == currentMonitor)
-            widget->isActive() ? widget->hide() : widget->show();
-    }
+    auto widget = getWidgetForMonitor(currentMonitor);
+    if (widget)
+        widget->isActive() ? widget->hide() : widget->show();
 }
 
 
@@ -122,6 +132,11 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     changeWorkspaceHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkChangeWorkspace);
     if (changeWorkspaceHook)
         changeWorkspaceHook->hook();
+
+    funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "getWorkspaceRulesFor");
+    getWorkspaceRulesForHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkGetWorkspaceRulesFor);
+    if (getWorkspaceRulesForHook)
+        getWorkspaceRulesForHook->hook();
 
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWindow");
     pRenderWindow = funcSearch[0].address;
@@ -148,4 +163,5 @@ APICALL EXPORT void PLUGIN_EXIT() {
     arrangeLayersForMonitorHook->unhook();
     changeWorkspaceHook->unhook();
     recalculateMonitorHook->unhook();
+    getWorkspaceRulesForHook->unhook();
 }

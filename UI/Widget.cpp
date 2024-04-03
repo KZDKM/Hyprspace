@@ -68,15 +68,35 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, CWorkspace* pWorkspa
     Vector2D oSize = pWindow->m_vRealSize.value();
     float oRounding = pWindow->rounding();
     bool oUseNearestNeighbor = pWindow->m_sAdditionalConfigData.nearestNeighbor.toUnderlying();
-    Vector2D oRenderOffset = pWorkspaceOverride->m_vRenderOffset.value(); // this is zeroed out so that the miniature windows isnt animated on workspace switch
+    Vector2D oRenderOffset = pWorkspaceOverride->m_vRenderOffset.value();
+    CWindow* oDraggedWindow = g_pInputManager->currentlyDraggedWindow;
+    auto oDragMode = g_pInputManager->dragMode;
+    auto oReportedSize = pWindow->m_vReportedSize;
+    //auto oSurfaceWidth = pWindow->m_pWLSurface.wlr()->current.width;
+    //auto oSurfaceHeight = pWindow->m_pWLSurface.wlr()->current.height;
+    //auto oBufferWidth = pWindow->m_pWLSurface.wlr()->current.buffer_width;
+    //auto oBufferHeight = pWindow->m_pWLSurface.wlr()->current.buffer_height;
+    //auto oViewportWidth = pWindow->m_pWLSurface.wlr()->current.viewport.dst_width;
+    //auto oViewportHeight = pWindow->m_pWLSurface.wlr()->current.viewport.dst_height;
+    //auto oScale = pWindow->m_pWLSurface.wlr()->current.scale;
 
     pWindow->m_iWorkspaceID = pWorkspaceOverride->m_iID;
     pWindow->m_bIsFullscreen = false;
     pWindow->m_vRealPosition.setValue(rectOverride.pos());
     pWindow->m_vRealSize.setValue(rectOverride.size());
     pWindow->m_sAdditionalConfigData.rounding = oRounding * (rectOverride.w / oSize.x);
-    pWindow->m_sAdditionalConfigData.nearestNeighbor = true; // FIX: we need proper downscaling so that windows arent shown as pixelated mess
-    pWorkspaceOverride->m_vRenderOffset.setValue({0, 0});
+    pWindow->m_sAdditionalConfigData.nearestNeighbor = false; // FIX: we need proper downscaling so that windows arent shown as pixelated mess
+    pWorkspaceOverride->m_vRenderOffset.setValue({0, 0}); // disable workspace sliding anim
+    g_pInputManager->currentlyDraggedWindow = pWindow; // override these to force INTERACTIVERESIZEINPROGRESS = true
+    g_pInputManager->dragMode = MBIND_RESIZE;
+    //pWindow->m_vReportedSize = rectOverride.size();
+    //pWindow->m_pWLSurface.wlr()->current.width = rectOverride.w;
+    //pWindow->m_pWLSurface.wlr()->current.height = rectOverride.h;
+    //pWindow->m_pWLSurface.wlr()->current.buffer_width = rectOverride.w;
+    //pWindow->m_pWLSurface.wlr()->current.buffer_height = rectOverride.h;
+    //pWindow->m_pWLSurface.wlr()->current.viewport.dst_width = rectOverride.w;
+    //pWindow->m_pWLSurface.wlr()->current.viewport.dst_height = rectOverride.h;
+    //pWindow->m_pWLSurface.wlr()->current.scale = oScale * (rectOverride.w / oSize.x);
 
     (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), pWindow, pMonitor, time, false, RENDER_PASS_MAIN, false, false);
 
@@ -88,6 +108,16 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, CWorkspace* pWorkspa
     pWindow->m_sAdditionalConfigData.rounding = oRounding;
     pWindow->m_sAdditionalConfigData.nearestNeighbor = oUseNearestNeighbor;
     pWorkspaceOverride->m_vRenderOffset.setValue(oRenderOffset);
+    g_pInputManager->currentlyDraggedWindow = oDraggedWindow;
+    g_pInputManager->dragMode = oDragMode;
+    pWindow->m_vReportedSize = oReportedSize;
+    //pWindow->m_pWLSurface.wlr()->current.width = oSurfaceWidth;
+    //pWindow->m_pWLSurface.wlr()->current.height = oSurfaceHeight;
+    //pWindow->m_pWLSurface.wlr()->current.buffer_width = oBufferWidth;
+    //pWindow->m_pWLSurface.wlr()->current.buffer_height = oBufferHeight;
+    //pWindow->m_pWLSurface.wlr()->current.viewport.dst_width = oViewportWidth;
+    //pWindow->m_pWLSurface.wlr()->current.viewport.dst_height = oViewportHeight;
+    //pWindow->m_pWLSurface.wlr()->current.scale = oScale;
 }
 
 void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverride, timespec* time) {

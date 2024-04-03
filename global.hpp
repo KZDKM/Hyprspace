@@ -19,6 +19,9 @@ extern CFunctionHook* recalculateMonitorHook;
 typedef void (*tChangeWorkspace)(CMonitor*, CWorkspace* const, bool, bool, bool);
 extern CFunctionHook* changeWorkspaceHook;
 
+typedef std::vector<SWorkspaceRule> (*tGetWorkspaceRulesFor)(CConfigManager*, CWorkspace*);
+extern CFunctionHook* getWorkspaceRulesForHook;
+
 typedef void (*tRenderWindow)(void*, CWindow*, CMonitor*, timespec*, bool, eRenderPassMode, bool, bool);
 extern void* pRenderWindow;
 typedef void (*tRenderLayer)(void*, SLayerSurface*, CMonitor*, timespec*, bool);
