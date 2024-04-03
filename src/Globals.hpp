@@ -1,7 +1,7 @@
 #pragma once
 
 #include <hyprland/src/plugins/PluginAPI.hpp>
-#include "UI/Widget.hpp"
+#include "Overview.hpp"
 
 inline HANDLE pHandle = NULL;
 
