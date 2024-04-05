@@ -95,39 +95,46 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
 
     if (!HyprlandAPI::addDispatcher(pHandle, "overview:toggle", dispatchToggleOverview)) return {};
 
+    // CHyprRenderer::renderWorkspaceWindows
     auto funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWorkspaceWindows");
     renderWorkspaceWindowsHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkRenderWorkspaceWindows);
     if (renderWorkspaceWindowsHook)
         renderWorkspaceWindowsHook->hook();
 
+    // CHyprRenderer::arrangeLayersForMonitor
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "arrangeLayersForMonitor");
     arrangeLayersForMonitorHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkArrangeLayersForMonitor);
     if (arrangeLayersForMonitorHook)
         arrangeLayersForMonitorHook->hook();
 
+    // CMonitor::changeWorkspace
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "changeWorkspace");
     changeWorkspaceHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkChangeWorkspace);
     if (changeWorkspaceHook)
         changeWorkspaceHook->hook();
 
+    // CConfigManager::getWorkspaceRulesFor
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "getWorkspaceRulesFor");
     getWorkspaceRulesForHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkGetWorkspaceRulesFor);
     if (getWorkspaceRulesForHook)
         getWorkspaceRulesForHook->hook();
 
+    // CHyprRenderer::renderWindow
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWindow");
     pRenderWindow = funcSearch[0].address;
 
+    // CHyprRenderer::renderLayer
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderLayer");
     pRenderLayer = funcSearch[0].address;
 
     // create a widget for each monitor
+    // TODO: update on monitor change
     for (auto& m : g_pCompositor->m_vMonitors) {
         CHyprspaceWidget* widget = new CHyprspaceWidget(m->ID);
         g_overviewWidgets.push_back(widget);
     }
 
-    return {"Hyprspace", "Workspace switcher and overview plugin", "KZdkm", "0.1"};
+    return {"Hyprspace", "Workspace overview", "KZdkm", "0.1"};
 }
 
 APICALL EXPORT void PLUGIN_EXIT() {
