@@ -66,6 +66,7 @@ bool CHyprspaceWidget::isActive() {
 void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorkspaceOverride, CBox rectOverride, timespec* time) {
     if (!pWindow || !pMonitor || !pWorkspaceOverride || !time) return;
 
+    // just kill me
     const auto oWorkspace = pWindow->m_pWorkspace;
     const auto oFullscreen = pWindow->m_bIsFullscreen;
     const auto oPosition = pWindow->m_vRealPosition.value();
@@ -83,11 +84,14 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     //auto oViewportWidth = pWindow->m_pWLSurface.wlr()->current.viewport.dst_width;
     //auto oViewportHeight = pWindow->m_pWLSurface.wlr()->current.viewport.dst_height;
     //auto oScale = pWindow->m_pWLSurface.wlr()->current.scale;
+    auto oRenderModifEnable = g_pHyprOpenGL->m_RenderData.renderModif.enabled;
 
+    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, (float)(rectOverride.w / oSize.x)});
+    g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
     pWindow->m_pWorkspace = pWorkspaceOverride;
     pWindow->m_bIsFullscreen = false;
-    pWindow->m_vRealPosition.setValue(rectOverride.pos());
-    pWindow->m_vRealSize.setValue(rectOverride.size());
+    pWindow->m_vRealPosition.setValue(rectOverride.pos() / (rectOverride.w / oSize.x));
+    //pWindow->m_vRealSize.setValue(rectOverride.size());
     pWindow->m_sAdditionalConfigData.rounding = oRounding * (rectOverride.w / oSize.x);
     pWindow->m_sAdditionalConfigData.nearestNeighbor = false; // FIX: we need proper downscaling so that windows arent shown as pixelated mess
     pWorkspaceOverride->m_vRenderOffset.setValue({0, 0}); // disable workspace sliding anim
@@ -102,7 +106,7 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     //pWindow->m_pWLSurface.wlr()->current.viewport.dst_height = rectOverride.h;
     //pWindow->m_pWLSurface.wlr()->current.scale = oScale * (rectOverride.w / oSize.x);
 
-    (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), pWindow, pMonitor, time, false, RENDER_PASS_MAIN, false, false);
+    (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), pWindow, pMonitor, time, false, RENDER_PASS_MAIN, false, true); // ignoreGeometry needs to be true
 
     // restore values for normal window render
     pWindow->m_pWorkspace = oWorkspace;
@@ -122,6 +126,8 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     //pWindow->m_pWLSurface.wlr()->current.viewport.dst_width = oViewportWidth;
     //pWindow->m_pWLSurface.wlr()->current.viewport.dst_height = oViewportHeight;
     //pWindow->m_pWLSurface.wlr()->current.scale = oScale;
+    g_pHyprOpenGL->m_RenderData.renderModif.enabled = oRenderModifEnable;
+    g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
 }
 
 // FIXME: better downscaling

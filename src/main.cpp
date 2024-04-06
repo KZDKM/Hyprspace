@@ -118,7 +118,13 @@ bool hkOnMouseEvent(CKeybindManager* thisptr, wlr_pointer_button_event* e) {
     // execute original function before opperation to ensure that compositor would not fall into an unsafe state
     auto oReturn = (*(tOnMouseEvent)onMouseEventHook->m_pOriginal)(thisptr, e);
 
+    // FIXME: autodrag still sends mouse event
     if (shouldDrag) {
+        if (g_pInputManager->currentlyDraggedWindow) {
+            g_pLayoutManager->getCurrentLayout()->onEndDragWindow();
+            g_pInputManager->currentlyDraggedWindow = nullptr;
+            g_pInputManager->dragMode = MBIND_INVALID;
+        }
         std::string keybind = (pressed ? "1" : "0") + std::string("movewindow");
         (*(tMouseKeybind)pMouseKeybind)(keybind);
     }
