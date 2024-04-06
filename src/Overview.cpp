@@ -5,7 +5,6 @@ constexpr int g_panelHeight = 150;
 constexpr int g_workspaceMargin = 12;
 constexpr bool g_workspacesCenterAlign = true;
 
-std::vector<CHyprspaceWidget*> g_overviewWidgets;
 
 CHyprspaceWidget::CHyprspaceWidget(uint64_t inOwnerID) {
     ownerID = inOwnerID;
@@ -150,6 +149,9 @@ float CHyprspaceWidget::reserveArea() {
 
 void CHyprspaceWidget::draw(timespec* time) {
 
+    // thread safe???
+    workspaceBoxes.clear();
+
     if (!active && !curYOffset.isBeingAnimated()) return;
 
     auto owner = getOwner();
@@ -167,6 +169,7 @@ void CHyprspaceWidget::draw(timespec* time) {
     g_pHyprRenderer->damageBox(&widgetBox);
     g_pHyprOpenGL->renderRectWithBlur(&widgetBox, CColor(0, 0, 0, 0)); // need blurfbshouldrender = true
 
+    // the fuck?
     std::vector<CWorkspace*> workspaces;
     int activeWorkspaceID = 0;
     for (auto& ws : g_pCompositor->m_vWorkspaces) {
@@ -270,6 +273,8 @@ void CHyprspaceWidget::draw(timespec* time) {
         }
 
         // no reasons to render overlay layers atm...
+
+        workspaceBoxes.emplace_back(std::make_tuple(ws, std::make_unique<CBox>(curWorkspaceBox)));
 
         curWorkspaceRectOffsetX += workspaceBoxW + g_workspaceMargin;
     }

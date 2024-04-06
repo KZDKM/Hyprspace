@@ -11,9 +11,12 @@ CFunctionHook* arrangeLayersForMonitorHook;
 CFunctionHook* recalculateMonitorHook;
 CFunctionHook* changeWorkspaceHook;
 CFunctionHook* getWorkspaceRulesForHook;
+CFunctionHook* onMouseButtonHook;
 
 void* pRenderWindow;
 void* pRenderLayer;
+
+std::vector<std::unique_ptr<CHyprspaceWidget>> g_overviewWidgets;
 
 APICALL EXPORT string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;
@@ -28,7 +31,7 @@ void hkRenderWorkspaceWindows(CHyprRenderer* thisptr, CMonitor* pMonitor, CWorks
 // trigger recalculations for all workspace
 void hkArrangeLayersForMonitor(CHyprRenderer* thisptr, const int& monitor) {
     (*(tArrangeLayersForMonitor)arrangeLayersForMonitorHook->m_pOriginal)(thisptr, monitor);
-    for (auto widget : g_overviewWidgets) {
+    for (auto& widget : g_overviewWidgets) {
         if (!widget) continue;
         if (!widget->getOwner()) continue;
         auto pMonitor = g_pCompositor->getMonitorFromID(monitor);
@@ -81,6 +84,31 @@ std::vector<SWorkspaceRule> hkGetWorkspaceRulesFor(CConfigManager* thisptr, CWor
     return oReturn;
 }
 
+// for dragging windows into workspace
+void hkOnMouseButton(std::string args) {
+
+
+    // when widget is active, always drag windows on click
+    auto pMonitor = g_pCompositor->getMonitorFromCursor();
+    if (pMonitor) {
+        auto widget = CHyprspaceWidget::getWidgetForMonitor(pMonitor);
+        if (widget) {
+            for (auto& w : widget->workspaceBoxes) {
+                auto pWorkspace = std::get<0>(w);
+                auto& wb = std::get<1>(w);
+                if (wb->containsPoint(g_pInputManager->getMouseCoordsInternal())) { 
+                    // TODO: implement window  and drop
+                    break;
+                }
+            }
+
+            if (widget->isActive())
+                args = args[0] + "movewindow";
+        }
+    }
+    (*(tOnMouseButton)onMouseButtonHook->m_pOriginal)(args);
+}
+
 void dispatchToggleOverview(std::string arg) {
     auto currentMonitor = g_pCompositor->getMonitorFromCursor();
     auto widget = CHyprspaceWidget::getWidgetForMonitor(currentMonitor);
@@ -119,6 +147,10 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     if (getWorkspaceRulesForHook)
         getWorkspaceRulesForHook->hook();
 
+    // CKeybindManager::mouse (names too generic bruh)
+    funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "mouse");
+    onMouseButtonHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkOnMouseButton);
+
     // CHyprRenderer::renderWindow
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWindow");
     pRenderWindow = funcSearch[0].address;
@@ -131,7 +163,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     // TODO: update on monitor change
     for (auto& m : g_pCompositor->m_vMonitors) {
         CHyprspaceWidget* widget = new CHyprspaceWidget(m->ID);
-        g_overviewWidgets.push_back(widget);
+        g_overviewWidgets.emplace_back(widget);
     }
 
     return {"Hyprspace", "Workspace overview", "KZdkm", "0.1"};

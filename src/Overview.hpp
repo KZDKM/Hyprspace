@@ -8,11 +8,18 @@ class CHyprspaceWidget {
     uint64_t ownerID;
     timespec startTime;
     bool hasStarted = false;
+
     CBox widgetBox;
 
-    CAnimatedVariable<float> curYOffset; // for slide-in animation
+    // for slide-in animation
+    CAnimatedVariable<float> curYOffset; 
 
 public:
+
+    // for checking mouse hover for workspace drag and move
+    // modified on draw call, accessed on mouse click and release
+    // TODO: make private and implement getter
+    std::vector<std::tuple<CWorkspace*, std::unique_ptr<CBox>>> workspaceBoxes;
 
     CHyprspaceWidget(uint64_t);
     ~CHyprspaceWidget();
@@ -24,7 +31,7 @@ public:
 
     void show();
     void hide();
-    void draw(timespec* time); // call before renderWorkspaceWindows
+    void draw(timespec*); // call before renderWorkspaceWindows
     float reserveArea(); // call after arrangeLayersForMonitor
-    float reserveGaps();
+    float reserveGaps(); // TODO: implement
 };
