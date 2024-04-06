@@ -15,6 +15,13 @@
             "externalConsole": false,
             "MIMode": "gdb", 
             "miDebuggerPath": "/usr/bin/gdb", // Path to your GDB executable
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+            ],
             "preLaunchTask": "meson_compile", // Task to compile your C++ project, adjust this according to your setup
             "stopAtEntry": false
         }

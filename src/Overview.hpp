@@ -19,12 +19,12 @@ public:
     // for checking mouse hover for workspace drag and move
     // modified on draw call, accessed on mouse click and release
     // TODO: make private and implement getter
-    std::vector<std::tuple<CWorkspace*, std::unique_ptr<CBox>>> workspaceBoxes;
+    std::vector<std::tuple<int, CBox>> workspaceBoxes;
 
     CHyprspaceWidget(uint64_t);
     ~CHyprspaceWidget();
 
-    static inline CHyprspaceWidget* getWidgetForMonitor(CMonitor*);
+    static std::shared_ptr<CHyprspaceWidget> getWidgetForMonitor(CMonitor*);
 
     CMonitor* getOwner();
     bool isActive();

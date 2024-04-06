@@ -5,25 +5,21 @@
 
 inline HANDLE pHandle = NULL;
 
-extern std::vector<CHyprspaceWidget*> g_overviewWidgets;
+extern std::vector<std::shared_ptr<CHyprspaceWidget>> g_overviewWidgets;
 
-typedef void (*tRenderWorkspaceWindows)(CHyprRenderer*, CMonitor*, CWorkspace*, timespec*);
-extern CFunctionHook* renderWorkspaceWindowsHook;
+typedef void (*tRenderWorkspaceWindows)(CHyprRenderer*, CMonitor*, PHLWORKSPACE, timespec*);
 
 typedef void (*tArrangeLayersForMonitor)(CHyprRenderer*, const int&);
-extern CFunctionHook* arrangeLayersForMonitorHook;
 
 typedef void (*tRecalculateMonitor)(void*, const int&);
-extern CFunctionHook* recalculateMonitorHook;
 
-typedef void (*tChangeWorkspace)(CMonitor*, CWorkspace* const, bool, bool, bool);
-extern CFunctionHook* changeWorkspaceHook;
+typedef void (*tChangeWorkspace)(CMonitor*, const PHLWORKSPACE&, bool, bool, bool);
 
-typedef std::vector<SWorkspaceRule> (*tGetWorkspaceRulesFor)(CConfigManager*, CWorkspace*);
-extern CFunctionHook* getWorkspaceRulesForHook;
+typedef SWorkspaceRule (*tGetWorkspaceRuleFor)(CConfigManager*, PHLWORKSPACE);
 
-typedef void (*tOnMouseButton)(std::string);
-extern CFunctionHook* onMouseButtonHook;
+typedef bool (*tOnMouseEvent)(CKeybindManager*, wlr_pointer_button_event*);
+typedef void (*tMouseKeybind)(std::string);
+extern void* pMouseKeybind;
 
 typedef void (*tRenderWindow)(void*, CWindow*, CMonitor*, timespec*, bool, eRenderPassMode, bool, bool);
 extern void* pRenderWindow;

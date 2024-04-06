@@ -10,19 +10,21 @@ CFunctionHook* renderWorkspaceWindowsHook;
 CFunctionHook* arrangeLayersForMonitorHook;
 CFunctionHook* recalculateMonitorHook;
 CFunctionHook* changeWorkspaceHook;
-CFunctionHook* getWorkspaceRulesForHook;
-CFunctionHook* onMouseButtonHook;
+CFunctionHook* getWorkspaceRuleForHook;
+CFunctionHook* onMouseEventHook;
 
+void* pMouseKeybind;
 void* pRenderWindow;
 void* pRenderLayer;
 
-std::vector<std::unique_ptr<CHyprspaceWidget>> g_overviewWidgets;
+// FIXME: this should be a static member of the class
+std::vector<std::shared_ptr<CHyprspaceWidget>> g_overviewWidgets;
 
 APICALL EXPORT string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;
 }
 
-void hkRenderWorkspaceWindows(CHyprRenderer* thisptr, CMonitor* pMonitor, CWorkspace* pWorkspace, timespec* now) {
+void hkRenderWorkspaceWindows(CHyprRenderer* thisptr, CMonitor* pMonitor, PHLWORKSPACE pWorkspace, timespec* now) {
     auto widget = CHyprspaceWidget::getWidgetForMonitor(pMonitor);
     if (widget) widget->draw(now);
     (*(tRenderWorkspaceWindows)renderWorkspaceWindowsHook->m_pOriginal)(thisptr, pMonitor, pWorkspace, now);
@@ -37,11 +39,11 @@ void hkArrangeLayersForMonitor(CHyprRenderer* thisptr, const int& monitor) {
         auto pMonitor = g_pCompositor->getMonitorFromID(monitor);
         if (widget->getOwner() == pMonitor) {
             if (widget->reserveArea() > pMonitor->vecReservedTopLeft.y) {
-                int oActiveWorkspace = pMonitor->activeWorkspace;
+                const auto oActiveWorkspace = pMonitor->activeWorkspace;
 
                 for (auto& ws : g_pCompositor->m_vWorkspaces) { // HACK: recalculate other workspaces without reserved area
-                    if (ws->m_iMonitorID == monitor && ws->m_iID != oActiveWorkspace) {
-                        pMonitor->activeWorkspace = ws->m_iID;
+                    if (ws->m_iMonitorID == monitor && ws->m_iID != oActiveWorkspace->m_iID) {
+                        pMonitor->activeWorkspace = ws;
                         g_pLayoutManager->getCurrentLayout()->recalculateMonitor(monitor);
                     }
                 }
@@ -55,29 +57,27 @@ void hkArrangeLayersForMonitor(CHyprRenderer* thisptr, const int& monitor) {
 }
 
 
-// currently this is only here to re-hide panels on workspace change
+// currently this is only here to re-hide top layer panels on workspace change
 //TODO: use event hook instead of function hook
-void hkChangeWorkspace(CMonitor* thisptr, CWorkspace* pWorkspace, bool internal, bool noMouseMove, bool noFocus) {
+void hkChangeWorkspace(CMonitor* thisptr, const PHLWORKSPACE& pWorkspace, bool internal, bool noMouseMove, bool noFocus) {
     (*(tChangeWorkspace)changeWorkspaceHook->m_pOriginal)(thisptr, pWorkspace, internal, noMouseMove, noFocus);
     auto widget = CHyprspaceWidget::getWidgetForMonitor(thisptr);
-    if (widget)
+    if (widget.get())
         if (widget->isActive())
             widget->show();
 }
 
 // override gaps
 //FIXME: gaps kept getting applied to every workspace
-std::vector<SWorkspaceRule> hkGetWorkspaceRulesFor(CConfigManager* thisptr, CWorkspace* pWorkspace) {
-    auto oReturn = (*(tGetWorkspaceRulesFor)getWorkspaceRulesForHook->m_pOriginal)(thisptr, pWorkspace);
+SWorkspaceRule hkGetWorkspaceRuleFor(CConfigManager* thisptr, PHLWORKSPACE pWorkspace) {
+    auto oReturn = (*(tGetWorkspaceRuleFor)getWorkspaceRuleForHook->m_pOriginal)(thisptr, pWorkspace);
     auto pMonitor = g_pCompositor->getMonitorFromID(pWorkspace->m_iMonitorID);
-    if (pMonitor->activeWorkspace == pWorkspace->m_iID) {
+    if (pMonitor->activeWorkspace == pWorkspace) {
         auto widget = CHyprspaceWidget::getWidgetForMonitor(pMonitor);
         if (widget)
             if (widget->isActive()) {
-                auto rule = SWorkspaceRule();
-                rule.gapsIn = 50;
-                rule.gapsOut = 50;
-                oReturn.push_back(rule);
+                oReturn.gapsIn = 50;
+                oReturn.gapsOut = 50;
             }
     }
 
@@ -85,28 +85,50 @@ std::vector<SWorkspaceRule> hkGetWorkspaceRulesFor(CConfigManager* thisptr, CWor
 }
 
 // for dragging windows into workspace
-void hkOnMouseButton(std::string args) {
-
+bool hkOnMouseEvent(CKeybindManager* thisptr, wlr_pointer_button_event* e) {
 
     // when widget is active, always drag windows on click
-    auto pMonitor = g_pCompositor->getMonitorFromCursor();
+    const auto pressed = e->state == WL_POINTER_BUTTON_STATE_PRESSED;
+    const auto pMonitor = g_pCompositor->getMonitorFromCursor();
+    auto targetWindow = g_pInputManager->currentlyDraggedWindow;
+    int targetWorkspaceID = -1;
+    bool shouldDrag = false;
     if (pMonitor) {
-        auto widget = CHyprspaceWidget::getWidgetForMonitor(pMonitor);
+        const auto widget = CHyprspaceWidget::getWidgetForMonitor(pMonitor);
         if (widget) {
             for (auto& w : widget->workspaceBoxes) {
-                auto pWorkspace = std::get<0>(w);
-                auto& wb = std::get<1>(w);
-                if (wb->containsPoint(g_pInputManager->getMouseCoordsInternal())) { 
-                    // TODO: implement window  and drop
+                auto wi = std::get<0>(w);
+                auto wb = std::get<1>(w);
+                if (wb.containsPoint(g_pInputManager->getMouseCoordsInternal())) {
+                    // set window to move if a window is released within the bound of a workspace box
+                    if (!pressed) {
+                        // null permissive
+                        targetWorkspaceID = wi;
+                    }
                     break;
                 }
             }
 
-            if (widget->isActive())
-                args = args[0] + "movewindow";
+            if (widget->isActive()) {
+                shouldDrag = true;
+            }
         }
     }
-    (*(tOnMouseButton)onMouseButtonHook->m_pOriginal)(args);
+
+    // execute original function before opperation to ensure that compositor would not fall into an unsafe state
+    auto oReturn = (*(tOnMouseEvent)onMouseEventHook->m_pOriginal)(thisptr, e);
+
+    if (shouldDrag) {
+        std::string keybind = (pressed ? "1" : "0") + std::string("movewindow");
+        (*(tMouseKeybind)pMouseKeybind)(keybind);
+    }
+
+    auto targetWorkspace = g_pCompositor->getWorkspaceByID(targetWorkspaceID);
+    if (targetWindow && targetWorkspace.get()) {
+        g_pCompositor->moveWindowToWorkspaceSafe(targetWindow, targetWorkspace);
+    }
+
+    return oReturn;
 }
 
 void dispatchToggleOverview(std::string arg) {
@@ -114,6 +136,20 @@ void dispatchToggleOverview(std::string arg) {
     auto widget = CHyprspaceWidget::getWidgetForMonitor(currentMonitor);
     if (widget)
         widget->isActive() ? widget->hide() : widget->show();
+}
+
+void* findFunctionBySymbol(HANDLE inHandle, const std::string func, const std::string sym) {
+
+    // should return all functions
+    auto funcSearch = HyprlandAPI::findFunctionsByName(inHandle, func);
+
+    for (auto f : funcSearch) {
+        if (f.demangled.contains(sym)) {
+            return f.address;
+        }
+    }
+
+    return 0;
 }
 
 APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
@@ -136,20 +172,21 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
         arrangeLayersForMonitorHook->hook();
 
     // CMonitor::changeWorkspace
-    funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "changeWorkspace");
-    changeWorkspaceHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkChangeWorkspace);
+    changeWorkspaceHook = HyprlandAPI::createFunctionHook(pHandle, findFunctionBySymbol(pHandle, "changeWorkspace", "CMonitor::changeWorkspace(std::shared_ptr<CWorkspace> const&, bool, bool, bool)"), (void*)&hkChangeWorkspace);
     if (changeWorkspaceHook)
         changeWorkspaceHook->hook();
 
-    // CConfigManager::getWorkspaceRulesFor
-    funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "getWorkspaceRulesFor");
-    getWorkspaceRulesForHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkGetWorkspaceRulesFor);
-    if (getWorkspaceRulesForHook)
-        getWorkspaceRulesForHook->hook();
+    // CConfigManager::getWorkspaceRuleFor
+    funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "getWorkspaceRuleFor");
+    getWorkspaceRuleForHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkGetWorkspaceRuleFor);
+    if (getWorkspaceRuleForHook)
+        getWorkspaceRuleForHook->hook();
 
     // CKeybindManager::mouse (names too generic bruh)
-    funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "mouse");
-    onMouseButtonHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkOnMouseButton);
+    pMouseKeybind = findFunctionBySymbol(pHandle, "mouse", "CKeybindManager::mouse");
+    onMouseEventHook = HyprlandAPI::createFunctionHook(pHandle, findFunctionBySymbol(pHandle, "onMouseEvent", "CKeybindManager::onMouseEvent"), (void*)&hkOnMouseEvent);
+    if (onMouseEventHook)
+        onMouseEventHook->hook();
 
     // CHyprRenderer::renderWindow
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWindow");
@@ -174,5 +211,6 @@ APICALL EXPORT void PLUGIN_EXIT() {
     arrangeLayersForMonitorHook->unhook();
     changeWorkspaceHook->unhook();
     recalculateMonitorHook->unhook();
-    getWorkspaceRulesForHook->unhook();
+    getWorkspaceRuleForHook->unhook();
+    onMouseEventHook->unhook();
 }
