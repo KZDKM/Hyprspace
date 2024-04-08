@@ -87,10 +87,14 @@ SWorkspaceRule hkGetWorkspaceRuleFor(CConfigManager* thisptr, PHLWORKSPACE pWork
 // for dragging windows into workspace
 bool hkOnMouseEvent(CKeybindManager* thisptr, wlr_pointer_button_event* e) {
 
+    auto targetWindow = g_pInputManager->currentlyDraggedWindow;
+
+    bool oReturn = false;
+
+
     // when widget is active, always drag windows on click
     const auto pressed = e->state == WL_POINTER_BUTTON_STATE_PRESSED;
     const auto pMonitor = g_pCompositor->getMonitorFromCursor();
-    auto targetWindow = g_pInputManager->currentlyDraggedWindow;
     int targetWorkspaceID = -1;
     bool shouldDrag = false;
     if (pMonitor) {
@@ -100,11 +104,8 @@ bool hkOnMouseEvent(CKeybindManager* thisptr, wlr_pointer_button_event* e) {
                 auto wi = std::get<0>(w);
                 auto wb = std::get<1>(w);
                 if (wb.containsPoint(g_pInputManager->getMouseCoordsInternal())) {
-                    // set window to move if a window is released within the bound of a workspace box
-                    if (!pressed) {
-                        // null permissive
-                        targetWorkspaceID = wi;
-                    }
+                    // null permissive
+                    targetWorkspaceID = wi;
                     break;
                 }
             }
@@ -112,26 +113,34 @@ bool hkOnMouseEvent(CKeybindManager* thisptr, wlr_pointer_button_event* e) {
             if (widget->isActive()) {
                 shouldDrag = true;
             }
+            // FIXME: autodrag still sends mouse event
+            if (shouldDrag && pressed) {
+                if (g_pInputManager->currentlyDraggedWindow) {
+                    g_pLayoutManager->getCurrentLayout()->onEndDragWindow();
+                    g_pInputManager->currentlyDraggedWindow = nullptr;
+                    g_pInputManager->dragMode = MBIND_INVALID;
+                }
+                std::string keybind = (pressed ? "1" : "0") + std::string("movewindow");
+                (*(tMouseKeybind)pMouseKeybind)(keybind);
+                oReturn = false;
+            } else
+                oReturn = (*(tOnMouseEvent)onMouseEventHook->m_pOriginal)(thisptr, e);
+
+            auto targetWorkspace = g_pCompositor->getWorkspaceByID(targetWorkspaceID);
+            if (targetWindow && targetWorkspace.get() && !pressed) {
+                g_pCompositor->moveWindowToWorkspaceSafe(targetWindow, targetWorkspace);
+                if (targetWindow->m_bIsFloating) {
+                    auto targetPos = pMonitor->vecPosition + (pMonitor->vecSize / 2.) - (targetWindow->m_vReportedSize / 2.);
+                    targetWindow->m_vPosition = targetPos;
+                    targetWindow->m_vRealPosition = targetPos;
+                }
+            }
+            else if (targetWorkspace && pressed) {
+                g_pCompositor->getMonitorFromID(targetWorkspace->m_iMonitorID)->changeWorkspace(targetWorkspace->m_iID);
+                if (widget->isActive()) widget->hide();
+            }
+            else if (!targetWorkspace.get() && widget->isActive() && !pressed) widget->hide();
         }
-    }
-
-    // execute original function before opperation to ensure that compositor would not fall into an unsafe state
-    auto oReturn = (*(tOnMouseEvent)onMouseEventHook->m_pOriginal)(thisptr, e);
-
-    // FIXME: autodrag still sends mouse event
-    if (shouldDrag) {
-        if (g_pInputManager->currentlyDraggedWindow) {
-            g_pLayoutManager->getCurrentLayout()->onEndDragWindow();
-            g_pInputManager->currentlyDraggedWindow = nullptr;
-            g_pInputManager->dragMode = MBIND_INVALID;
-        }
-        std::string keybind = (pressed ? "1" : "0") + std::string("movewindow");
-        (*(tMouseKeybind)pMouseKeybind)(keybind);
-    }
-
-    auto targetWorkspace = g_pCompositor->getWorkspaceByID(targetWorkspaceID);
-    if (targetWindow && targetWorkspace.get()) {
-        g_pCompositor->moveWindowToWorkspaceSafe(targetWindow, targetWorkspace);
     }
 
     return oReturn;
@@ -185,8 +194,8 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     // CConfigManager::getWorkspaceRuleFor
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "getWorkspaceRuleFor");
     getWorkspaceRuleForHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkGetWorkspaceRuleFor);
-    if (getWorkspaceRuleForHook)
-        getWorkspaceRuleForHook->hook();
+    //if (getWorkspaceRuleForHook)
+    //    getWorkspaceRuleForHook->hook();
 
     // CKeybindManager::mouse (names too generic bruh)
     pMouseKeybind = findFunctionBySymbol(pHandle, "mouse", "CKeybindManager::mouse");

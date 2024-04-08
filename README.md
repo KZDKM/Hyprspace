@@ -6,9 +6,9 @@ A plugin for Hyprland that implements a workspace overview feature similar to th
 ### Dispatcher
 - Use `overview:toggle` dispatcher to toggle workspace overview on current monitor
 ### Style
-- WIP
+- TBA
 ### Animation
-- The panel use the same curve as the `workspaces` animation for a slide-in animation
+- The panel use the same curve as the `windows` animation for a slide-in animation
 
 ## Goals (Sorted by priority)
 - [ ] Base features
@@ -24,3 +24,5 @@ A plugin for Hyprland that implements a workspace overview feature similar to th
     - [x] Animation support
     - [ ] aarch64 support (CFunctionHook reimpl.)
     - [ ] Gesture support
+- [ ] Plugin compatibility
+    - [ ] hyprsplit
