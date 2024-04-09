@@ -3,6 +3,7 @@
 #include <hyprland/src/plugins/HookSystem.hpp>
 #include "Overview.hpp"
 #include "Globals.hpp"
+#include <dlfcn.h>
 
 using namespace std;
 
@@ -12,12 +13,15 @@ CFunctionHook* recalculateMonitorHook;
 CFunctionHook* changeWorkspaceHook;
 CFunctionHook* getWorkspaceRuleForHook;
 CFunctionHook* onMouseEventHook;
+CFunctionHook* glTexParameteriHook;
 
 void* pMouseKeybind;
 void* pRenderWindow;
 void* pRenderLayer;
 
 std::vector<std::shared_ptr<CHyprspaceWidget>> g_overviewWidgets;
+
+bool g_useMipmapping = false;
 
 APICALL EXPORT string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;
@@ -99,6 +103,16 @@ SWorkspaceRule hkGetWorkspaceRuleFor(CConfigManager* thisptr, PHLWORKSPACE pWork
     return oReturn;
 }
 
+// for generating mipmap on miniature windows
+
+void hkGLTexParameteri(GLenum target, GLenum pname, GLint param) {
+    if (g_useMipmapping && pname == GL_TEXTURE_MIN_FILTER && param == GL_LINEAR) {
+        param = GL_LINEAR_MIPMAP_LINEAR;
+        glGenerateMipmap(target);
+    }
+    (*(tGLTexParameteri)glTexParameteriHook->m_pOriginal)(target, pname, param);
+}
+
 // for dragging windows into workspace
 bool hkOnMouseEvent(CKeybindManager* thisptr, wlr_pointer_button_event* e) {
 
@@ -114,7 +128,7 @@ bool hkOnMouseEvent(CKeybindManager* thisptr, wlr_pointer_button_event* e) {
             // currentlyDraggedWindow would be cleared by the execution of original function
             const auto targetWindow = g_pInputManager->currentlyDraggedWindow;
 
-            if (widget->isActive()) { 
+            if (widget->isActive()) {
                 // when overview is active, always drag windows on mouse click
                 if (g_pInputManager->currentlyDraggedWindow) {
                     g_pLayoutManager->getCurrentLayout()->onEndDragWindow();
@@ -231,6 +245,11 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     if (onMouseEventHook)
         onMouseEventHook->hook();
 
+    // gotta find other ways to hook
+    //glTexParameteriHook = HyprlandAPI::createFunctionHook(pHandle, (void*)&glTexParameteri, (void*)hkGLTexParameteri);
+    //if (glTexParameteriHook)
+    //    glTexParameteriHook->hook();
+
     // CHyprRenderer::renderWindow
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWindow");
     pRenderWindow = funcSearch[0].address;
@@ -250,10 +269,18 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
 }
 
 APICALL EXPORT void PLUGIN_EXIT() {
-    renderWorkspaceWindowsHook->unhook();
-    arrangeLayersForMonitorHook->unhook();
-    changeWorkspaceHook->unhook();
-    recalculateMonitorHook->unhook();
-    getWorkspaceRuleForHook->unhook();
-    onMouseEventHook->unhook();
+    if (renderWorkspaceWindowsHook)
+        renderWorkspaceWindowsHook->unhook();
+    if (arrangeLayersForMonitorHook)
+        arrangeLayersForMonitorHook->unhook();
+    if (changeWorkspaceHook)
+        changeWorkspaceHook->unhook();
+    if (recalculateMonitorHook)
+        recalculateMonitorHook->unhook();
+    if (getWorkspaceRuleForHook)
+        getWorkspaceRuleForHook->unhook();
+    if (onMouseEventHook)
+        onMouseEventHook->unhook();
+    //if (glTexParameteriHook)
+    //    glTexParameteriHook->unhook();
 }

@@ -82,6 +82,7 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     const auto oDraggedWindow = g_pInputManager->currentlyDraggedWindow;
     const auto oDragMode = g_pInputManager->dragMode;
     const auto oRenderModifEnable = g_pHyprOpenGL->m_RenderData.renderModif.enabled;
+    const auto oFloating = pWindow->m_bIsFloating;
 
     // hack
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, (float)(rectOverride.w / oSize.x)});
@@ -91,11 +92,15 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     pWindow->m_vPosition = ((pMonitor->vecPosition * (rectOverride.w / oSize.x)) + rectOverride.pos()) / (rectOverride.w / oSize.x);
     pWindow->m_vRealPosition.setValue(((pMonitor->vecPosition * (rectOverride.w / oSize.x)) + rectOverride.pos()) / (rectOverride.w / oSize.x));
     pWindow->m_sAdditionalConfigData.nearestNeighbor = false; // FIX: this wont do, need to scale surface texture down properly so that windows arent shown as pixelated mess
+    pWindow->m_bIsFloating = false; // weird shit happened so hack fix
     pWorkspaceOverride->m_vRenderOffset.setValue({0, 0}); // no workspace sliding, bPinned = true also works
     g_pInputManager->currentlyDraggedWindow = pWindow; // override these and force INTERACTIVERESIZEINPROGRESS = true to trick the renderer
     g_pInputManager->dragMode = MBIND_RESIZE;
 
+
+    g_useMipmapping = true;
     (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), pWindow, pMonitor, time, false, RENDER_PASS_MAIN, false, true); // ignoreGeometry needs to be true
+    g_useMipmapping = false;
 
     // restore values for normal window render
     pWindow->m_pWorkspace = oWorkspace;
@@ -103,6 +108,7 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     pWindow->m_vPosition = oPosition;
     pWindow->m_vRealPosition.setValue(oRealPosition);
     pWindow->m_sAdditionalConfigData.nearestNeighbor = oUseNearestNeighbor;
+    pWindow->m_bIsFloating = oFloating;
     pWorkspaceOverride->m_vRenderOffset.setValue(oRenderOffset);
     g_pInputManager->currentlyDraggedWindow = oDraggedWindow;
     g_pInputManager->dragMode = oDragMode;
@@ -121,7 +127,9 @@ void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverrid
     pLayer->realSize.setValue(rectOverride.size());
     pLayer->alpha.setValue(1);
 
+    g_useMipmapping = true;
     (*(tRenderLayer)pRenderLayer)(g_pHyprRenderer.get(), pLayer, pMonitor, time, false);
+    g_useMipmapping = false;
 
     pLayer->realPosition.setValue(oRealPosition);
     pLayer->realSize.setValue(oSize);
@@ -162,16 +170,26 @@ void CHyprspaceWidget::draw(timespec* time) {
     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
 
     std::vector<CWorkspace*> workspaces;
-    int highestID = 0;
+    int highestID = 1;
     for (auto& ws : g_pCompositor->m_vWorkspaces) {
         if (ws->m_iMonitorID == ownerID) {
             workspaces.push_back(ws.get());
+            if (highestID < ws->m_iID) highestID = ws->m_iID;
         }
-        if (ws->m_iID > highestID) highestID = ws->m_iID;
     }
 
+    // get the lowest empty workspce id after the highest id of current workspace
+    while (g_pCompositor->getWorkspaceByID(highestID) != nullptr) highestID++;
+
+    std::sort(workspaces.begin(), workspaces.end(), [] (CWorkspace* w1, CWorkspace* w2) {
+        if (!w1 || !w2) return false;
+        else return w1->m_iID < w2->m_iID;
+        });
+
     // placeholder for empty new workspace
-    CWorkspace dummyWorkspace = CWorkspace(highestID + 1, ownerID, "dummy");
+    // FIXME: probably not the best idea to have a new instance as the destructor calls a lot of stuff
+    std::string outName;
+    CWorkspace dummyWorkspace = CWorkspace(highestID, ownerID, "dummy");
     workspaces.push_back(&dummyWorkspace);
 
     // create new workspace at end if last workspace isnt empty
@@ -200,8 +218,11 @@ void CHyprspaceWidget::draw(timespec* time) {
 
     for (auto& ws : workspaces) {
         CBox curWorkspaceBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY, workspaceBoxW, workspaceBoxH};
-        if (ws == owner->activeWorkspace.get())
+        if (ws == owner->activeWorkspace.get()) {
             g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, CColor(0, 0, 0, 0.5), 0, 1.f, false); // cant really round it until I find a proper way to clip windows to a rounded rect
+            curWorkspaceRectOffsetX += workspaceBoxW + g_workspaceMargin;
+            continue;
+        }
         else
             g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, CColor(0, 0, 0, 0.25), 0, 1.f, false);
 
@@ -247,7 +268,7 @@ void CHyprspaceWidget::draw(timespec* time) {
         // draw floating windows
         for (auto& w : g_pCompositor->m_vWindows) {
             if (!w) continue;
-            if (w->m_pWorkspace.get() == ws && w->m_bIsFloating && w.get() != ws->getLastFocusedWindow()) {
+            if (w->m_pWorkspace.get() == ws && w->m_bIsFloating && ws->getLastFocusedWindow() != w.get()) {
                 double wX = curWorkspaceRectOffsetX + (w->m_vRealPosition.value().x - owner->vecPosition.x) * monitorSizeScaleFactor;
                 double wY = curWorkspaceRectOffsetY + (w->m_vRealPosition.value().y - owner->vecPosition.y) * monitorSizeScaleFactor;
                 double wW = w->m_vRealSize.value().x * monitorSizeScaleFactor;
