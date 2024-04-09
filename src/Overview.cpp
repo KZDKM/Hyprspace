@@ -162,19 +162,22 @@ void CHyprspaceWidget::draw(timespec* time) {
     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
 
     std::vector<CWorkspace*> workspaces;
-    int activeWorkspaceID = 0;
+    int highestID = 0;
     for (auto& ws : g_pCompositor->m_vWorkspaces) {
         if (ws->m_iMonitorID == ownerID) {
             workspaces.push_back(ws.get());
-            if (owner->activeWorkspace == ws)
-                activeWorkspaceID = ws->m_iID;
         }
+        if (ws->m_iID > highestID) highestID = ws->m_iID;
     }
+
+    // placeholder for empty new workspace
+    CWorkspace dummyWorkspace = CWorkspace(highestID + 1, ownerID, "dummy");
+    workspaces.push_back(&dummyWorkspace);
 
     // create new workspace at end if last workspace isnt empty
     /*auto lastWorkspace = std::max_element(workspaces.begin(), workspaces.end(),
         [] (const CWorkspace* w1, const CWorkspace* w2) {
-            if (!w1 || !w1) return false;
+            if (!w1 || !w2) return false;
             else return w1->m_iID < w2->m_iID;
         });
 
@@ -184,7 +187,7 @@ void CHyprspaceWidget::draw(timespec* time) {
         }*/
 
 
-        // render workspace boxes
+    // render workspace boxes
     int wsCount = workspaces.size();
     double monitorSizeScaleFactor = (g_panelHeight - 2 * g_workspaceMargin) / owner->vecTransformedSize.y; // scale box with panel height
     double workspaceBoxW = owner->vecTransformedSize.x * monitorSizeScaleFactor;
@@ -197,7 +200,7 @@ void CHyprspaceWidget::draw(timespec* time) {
 
     for (auto& ws : workspaces) {
         CBox curWorkspaceBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY, workspaceBoxW, workspaceBoxH};
-        if (ws->m_iID == activeWorkspaceID)
+        if (ws == owner->activeWorkspace.get())
             g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, CColor(0, 0, 0, 0.5), 0, 1.f, false); // cant really round it until I find a proper way to clip windows to a rounded rect
         else
             g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, CColor(0, 0, 0, 0.25), 0, 1.f, false);
@@ -236,7 +239,7 @@ void CHyprspaceWidget::draw(timespec* time) {
                 if (!(wW > 0 && wH > 0)) continue;
                 CBox curWindowBox = {wX, wY, wW, wH};
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(1, 1, 1, 1), 12);
+                g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
                 renderWindowStub(w.get(), owner, owner->activeWorkspace, curWindowBox, time);
                 g_pHyprOpenGL->m_RenderData.clipBox = CBox();
             }
@@ -252,7 +255,7 @@ void CHyprspaceWidget::draw(timespec* time) {
                 if (!(wW > 0 && wH > 0)) continue;
                 CBox curWindowBox = {wX, wY, wW, wH};
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(1, 1, 1, 1), 12);
+                g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
                 renderWindowStub(w.get(), owner, owner->activeWorkspace, curWindowBox, time);
                 g_pHyprOpenGL->m_RenderData.clipBox = CBox();
             }
@@ -268,7 +271,7 @@ void CHyprspaceWidget::draw(timespec* time) {
                 if (!(wW > 0 && wH > 0)) continue;
                 CBox curWindowBox = {wX, wY, wW, wH};
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(1, 1, 1, 1), 12);
+                g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
                 renderWindowStub(w, owner, owner->activeWorkspace, curWindowBox, time);
                 g_pHyprOpenGL->m_RenderData.clipBox = CBox();
             }

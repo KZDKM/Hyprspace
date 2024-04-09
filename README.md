@@ -12,17 +12,15 @@ A plugin for Hyprland that implements a workspace overview feature similar to th
 
 ## Goals (Sorted by priority)
 - [ ] Base features
-    - [x] Overview interface
+    - [ ] Overview interface
         - [x] Workspace minimap
         - [x] Workspace display
         - [ ] Workspace name
-    - [ ] Mouse controls
-        - [ ] Moving window between workspaces
-        - [ ] Creating new workspaces
+    - [x] Mouse controls
+        - [x] Moving window between workspaces
+        - [x] Creating new workspaces
     - [ ] Configurability
 - [ ] QoL features
     - [x] Animation support
     - [ ] aarch64 support (CFunctionHook reimpl.)
     - [ ] Gesture support
-- [ ] Plugin compatibility
-    - [ ] hyprsplit

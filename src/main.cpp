@@ -37,7 +37,17 @@ std::shared_ptr<CHyprspaceWidget> getWidgetForMonitor(CMonitor* pMonitor) {
 void hkRenderWorkspaceWindows(CHyprRenderer* thisptr, CMonitor* pMonitor, PHLWORKSPACE pWorkspace, timespec* now) {
     auto widget = getWidgetForMonitor(pMonitor);
     if (widget) widget->draw(now);
+    float oAlpha = 1;
+    if (widget->isActive() && g_pInputManager->currentlyDraggedWindow)
+        if (g_pInputManager->currentlyDraggedWindow->m_iMonitorID == widget->getOwner()->ID) {
+            oAlpha = g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.goal();
+            g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(0.2);
+        }
     (*(tRenderWorkspaceWindows)renderWorkspaceWindowsHook->m_pOriginal)(thisptr, pMonitor, pWorkspace, now);
+    if (widget->isActive() && g_pInputManager->currentlyDraggedWindow)
+        if (g_pInputManager->currentlyDraggedWindow->m_iMonitorID == widget->getOwner()->ID) {
+            g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(oAlpha);
+        }
 }
 
 // trigger recalculations for all workspace
@@ -127,6 +137,11 @@ bool hkOnMouseEvent(CKeybindManager* thisptr, wlr_pointer_button_event* e) {
 
                 auto targetWorkspace = g_pCompositor->getWorkspaceByID(targetWorkspaceID);
 
+                // create new workspace
+                if (!targetWorkspace && targetWorkspaceID >= 0) {
+                    targetWorkspace = g_pCompositor->createNewWorkspace(targetWorkspaceID, widget->getOwner()->ID);
+                }
+
                 // release window on workspace to drop it in
                 if (targetWindow && targetWorkspace.get() && !pressed) {
                     g_pCompositor->moveWindowToWorkspaceSafe(targetWindow, targetWorkspace);
@@ -135,14 +150,15 @@ bool hkOnMouseEvent(CKeybindManager* thisptr, wlr_pointer_button_event* e) {
                         targetWindow->m_vPosition = targetPos;
                         targetWindow->m_vRealPosition = targetPos;
                     }
+                    g_pHyprRenderer->arrangeLayersForMonitor(widget->getOwner()->ID);
                 }
                 // click workspace to change to workspace and exit overview
                 else if (targetWorkspace && pressed) {
                     g_pCompositor->getMonitorFromID(targetWorkspace->m_iMonitorID)->changeWorkspace(targetWorkspace->m_iID);
-                    if (widget->isActive()) widget->hide();
+                    //if (widget->isActive()) widget->hide();
                 }
                 // click elsewhere to exit overview
-                else if (!targetWorkspace.get() && widget->isActive() && !pressed) widget->hide();
+                //else if (!targetWorkspace.get() && widget->isActive() && !pressed) widget->hide();
             }
             else
                 oReturn = (*(tOnMouseEvent)onMouseEventHook->m_pOriginal)(thisptr, e);
