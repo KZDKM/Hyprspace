@@ -24,7 +24,6 @@ public:
     CHyprspaceWidget(uint64_t);
     ~CHyprspaceWidget();
 
-    static std::shared_ptr<CHyprspaceWidget> getWidgetForMonitor(CMonitor*);
 
     CMonitor* getOwner();
     bool isActive();
@@ -34,4 +33,5 @@ public:
     void draw(timespec*); // call before renderWorkspaceWindows
     float reserveArea(); // call after arrangeLayersForMonitor
     float reserveGaps(); // TODO: implement
+
 };

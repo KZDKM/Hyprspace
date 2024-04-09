@@ -1,11 +1,9 @@
 #pragma once
 
 #include <hyprland/src/plugins/PluginAPI.hpp>
-#include "Overview.hpp"
+#include <hyprland/src/Compositor.hpp>
 
 inline HANDLE pHandle = NULL;
-
-extern std::vector<std::shared_ptr<CHyprspaceWidget>> g_overviewWidgets;
 
 typedef void (*tRenderWorkspaceWindows)(CHyprRenderer*, CMonitor*, PHLWORKSPACE, timespec*);
 

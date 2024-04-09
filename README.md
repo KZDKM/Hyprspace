@@ -8,7 +8,7 @@ A plugin for Hyprland that implements a workspace overview feature similar to th
 ### Style
 - TBA
 ### Animation
-- The panel use the same curve as the `windows` animation for a slide-in animation
+- The panel use the same curve as the `windows` animation configuration for a slide-in animation
 
 ## Goals (Sorted by priority)
 - [ ] Base features
