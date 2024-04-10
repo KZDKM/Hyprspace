@@ -2,7 +2,7 @@
 name = "Hyprspace"
 authors = ["KZdkm"]
 
-[plugin-name]
+[Hyprspace]
 description = "Workspace overview"
 authors = ["KZdkm"]
 output = "Hyprspace.so"
