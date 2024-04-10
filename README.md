@@ -31,11 +31,9 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
 
 To build, have hyprland headers installed and under the repo directory do:
 ```
-meson setup ./builddir ./
-cd builddir
-meson compile
+make all
 ```
-Then use `hyprctl plugin load` followed by the absolute path to the `.so` file in builddir to load
+Then use `hyprctl plugin load` followed by the absolute path to the `.so` file to load
 
 ### Hyprpm
 ```
