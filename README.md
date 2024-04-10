@@ -25,6 +25,8 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
 
 ## Installation
 
+- Make sure to use `hyprland-git`
+
 ### Manual
 
 To build, have hyprland headers installed and under the repo directory do:
@@ -36,8 +38,11 @@ meson compile
 Then use `hyprctl plugin load` followed by the absolute path to the `.so` file in builddir to load
 
 ### Hyprpm
-- TBA
+```
+hyprpm add https://github.com/KZDKM/Hyprspace
+hyprpm enable Hyprspace
 
+```
 ## Configuration
 ### Dispatchers
 - Use `overview:toggle` dispatcher to toggle workspace overview on current monitor
