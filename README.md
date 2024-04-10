@@ -9,6 +9,34 @@ A plugin for Hyprland that implements a workspace overview feature similar to th
 https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc0713828f9
 
 
+## Features
+- [x] Overview interface
+    - [x] Workspace minimap
+    - [x] Workspace display
+- [x] Mouse controls
+    - [x] Moving window between workspaces
+    - [x] Creating new workspaces
+- [x] Configurability
+- [x] Animation support
+- [x] Multi-monitor support
+- [ ] Monitor scaling support
+- [ ] aarch64 support (CFunctionHook reimplementation)
+- [ ] Touchpad & gesture support
+
+## Installation
+
+### Manual
+
+To build, have hyprland headers installed and under the repo directory do:
+```
+meson setup ./builddir ./
+cd builddir
+meson compile
+```
+Then use `hyprctl plugin load` followed by the absolute path to the `.so` file in builddir to load
+
+### Hyprpm
+- TBA
 
 ## Configuration
 ### Dispatchers
@@ -46,34 +74,6 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
 - `plugin:overview:showNewWorkspace` add a new empty workspace at the end of workspaces view
 - `plugin:overview:showEmptyWorkspace` show empty workspaces that are inbetween non-empty workspaces
 
-## Features (Sorted by priority)
-- [ ] Overview interface
-    - [x] Workspace minimap
-    - [x] Workspace display
-    - [ ] Workspace name
-- [x] Mouse controls
-    - [x] Moving window between workspaces
-    - [x] Creating new workspaces
-- [x] Configurability
-- [x] Animation support
-- [x] Multi-monitor support
-- [ ] aarch64 support (CFunctionHook reimplementation)
-- [ ] Gesture support
-
-## Installation
-
-### Manual
-
-To build, have hyprland headers installed and under the repo directory do:
-```
-meson setup ./builddir ./
-cd builddir
-meson compile
-```
-Then use `hyprctl plugin load` followed by the absolute path to the `.so` file in builddir to load
-
-### Hyprpm
-- TBA
 
 ## Plugin Compatibility
-- [x] [hyprsplit](https://github.com/shezdy/hyprsplit)
+- [x] [hyprsplit](https://github.com/shezdy/hyprsplit) (tested, minor bug with `showEmptyWorkspace` on)
