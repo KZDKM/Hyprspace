@@ -1,0 +1,11 @@
+[repository]
+name = "Hyprspace"
+authors = ["KZdkm"]
+
+[plugin-name]
+description = "Workspace overview"
+authors = ["KZdkm"]
+output = "Hyprspace.so"
+build = [
+    "make all"
+]
