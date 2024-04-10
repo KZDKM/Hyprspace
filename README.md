@@ -53,3 +53,18 @@ A plugin for Hyprland that implements a workspace overview feature similar to th
 - [x] Multi-monitor support
 - [ ] aarch64 support (CFunctionHook reimplementation)
 - [ ] Gesture support
+
+## Installation
+
+### Manual
+
+To build, have hyprland headers installed and under the repo directory do:
+```
+meson setup ./builddir ./
+cd builddir
+meson compile
+```
+Then use `hyprctl plugin load` followed by the absolute path to the `.so` file in builddir to load
+
+### Hyprpm
+- TBA
