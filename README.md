@@ -68,3 +68,6 @@ Then use `hyprctl plugin load` followed by the absolute path to the `.so` file i
 
 ### Hyprpm
 - TBA
+
+## Plugin Compatibility
+- [x] [hyprsplit](https://github.com/shezdy/hyprsplit)
