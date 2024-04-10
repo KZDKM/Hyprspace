@@ -4,6 +4,12 @@ A plugin for Hyprland that implements a workspace overview feature similar to th
 
 > Only works with the latest git version currently!
 
+
+
+https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc0713828f9
+
+
+
 ## Configuration
 ### Dispatchers
 - Use `overview:toggle` dispatcher to toggle workspace overview on current monitor
