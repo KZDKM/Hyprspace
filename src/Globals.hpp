@@ -60,3 +60,4 @@ namespace Config {
     extern float dragAlpha;
 }
 
+extern int hyprsplitNumWorkspaces;

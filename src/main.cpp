@@ -50,6 +50,7 @@ bool Config::showEmptyWorkspace = true;
 
 float Config::dragAlpha = 0.2;
 
+int hyprsplitNumWorkspaces = -1;
 
 bool g_useMipmapping = false;
 
@@ -243,6 +244,8 @@ void reloadConfig() {
     Config::showEmptyWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:showEmptyWorkspace")->getValue());
 
     Config::dragAlpha = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:dragAlpha")->getValue());
+
+    hyprsplitNumWorkspaces = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:hyprsplit:num_workspaces")->getValue());
 }
 
 void registerMonitors() {

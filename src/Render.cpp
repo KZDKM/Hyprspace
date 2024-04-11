@@ -99,17 +99,27 @@ void CHyprspaceWidget::draw(timespec* time) {
     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
 
     std::vector<int> workspaces;
+    int lowestID = INFINITY;
     int highestID = 1;
     for (auto& ws : g_pCompositor->m_vWorkspaces) {
         if (!ws) continue;
         if (ws->m_iMonitorID == ownerID) {
             workspaces.push_back(ws->m_iID);
             if (highestID < ws->m_iID) highestID = ws->m_iID;
+            if (lowestID > ws->m_iID) lowestID = ws->m_iID;
         }
     }
 
     if (Config::showEmptyWorkspace) {
-        for (int i = 1; i <= highestID; i++) {
+        int wsIDStart = 1;
+        int wsIDEnd = highestID;
+        // hyprsplit compatibility
+        // fixes the problem that empty workspaces which should belong to previous monitors being shown
+        if (hyprsplitNumWorkspaces > 0) {
+            wsIDStart = std::min<int>(hyprsplitNumWorkspaces * ownerID + 1, lowestID);
+            wsIDEnd = std::max<int>(hyprsplitNumWorkspaces * ownerID + 1, highestID); // always show the initial workspace for current monitor
+        }
+        for (int i = wsIDStart; i <= wsIDEnd; i++) {
             const auto pWorkspace = g_pCompositor->getWorkspaceByID(i);
             if (pWorkspace == nullptr)
                 workspaces.push_back(i);

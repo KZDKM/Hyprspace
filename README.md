@@ -79,4 +79,4 @@ hyprpm enable Hyprspace
 
 
 ## Plugin Compatibility
-- [x] [hyprsplit](https://github.com/shezdy/hyprsplit) (tested, minor bug with `showEmptyWorkspace` on)
+- [x] [hyprsplit](https://github.com/shezdy/hyprsplit) (tested)
