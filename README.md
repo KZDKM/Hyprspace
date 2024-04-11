@@ -63,7 +63,7 @@ hyprpm enable Hyprspace
 - `plugin:overview:gapsIn`
 - `plugin:overview:gapsOut`
 - `plugin:overview:hideBackgroundLayers` do not draw background layers in overview
-- `plugin:overview:drawActiveWorkspace` draw the active workspace in overview as-is (looks wonky so defaults to false)
+- `plugin:overview:drawActiveWorkspace` draw the active workspace in overview as-is
 
 ### Animation
 - The panel uses the `windows` curve for a slide-in animation

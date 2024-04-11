@@ -39,6 +39,7 @@ namespace Config {
 
     extern int panelHeight;
     extern int workspaceMargin;
+    extern int workspaceBorderSize;
     extern bool adaptiveHeight; // TODO: implement
     extern bool centerAligned;
     extern bool onTop; // TODO: implement

@@ -25,16 +25,17 @@ std::vector<std::shared_ptr<CHyprspaceWidget>> g_overviewWidgets;
 CColor Config::panelBaseColor = CColor(0, 0, 0, 0);
 CColor Config::workspaceActiveBackground = CColor(0, 0, 0, 0.25);
 CColor Config::workspaceInactiveBackground = CColor(0, 0, 0, 0.5);
-CColor Config::workspaceActiveBorder = CColor(1, 1, 1, 0.25);
+CColor Config::workspaceActiveBorder = CColor(1, 1, 1, 0.3);
 CColor Config::workspaceInactiveBorder = CColor(1, 1, 1, 0);
 
 int Config::panelHeight = 250;
 int Config::workspaceMargin = 12;
+int Config::workspaceBorderSize = 1;
 bool Config::adaptiveHeight = false; // TODO: implement
 bool Config::centerAligned = true;
 bool Config::onTop = true; // TODO: implement
 bool Config::hideBackgroundLayers = false;
-bool Config::drawActiveWorkspace = false;
+bool Config::drawActiveWorkspace = true;
 
 bool Config::overrideGaps = true;
 int Config::gapsIn = 20;
@@ -225,6 +226,7 @@ void reloadConfig() {
 
     Config::panelHeight = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:panelHeight")->getValue());
     Config::workspaceMargin = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceMargin")->getValue());
+    Config::workspaceBorderSize = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceBorderSize")->getValue());
     Config::adaptiveHeight = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:adaptiveHeight")->getValue());
     Config::centerAligned = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:centerAligned")->getValue());
     Config::onTop = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:onTop")->getValue());
@@ -245,7 +247,12 @@ void reloadConfig() {
 
     Config::dragAlpha = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:dragAlpha")->getValue());
 
-    hyprsplitNumWorkspaces = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:hyprsplit:num_workspaces")->getValue());
+    Hyprlang::CConfigValue* numWorkspacesConfig = HyprlandAPI::getConfigValue(pHandle, "plugin:hyprsplit:num_workspaces");
+
+    if (numWorkspacesConfig)
+        hyprsplitNumWorkspaces = std::any_cast<Hyprlang::INT>(numWorkspacesConfig->getValue());
+
+    // TODO: schedule frame for monitor?
 }
 
 void registerMonitors() {
@@ -270,11 +277,12 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
 
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelHeight", Hyprlang::INT{250});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceMargin", Hyprlang::INT{12});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceBorderSize", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:adaptiveHeight", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:centerAligned", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:onTop", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:hideBackgroundLayers", Hyprlang::INT{0});
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:drawActiveWorkspace", Hyprlang::INT{0});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:drawActiveWorkspace", Hyprlang::INT{1});
     
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:overrideGaps", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:gapsIn", Hyprlang::INT{20});

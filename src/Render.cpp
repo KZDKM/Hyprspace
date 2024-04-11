@@ -95,7 +95,7 @@ void CHyprspaceWidget::draw(timespec* time) {
 
     g_pHyprOpenGL->m_RenderData.clipBox = CBox({0, 0}, owner->vecTransformedSize);
     // crashes with xray true
-    g_pHyprOpenGL->renderRectWithBlur(&widgetBox, Config::panelBaseColor, 0, 1.f, false); // need blurfbshouldrender = true
+    g_pHyprOpenGL->renderRectWithBlur(&widgetBox, Config::panelBaseColor); // need blurfbshouldrender = true
     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
 
     std::vector<int> workspaces;
@@ -154,14 +154,21 @@ void CHyprspaceWidget::draw(timespec* time) {
         const auto ws = g_pCompositor->getWorkspaceByID(wsID);
         CBox curWorkspaceBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY, workspaceBoxW, workspaceBoxH};
         if (ws == owner->activeWorkspace) {
-            g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, CColor(0, 0, 0, 0.5), 0, 1.f, false); // cant really round it until I find a proper way to clip windows to a rounded rect
+            if (Config::workspaceBorderSize >= 1 && Config::workspaceActiveBorder.a > 0) {
+                g_pHyprOpenGL->renderBorder(&curWorkspaceBox, CGradientValueData(Config::workspaceActiveBorder), 0, Config::workspaceBorderSize);
+            }
+            g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, Config::workspaceActiveBackground); // cant really round it until I find a proper way to clip windows to a rounded rect
             if (!Config::drawActiveWorkspace) {
                 curWorkspaceRectOffsetX += workspaceBoxW + Config::workspaceMargin;
                 continue;
             }
         }
-        else
-            g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, CColor(0, 0, 0, 0.25), 0, 1.f, false);
+        else {
+            if (Config::workspaceBorderSize >= 1 && Config::workspaceInactiveBorder.a > 0) {
+                g_pHyprOpenGL->renderBorder(&curWorkspaceBox, CGradientValueData(Config::workspaceInactiveBorder), 0, Config::workspaceBorderSize);
+            }
+            g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, Config::workspaceInactiveBackground);
+        }
 
         if (!Config::hideBackgroundLayers) {
             for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND]) {
