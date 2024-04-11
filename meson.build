@@ -1,6 +1,6 @@
-project('hyprspace', 'cpp',
+project('Hyprspace', 'cpp',
   version: '0.1',
-  default_options: ['buildtype=debug'],
+  default_options: ['buildtype=release'],
 )
 
 cpp_compiler = meson.get_compiler('cpp')
@@ -22,5 +22,6 @@ shared_module(meson.project_name(), src,
     dependency('hyprland'),
     dependency('pixman-1'),
     dependency('libdrm'),
-  ]
+  ],
+  install: true,
 )
