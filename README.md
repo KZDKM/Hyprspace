@@ -60,7 +60,7 @@ hyprpm enable Hyprspace
 - `plugin:overview:workspaceMargin` spacing of workspaces with eachother and the edge of the panel
 - `plugin:overview:workspaceBorderSize`
 - `plugin:overview:centerAligned` whether if workspaces should be aligned at the center (KDE / macOS style) or at the left (Windows style)
-- `plugin:overview:overrideGaps` whether if the following tiling gap values should be applied when workspace is open
+- `plugin:overview:overrideGaps` whether if the following tiling gap values should be applied when overview is open
 - `plugin:overview:gapsIn`
 - `plugin:overview:gapsOut`
 - `plugin:overview:hideBackgroundLayers` do not draw background layers in overview
