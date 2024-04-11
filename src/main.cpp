@@ -245,6 +245,15 @@ void reloadConfig() {
     Config::dragAlpha = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:dragAlpha")->getValue());
 }
 
+void registerMonitors() {
+    // create a widget for each monitor
+    for (auto& m : g_pCompositor->m_vMonitors) {
+        if (getWidgetForMonitor(m.get()) != nullptr) continue;
+        CHyprspaceWidget* widget = new CHyprspaceWidget(m->ID);
+        g_overviewWidgets.emplace_back(widget);
+    }
+}
+
 APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     pHandle = inHandle;
 
@@ -278,9 +287,8 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
 
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:dragAlpha", Hyprlang::FLOAT{0.2});
 
-    Debug::log(LOG, "Reloading config");
-
     reloadConfig();
+    HyprlandAPI::registerCallbackDynamic(pHandle, "configReloaded", [&] (void* thisptr, SCallbackInfo& info, std::any data) { reloadConfig(); });
 
     HyprlandAPI::addDispatcher(pHandle, "overview:toggle", dispatchToggleOverview);
     HyprlandAPI::addDispatcher(pHandle, "overview:open", dispatchOpenOverview);
@@ -333,12 +341,8 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderLayer");
     pRenderLayer = funcSearch[0].address;
 
-    // create a widget for each monitor
-    // TODO: update on monitor change
-    for (auto& m : g_pCompositor->m_vMonitors) {
-        CHyprspaceWidget* widget = new CHyprspaceWidget(m->ID);
-        g_overviewWidgets.emplace_back(widget);
-    }
+    registerMonitors();
+    HyprlandAPI::registerCallbackDynamic(pHandle, "monitorAdded", [&] (void* thisptr, SCallbackInfo& info, std::any data) { registerMonitors(); });
 
     return {"Hyprspace", "Workspace overview", "KZdkm", "0.1"};
 }
