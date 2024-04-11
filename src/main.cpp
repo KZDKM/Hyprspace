@@ -8,7 +8,6 @@ using namespace std;
 
 CFunctionHook* renderWorkspaceWindowsHook;
 CFunctionHook* arrangeLayersForMonitorHook;
-CFunctionHook* recalculateMonitorHook;
 CFunctionHook* changeWorkspaceHook;
 CFunctionHook* getWorkspaceRuleForHook;
 CFunctionHook* onMouseEventHook;
@@ -48,6 +47,8 @@ bool Config::switchOnDrop = false;
 bool Config::exitOnSwitch = false;
 bool Config::showNewWorkspace = true;
 bool Config::showEmptyWorkspace = true;
+
+float Config::overrideAnimSpeed = 0;
 
 float Config::dragAlpha = 0.2;
 
@@ -245,6 +246,12 @@ void reloadConfig() {
     Config::showNewWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:showNewWorkspace")->getValue());
     Config::showEmptyWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:showEmptyWorkspace")->getValue());
 
+    Config::overrideAnimSpeed = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:overrideAnimSpeed")->getValue());
+
+    for (auto& widget : g_overviewWidgets) {
+        widget->updateConfig();
+    }
+
     Config::dragAlpha = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:dragAlpha")->getValue());
 
     Hyprlang::CConfigValue* numWorkspacesConfig = HyprlandAPI::getConfigValue(pHandle, "plugin:hyprsplit:num_workspaces");
@@ -296,6 +303,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:showNewWorkspace", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:showEmptyWorkspace", Hyprlang::INT{1});
 
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:overrideAnimSpeed", Hyprlang::FLOAT{0.0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:dragAlpha", Hyprlang::FLOAT{0.2});
 
     reloadConfig();
@@ -365,8 +373,6 @@ APICALL EXPORT void PLUGIN_EXIT() {
         arrangeLayersForMonitorHook->unhook();
     if (changeWorkspaceHook)
         changeWorkspaceHook->unhook();
-    if (recalculateMonitorHook)
-        recalculateMonitorHook->unhook();
     if (getWorkspaceRuleForHook)
         getWorkspaceRuleForHook->unhook();
     if (onMouseEventHook)

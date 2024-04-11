@@ -68,6 +68,7 @@ hyprpm enable Hyprspace
 
 ### Animation
 - The panel uses the `windows` curve for a slide-in animation
+- Use `plugin:overview:overrideAnimSpeed` to override the animation speed
 
 ### Behaviors
 - `plugin:overview:autoDrag` mouse click always drags window when overview is open

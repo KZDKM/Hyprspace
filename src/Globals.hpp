@@ -58,6 +58,7 @@ namespace Config {
     extern bool showNewWorkspace;
     extern bool showEmptyWorkspace;
 
+    extern float overrideAnimSpeed;
     extern float dragAlpha;
 }
 

@@ -7,6 +7,9 @@ class CHyprspaceWidget {
 
     uint64_t ownerID;
 
+    SAnimationPropertyConfig curAnimationConfig;
+    SAnimationPropertyConfig curAnimation;
+
     // for slide-in animation
     CAnimatedVariable<float> curYOffset;
 
@@ -28,6 +31,8 @@ public:
 
     void show();
     void hide();
+
+    void updateConfig();
 
     void draw(timespec*); // call before renderWorkspaceWindows
 
