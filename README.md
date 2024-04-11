@@ -19,7 +19,7 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
 - [x] Configurability
 - [x] Animation support
 - [x] Multi-monitor support
-- [ ] Monitor scaling support
+- [x] Monitor scaling support
 - [ ] aarch64 support (CFunctionHook reimplementation)
 - [ ] Touchpad & gesture support
 
