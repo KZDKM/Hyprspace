@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+# Nix
+result
+
+# Meson
+meson-out
+meson-info
+meson-logs
+meson-private
