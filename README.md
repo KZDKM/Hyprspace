@@ -25,7 +25,7 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
 
 ## Installation
 
-- Make sure to use `hyprland-git`
+- Make sure to use `hyprland-git` (versions newer than this commit: https://github.com/hyprwm/Hyprland/commit/ef23ef60c5641c5903f9cf40571ead7ad6aba1b9)
 
 ### Manual
 
