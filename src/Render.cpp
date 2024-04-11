@@ -9,9 +9,9 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     const auto oFullscreen = pWindow->m_bIsFullscreen;
     const auto oPosition = pWindow->m_vPosition;
     const auto oRealPosition = pWindow->m_vRealPosition.value();
-    const auto oSize = pWindow->m_vReportedSize;
+    const auto oSize = pWindow->m_vRealSize.value();
     const auto oUseNearestNeighbor = pWindow->m_sAdditionalConfigData.nearestNeighbor.toUnderlying();
-    const auto oRenderOffset = pWorkspaceOverride->m_vRenderOffset.value();
+    const auto oPinned = pWindow->m_bPinned;
     const auto oDraggedWindow = g_pInputManager->currentlyDraggedWindow;
     const auto oDragMode = g_pInputManager->dragMode;
     const auto oRenderModifEnable = g_pHyprOpenGL->m_RenderData.renderModif.enabled;
@@ -19,16 +19,17 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
 
     const float curScaling = rectOverride.w / (oSize.x * pMonitor->scale);
 
-    // hack
+    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, (pMonitor->vecPosition + (rectOverride.pos() / curScaling) / pMonitor->scale) - oRealPosition});
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
     pWindow->m_pWorkspace = pWorkspaceOverride;
     pWindow->m_bIsFullscreen = false;
-    pWindow->m_vPosition = pMonitor->vecPosition + (rectOverride.pos() / curScaling) / pMonitor->scale;
-    pWindow->m_vRealPosition.setValue(pMonitor->vecPosition + (rectOverride.pos() / curScaling) / pMonitor->scale);
+    //pWindow->m_vPosition = pMonitor->vecPosition + (rectOverride.pos() / curScaling) / pMonitor->scale;
+    //pWindow->m_vRealPosition.setValue(pMonitor->vecPosition + (rectOverride.pos() / curScaling) / pMonitor->scale);
     pWindow->m_sAdditionalConfigData.nearestNeighbor = false; // FIX: this wont do, need to scale surface texture down properly so that windows arent shown as pixelated mess
     pWindow->m_bIsFloating = false; // weird shit happened so hack fix
-    pWorkspaceOverride->m_vRenderOffset.setValue({0, 0}); // no workspace sliding, bPinned = true also works
+    //pWorkspaceOverride->m_vRenderOffset.setValue({0, 0}); // no workspace sliding, bPinned = true also works
+    pWindow->m_bPinned = true;
     g_pInputManager->currentlyDraggedWindow = pWindow; // override these and force INTERACTIVERESIZEINPROGRESS = true to trick the renderer
     g_pInputManager->dragMode = MBIND_RESIZE;
 
@@ -40,14 +41,15 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     // restore values for normal window render
     pWindow->m_pWorkspace = oWorkspace;
     pWindow->m_bIsFullscreen = oFullscreen;
-    pWindow->m_vPosition = oPosition;
-    pWindow->m_vRealPosition.setValue(oRealPosition);
+    //pWindow->m_vPosition = oPosition;
+    //pWindow->m_vRealPosition.setValue(oRealPosition);
     pWindow->m_sAdditionalConfigData.nearestNeighbor = oUseNearestNeighbor;
     pWindow->m_bIsFloating = oFloating;
-    pWorkspaceOverride->m_vRenderOffset.setValue(oRenderOffset);
+    pWindow->m_bPinned = oPinned;
     g_pInputManager->currentlyDraggedWindow = oDraggedWindow;
     g_pInputManager->dragMode = oDragMode;
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = oRenderModifEnable;
+    g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
 }
 
