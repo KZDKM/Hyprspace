@@ -19,6 +19,8 @@ CHyprspaceWidget::CHyprspaceWidget(uint64_t inOwnerID) {
     workspaceScrollOffset.setValueAndWarp(0);
 }
 
+CHyprspaceWidget::~CHyprspaceWidget() { }
+
 CMonitor* CHyprspaceWidget::getOwner() {
     return g_pCompositor->getMonitorFromID(ownerID);
 }

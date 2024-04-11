@@ -41,6 +41,33 @@ hyprpm add https://github.com/KZDKM/Hyprspace
 hyprpm enable Hyprspace
 
 ```
+
+### Nix
+Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Manager/#plugins) on plugins, but your flake might look like this:
+```nix
+{
+  inputs = {
+    # Hyprland is **such** eye candy
+    hyprland ={
+      # Update for releavant commit, this is just bleeding edge as of 2024/04/11
+      url = github:hyprwm/Hyprland/ac0f3411c18497a39498b756b711e092512de9e0;
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    Hyprspace = {
+      url = github:KZDKM/Hyprspace;
+      inputs.hyprland.follows = "hyprland";
+    };
+  };
+
+... # your normal setup with hyprland
+
+  wayland.windowManager.hyprland.plugins = [
+    # ... whatever
+    inputs.Hyprspace.packages.${pkgs.system}.Hyprspace
+  ];
+}
+```
+
 ## Configuration
 ### Dispatchers
 - Use `overview:toggle` dispatcher to toggle workspace overview on current monitor
