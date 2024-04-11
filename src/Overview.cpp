@@ -56,7 +56,7 @@ void CHyprspaceWidget::hide() {
         ls->startAnimation(true);
     }
     active = false;
-    curYOffset = Config::panelHeight;
+    curYOffset = Config::panelHeight * owner->scale;
     g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
     g_pCompositor->scheduleFrameForMonitor(owner);
 }

@@ -17,13 +17,15 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     const auto oRenderModifEnable = g_pHyprOpenGL->m_RenderData.renderModif.enabled;
     const auto oFloating = pWindow->m_bIsFloating;
 
+    const float curScaling = rectOverride.w / (oSize.x * pMonitor->scale);
+
     // hack
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, (float)(rectOverride.w / oSize.x)});
+    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
     pWindow->m_pWorkspace = pWorkspaceOverride;
     pWindow->m_bIsFullscreen = false;
-    pWindow->m_vPosition = ((pMonitor->vecPosition * (rectOverride.w / oSize.x)) + rectOverride.pos()) / (rectOverride.w / oSize.x);
-    pWindow->m_vRealPosition.setValue(((pMonitor->vecPosition * (rectOverride.w / oSize.x)) + rectOverride.pos()) / (rectOverride.w / oSize.x));
+    pWindow->m_vPosition = pMonitor->vecPosition + (rectOverride.pos() / curScaling) / pMonitor->scale;
+    pWindow->m_vRealPosition.setValue(pMonitor->vecPosition + (rectOverride.pos() / curScaling) / pMonitor->scale);
     pWindow->m_sAdditionalConfigData.nearestNeighbor = false; // FIX: this wont do, need to scale surface texture down properly so that windows arent shown as pixelated mess
     pWindow->m_bIsFloating = false; // weird shit happened so hack fix
     pWorkspaceOverride->m_vRenderOffset.setValue({0, 0}); // no workspace sliding, bPinned = true also works
@@ -87,7 +89,7 @@ void CHyprspaceWidget::draw(timespec* time) {
     g_pHyprOpenGL->m_RenderData.pCurrentMonData->blurFBShouldRender = true; // true to keep blur framebuffer when no window is present
 
     // TODO: set clipbox to the current monitor so that the slide in animation dont fuck up other monitors
-    CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, Config::panelHeight}; //TODO: update size on monitor change
+    CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, Config::panelHeight * owner->scale}; //TODO: update size on monitor change
 
     g_pHyprRenderer->damageBox(&widgetBox);
     widgetBox.x -= owner->vecPosition.x;
@@ -139,13 +141,13 @@ void CHyprspaceWidget::draw(timespec* time) {
 
     // render workspace boxes
     int wsCount = workspaces.size();
-    double monitorSizeScaleFactor = (Config::panelHeight - 2 * Config::workspaceMargin) / owner->vecTransformedSize.y; // scale box with panel height
+    double monitorSizeScaleFactor = ((Config::panelHeight - 2 * Config::workspaceMargin) / (owner->vecTransformedSize.y)) * owner->scale; // scale box with panel height
     double workspaceBoxW = owner->vecTransformedSize.x * monitorSizeScaleFactor;
     double workspaceBoxH = owner->vecTransformedSize.y * monitorSizeScaleFactor;
-    double workspaceGroupWidth = workspaceBoxW * wsCount + Config::workspaceMargin * (wsCount - 1);
+    double workspaceGroupWidth = workspaceBoxW * wsCount + (Config::workspaceMargin * owner->scale) * (wsCount - 1);
     double curWorkspaceRectOffsetX = Config::centerAligned ? workspaceScrollOffset.value() + (widgetBox.w / 2.) - (workspaceGroupWidth / 2.) : workspaceScrollOffset.value() + Config::workspaceMargin;
-    double curWorkspaceRectOffsetY = 0 + Config::workspaceMargin - curYOffset.value();
-    double workspaceOverflowSize = std::max<double>(((workspaceGroupWidth - widgetBox.w) / 2) + Config::workspaceMargin, 0);
+    double curWorkspaceRectOffsetY = 0 + (Config::workspaceMargin * owner->scale) - curYOffset.value();
+    double workspaceOverflowSize = std::max<double>(((workspaceGroupWidth - widgetBox.w) / 2) + (Config::workspaceMargin * owner->scale), 0);
 
     workspaceScrollOffset = std::clamp<double>(workspaceScrollOffset.goal(), -workspaceOverflowSize, workspaceOverflowSize);
 
@@ -159,7 +161,7 @@ void CHyprspaceWidget::draw(timespec* time) {
             }
             g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, Config::workspaceActiveBackground); // cant really round it until I find a proper way to clip windows to a rounded rect
             if (!Config::drawActiveWorkspace) {
-                curWorkspaceRectOffsetX += workspaceBoxW + Config::workspaceMargin;
+                curWorkspaceRectOffsetX += workspaceBoxW + (Config::workspaceMargin * owner->scale);
                 continue;
             }
         }
@@ -200,10 +202,10 @@ void CHyprspaceWidget::draw(timespec* time) {
             for (auto& w : g_pCompositor->m_vWindows) {
                 if (!w) continue;
                 if (w->m_pWorkspace == ws && !w->m_bIsFloating) {
-                    double wX = curWorkspaceRectOffsetX + (w->m_vRealPosition.value().x - owner->vecPosition.x) * monitorSizeScaleFactor;
-                    double wY = curWorkspaceRectOffsetY + (w->m_vRealPosition.value().y - owner->vecPosition.y) * monitorSizeScaleFactor;
-                    double wW = w->m_vRealSize.value().x * monitorSizeScaleFactor;
-                    double wH = w->m_vRealSize.value().y * monitorSizeScaleFactor;
+                    double wX = curWorkspaceRectOffsetX + ((w->m_vRealPosition.value().x - owner->vecPosition.x) * monitorSizeScaleFactor * owner->scale);
+                    double wY = curWorkspaceRectOffsetY + ((w->m_vRealPosition.value().y - owner->vecPosition.y) * monitorSizeScaleFactor * owner->scale);
+                    double wW = w->m_vRealSize.value().x * monitorSizeScaleFactor * owner->scale;
+                    double wH = w->m_vRealSize.value().y * monitorSizeScaleFactor * owner->scale;
                     if (!(wW > 0 && wH > 0)) continue;
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
@@ -216,10 +218,10 @@ void CHyprspaceWidget::draw(timespec* time) {
             for (auto& w : g_pCompositor->m_vWindows) {
                 if (!w) continue;
                 if (w->m_pWorkspace == ws && w->m_bIsFloating && ws->getLastFocusedWindow() != w.get()) {
-                    double wX = curWorkspaceRectOffsetX + (w->m_vRealPosition.value().x - owner->vecPosition.x) * monitorSizeScaleFactor;
-                    double wY = curWorkspaceRectOffsetY + (w->m_vRealPosition.value().y - owner->vecPosition.y) * monitorSizeScaleFactor;
-                    double wW = w->m_vRealSize.value().x * monitorSizeScaleFactor;
-                    double wH = w->m_vRealSize.value().y * monitorSizeScaleFactor;
+                    double wX = curWorkspaceRectOffsetX + ((w->m_vRealPosition.value().x - owner->vecPosition.x) * monitorSizeScaleFactor * owner->scale);
+                    double wY = curWorkspaceRectOffsetY + ((w->m_vRealPosition.value().y - owner->vecPosition.y) * monitorSizeScaleFactor * owner->scale);
+                    double wW = w->m_vRealSize.value().x * monitorSizeScaleFactor * owner->scale;
+                    double wH = w->m_vRealSize.value().y * monitorSizeScaleFactor * owner->scale;
                     if (!(wW > 0 && wH > 0)) continue;
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
@@ -232,10 +234,10 @@ void CHyprspaceWidget::draw(timespec* time) {
             if (ws->getLastFocusedWindow())
                 if (ws->getLastFocusedWindow()->m_bIsFloating) {
                     CWindow* w = ws->getLastFocusedWindow();
-                    double wX = curWorkspaceRectOffsetX + (w->m_vRealPosition.value().x - owner->vecPosition.x) * monitorSizeScaleFactor;
-                    double wY = curWorkspaceRectOffsetY + (w->m_vRealPosition.value().y - owner->vecPosition.y) * monitorSizeScaleFactor;
-                    double wW = w->m_vRealSize.value().x * monitorSizeScaleFactor;
-                    double wH = w->m_vRealSize.value().y * monitorSizeScaleFactor;
+                    double wX = curWorkspaceRectOffsetX + ((w->m_vRealPosition.value().x - owner->vecPosition.x) * monitorSizeScaleFactor * owner->scale);
+                    double wY = curWorkspaceRectOffsetY + ((w->m_vRealPosition.value().y - owner->vecPosition.y) * monitorSizeScaleFactor * owner->scale);
+                    double wW = w->m_vRealSize.value().x * monitorSizeScaleFactor * owner->scale;
+                    double wH = w->m_vRealSize.value().y * monitorSizeScaleFactor * owner->scale;
                     if (!(wW > 0 && wH > 0)) continue;
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
@@ -263,6 +265,6 @@ void CHyprspaceWidget::draw(timespec* time) {
         curWorkspaceBox.y += owner->vecPosition.y;
         workspaceBoxes.emplace_back(std::make_tuple(wsID, curWorkspaceBox));
 
-        curWorkspaceRectOffsetX += workspaceBoxW + Config::workspaceMargin;
+        curWorkspaceRectOffsetX += workspaceBoxW + Config::workspaceMargin * owner->scale;
     }
 }
