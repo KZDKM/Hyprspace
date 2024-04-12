@@ -9,19 +9,6 @@ A plugin for Hyprland that implements a workspace overview feature similar to th
 https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc0713828f9
 
 
-## Features
-- [x] Overview interface
-    - [x] Workspace minimap
-    - [x] Workspace display
-- [x] Mouse controls
-    - [x] Moving window between workspaces
-    - [x] Creating new workspaces
-- [x] Configurability
-- [x] Animation support
-- [x] Multi-monitor support
-- [x] Monitor scaling support
-- [ ] aarch64 support (CFunctionHook reimplementation)
-- [ ] Touchpad & gesture support
 
 ## Installation
 
@@ -39,7 +26,6 @@ Then use `hyprctl plugin load` followed by the absolute path to the `.so` file t
 ```
 hyprpm add https://github.com/KZDKM/Hyprspace
 hyprpm enable Hyprspace
-
 ```
 
 ### Nix
@@ -106,6 +92,42 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - `plugin:overview:showNewWorkspace` add a new empty workspace at the end of workspaces view
 - `plugin:overview:showEmptyWorkspace` show empty workspaces that are inbetween non-empty workspaces
 
+## Roadmap
+- [x] Overview interface
+    - [x] Workspace minimap
+    - [x] Workspace display
+    - [ ] Workspace labels (workspace ID / name)
+- [x] Mouse controls
+    - [x] Moving window between workspaces
+    - [x] Creating new workspaces
+    - [ ] Dragging windows between workspace views
+- [x] Configurability
+  - [x] Styling
+    - [x] Panel background
+    - [x] Workspace background & border
+    - [ ] Panel on Bottom
+    - [ ] Vertical layout (on left / right)
+    - [ ] Panel top padding (reserved for bar / notch)
+    - [ ] Unique styling for special workspaces
+  - [ ] Behavior
+    - [x] Autodrag windows
+    - [x] Autoscroll workspaces
+    - [x] Responsive workspace switching
+    - [ ] Responsive exiting 
+      - [x] Exit on click / switch
+      - [ ] Exit with escape key
+    - [ ] Blacklisting workspaces
+      - [x] Show / hide new workspace and empty workspaces
+      - [ ] Show / hide special workspace (#11)
+    - [ ] Blacklisting layers from hiding
+- [x] Animation support
+- [x] Multi-monitor support
+- [x] Monitor scaling support
+- [ ] aarch64 support (CFunctionHook reimplementation)
+- [ ] Touchpad & gesture support
+  - [ ] Workspace swipe (#9)
+  - [ ] Scrolling through workspace panel (untested)
+  - [ ] Swipe to open
 
 ## Plugin Compatibility
 - [x] [hyprsplit](https://github.com/shezdy/hyprsplit) (tested)
