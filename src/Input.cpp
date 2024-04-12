@@ -1,7 +1,7 @@
 #include "Overview.hpp"
 #include "Globals.hpp"
 
-bool CHyprspaceWidget::mouseEvent(bool pressed) {
+bool CHyprspaceWidget::buttonEvent(bool pressed) {
     bool Return;
 
     const auto targetWindow = g_pInputManager->currentlyDraggedWindow;
@@ -58,7 +58,7 @@ bool CHyprspaceWidget::mouseEvent(bool pressed) {
             if (Config::exitOnSwitch && active) hide();
         }
         //g_pHyprRenderer->arrangeLayersForMonitor(getOwner()->ID);
-        reserveArea();
+        updateLayout();
     }
     // click workspace to change to workspace and exit overview
     else if (targetWorkspace && !pressed) {

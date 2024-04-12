@@ -124,7 +124,7 @@ void onMouseButton(void* thisptr, SCallbackInfo& info, std::any args) {
         const auto widget = getWidgetForMonitor(pMonitor);
         if (widget) {
             if (widget->isActive()) {
-                info.cancelled = !widget->mouseEvent(pressed);
+                info.cancelled = !widget->buttonEvent(pressed);
             }
         }
     }
@@ -299,13 +299,13 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
             if (widget.get())
                 if (widget->isActive()) widget->show();
         }
-    });
+        });
     HyprlandAPI::registerCallbackDynamic(pHandle, "closeLayer", [&] (void* thisptr, SCallbackInfo& info, std::any data) {
         for (auto& widget : g_overviewWidgets) {
             if (widget.get())
                 if (widget->isActive()) widget->show();
         }
-    });
+        });
 
     // CKeybindManager::mouse (names too generic bruh) (this is a private function btw)
     pMouseKeybind = findFunctionBySymbol(pHandle, "mouse", "CKeybindManager::mouse");

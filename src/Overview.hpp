@@ -37,10 +37,9 @@ public:
     void draw(); // call before renderWorkspaceWindows
 
     // reserves area on owner monitor
-    void reserveArea();
-    float reserveGaps();
+    void updateLayout();
 
-    bool mouseEvent(bool);
+    bool buttonEvent(bool);
     bool axisEvent(double);
 
 };

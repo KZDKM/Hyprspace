@@ -13,6 +13,7 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
 ## Installation
 
 - Make sure to use `hyprland-git` (versions newer than this commit: https://github.com/hyprwm/Hyprland/commit/ef23ef60c5641c5903f9cf40571ead7ad6aba1b9)
+- For Fedora, install `hyprland-git` and `hyprland-git-devel` package from COPR and build manually
 
 ### Manual
 
@@ -20,7 +21,7 @@ To build, have hyprland headers installed and under the repo directory do:
 ```
 make all
 ```
-Then use `hyprctl plugin load` followed by the absolute path to the `.so` file to load
+Then use `hyprctl plugin load` followed by the absolute path to the `.so` file to load, you could add this to your `exec-once` to load the plugin on startup
 
 ### Hyprpm
 ```
@@ -75,6 +76,9 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - `plugin:overview:centerAligned` whether if workspaces should be aligned at the center (KDE / macOS style) or at the left (Windows style)
 - `plugin:overview:hideBackgroundLayers` do not draw background layers in overview
 - `plugin:overview:drawActiveWorkspace` draw the active workspace in overview as-is
+- `plugin:overview:overrideGaps` whether if overview should override the layout gaps in the current workspace using the following values
+- `plugin:overview:gapsIn`
+- `plugin:overview:gapsOut`
 
 ### Animation
 - The panel uses the `windows` curve for a slide-in animation
@@ -120,7 +124,7 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - [x] Animation support
 - [x] Multi-monitor support
 - [x] Monitor scaling support
-- [ ] aarch64 support
+- [x] aarch64 support
 - [ ] Touchpad & gesture support
   - [ ] Workspace swipe (#9)
   - [ ] Scrolling through workspace panel (untested)

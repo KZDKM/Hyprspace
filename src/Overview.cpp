@@ -20,7 +20,7 @@ CHyprspaceWidget::CHyprspaceWidget(uint64_t inOwnerID) {
 }
 
 // TODO: implement deconstructor and delete widget on monitor unplug
-CHyprspaceWidget::~CHyprspaceWidget() { }
+CHyprspaceWidget::~CHyprspaceWidget() {}
 
 CMonitor* CHyprspaceWidget::getOwner() {
     return g_pCompositor->getMonitorFromID(ownerID);
@@ -51,7 +51,7 @@ void CHyprspaceWidget::show() {
     active = true;
     curYOffset = 0;
     //g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
-    reserveArea();
+    updateLayout();
     g_pCompositor->scheduleFrameForMonitor(owner);
 }
 
@@ -71,7 +71,7 @@ void CHyprspaceWidget::hide() {
     active = false;
     curYOffset = Config::panelHeight * owner->scale;
     //g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
-    reserveArea();
+    updateLayout();
     g_pCompositor->scheduleFrameForMonitor(owner);
 }
 
