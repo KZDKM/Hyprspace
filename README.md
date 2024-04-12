@@ -73,9 +73,6 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - `plugin:overview:workspaceMargin` spacing of workspaces with eachother and the edge of the panel
 - `plugin:overview:workspaceBorderSize`
 - `plugin:overview:centerAligned` whether if workspaces should be aligned at the center (KDE / macOS style) or at the left (Windows style)
-- `plugin:overview:overrideGaps` whether if the following tiling gap values should be applied when overview is open
-- `plugin:overview:gapsIn`
-- `plugin:overview:gapsOut`
 - `plugin:overview:hideBackgroundLayers` do not draw background layers in overview
 - `plugin:overview:drawActiveWorkspace` draw the active workspace in overview as-is
 
@@ -123,7 +120,7 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - [x] Animation support
 - [x] Multi-monitor support
 - [x] Monitor scaling support
-- [ ] aarch64 support (CFunctionHook reimplementation)
+- [ ] aarch64 support
 - [ ] Touchpad & gesture support
   - [ ] Workspace swipe (#9)
   - [ ] Scrolling through workspace panel (untested)

@@ -2,25 +2,11 @@
 
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/Compositor.hpp>
+#include <hyprland/src/config/ConfigValue.hpp>
 
 inline HANDLE pHandle = NULL;
 
 extern bool g_useMipmapping;
-
-typedef void (*tRenderWorkspaceWindows)(CHyprRenderer*, CMonitor*, PHLWORKSPACE, timespec*);
-
-typedef void (*tArrangeLayersForMonitor)(CHyprRenderer*, const int&);
-
-typedef void (*tRecalculateMonitor)(void*, const int&);
-
-typedef void (*tChangeWorkspace)(CMonitor*, const PHLWORKSPACE&, bool, bool, bool);
-
-typedef SWorkspaceRule(*tGetWorkspaceRuleFor)(CConfigManager*, PHLWORKSPACE);
-
-typedef void (*tGLTexParameteri)(GLenum, GLenum, GLint);
-
-typedef bool (*tOnMouseEvent)(CKeybindManager*, wlr_pointer_button_event*);
-typedef bool (*tOnAxisEvent)(CKeybindManager*, wlr_pointer_axis_event*);
 
 typedef void (*tMouseKeybind)(std::string);
 extern void* pMouseKeybind;

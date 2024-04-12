@@ -7,8 +7,6 @@
 using namespace std;
 
 CFunctionHook* renderWorkspaceWindowsHook;
-CFunctionHook* arrangeLayersForMonitorHook;
-CFunctionHook* changeWorkspaceHook;
 CFunctionHook* getWorkspaceRuleForHook;
 CFunctionHook* glTexParameteriHook;
 
@@ -70,34 +68,36 @@ std::shared_ptr<CHyprspaceWidget> getWidgetForMonitor(CMonitor* pMonitor) {
     return nullptr;
 }
 
-void hkRenderWorkspaceWindows(CHyprRenderer* thisptr, CMonitor* pMonitor, PHLWORKSPACE pWorkspace, timespec* now) {
-    auto widget = getWidgetForMonitor(pMonitor);
-    if (widget) widget->draw(now);
-    float oAlpha = 1;
-    if (widget->isActive() && g_pInputManager->currentlyDraggedWindow)
-        if (g_pInputManager->currentlyDraggedWindow->m_iMonitorID == widget->getOwner()->ID) {
-            oAlpha = g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.goal();
-            g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(Config::dragAlpha);
-        }
-    (*(tRenderWorkspaceWindows)renderWorkspaceWindowsHook->m_pOriginal)(thisptr, pMonitor, pWorkspace, now);
-    if (widget->isActive() && g_pInputManager->currentlyDraggedWindow)
-        if (g_pInputManager->currentlyDraggedWindow->m_iMonitorID == widget->getOwner()->ID) {
-            g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(oAlpha);
-        }
-}
+float g_oAlpha = -1;
+void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
 
-// trigger recalculations for all workspace
-void hkArrangeLayersForMonitor(CHyprRenderer* thisptr, const int& monitor) {
-    (*(tArrangeLayersForMonitor)arrangeLayersForMonitorHook->m_pOriginal)(thisptr, monitor);
-    auto pMonitor = g_pCompositor->getMonitorFromID(monitor);
-    if (pMonitor) {
-        auto widget = getWidgetForMonitor(pMonitor);
-        if (widget)
-            widget->reserveArea();
+    const auto renderStage = std::any_cast<eRenderStage>(args);
+
+
+    if (renderStage == eRenderStage::RENDER_PRE_WINDOWS) {
+
+
+        const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_RenderData.pMonitor);
+        if (widget.get())
+            if (widget->getOwner()) {
+                widget->draw();
+                if (g_pInputManager->currentlyDraggedWindow && widget->isActive()) {
+                    g_oAlpha = g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.goal();
+                    g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(Config::dragAlpha);
+                }
+                else g_oAlpha = -1;
+            }
+            else g_oAlpha = -1;
+        else g_oAlpha = -1;
+
     }
-
+    else if (renderStage == eRenderStage::RENDER_POST_WINDOWS) {
+        if (g_oAlpha != -1 && g_pInputManager->currentlyDraggedWindow) {
+            g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(g_oAlpha);
+        }
+        g_oAlpha = -1;
+    }
 }
-
 
 // event hook, currently this is only here to re-hide top layer panels on workspace change
 void onWorkspaceChange(void* thisptr, SCallbackInfo& info, std::any args) {
@@ -110,34 +110,6 @@ void onWorkspaceChange(void* thisptr, SCallbackInfo& info, std::any args) {
     if (widget.get())
         if (widget->isActive())
             widget->show();
-}
-
-// override gaps
-//FIXME: gaps kept getting applied to every workspace
-SWorkspaceRule hkGetWorkspaceRuleFor(CConfigManager* thisptr, PHLWORKSPACE pWorkspace) {
-    auto oReturn = (*(tGetWorkspaceRuleFor)getWorkspaceRuleForHook->m_pOriginal)(thisptr, pWorkspace);
-    if (Config::overrideGaps) {
-        auto pMonitor = g_pCompositor->getMonitorFromID(pWorkspace->m_iMonitorID);
-        if (pMonitor->activeWorkspace == pWorkspace) {
-            auto widget = getWidgetForMonitor(pMonitor);
-            if (widget)
-                if (widget->isActive()) {
-                    oReturn.gapsOut = Config::gapsOut;
-                    oReturn.gapsIn = Config::gapsIn;
-                }
-        }
-    }
-
-    return oReturn;
-}
-
-// for generating mipmap for overview surfaces, unused
-void hkGLTexParameteri(GLenum target, GLenum pname, GLint param) {
-    if (g_useMipmapping && pname == GL_TEXTURE_MIN_FILTER && param == GL_LINEAR) {
-        param = GL_LINEAR_MIPMAP_LINEAR;
-        glGenerateMipmap(target);
-    }
-    (*(tGLTexParameteri)glTexParameteriHook->m_pOriginal)(target, pname, param);
 }
 
 // event hook for click and drag interaction
@@ -255,6 +227,7 @@ void reloadConfig() {
 
     for (auto& widget : g_overviewWidgets) {
         widget->updateConfig();
+        widget->hide();
     }
 
     Config::dragAlpha = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:dragAlpha")->getValue());
@@ -318,23 +291,21 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addDispatcher(pHandle, "overview:open", dispatchOpenOverview);
     HyprlandAPI::addDispatcher(pHandle, "overview:close", dispatchCloseOverview);
 
-    // CHyprRenderer::renderWorkspaceWindows
-    auto funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWorkspaceWindows");
-    renderWorkspaceWindowsHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkRenderWorkspaceWindows);
-    if (renderWorkspaceWindowsHook)
-        renderWorkspaceWindowsHook->hook();
+    HyprlandAPI::registerCallbackDynamic(pHandle, "render", onRender);
 
-    // CHyprRenderer::arrangeLayersForMonitor
-    funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "arrangeLayersForMonitor");
-    arrangeLayersForMonitorHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkArrangeLayersForMonitor);
-    if (arrangeLayersForMonitorHook)
-        arrangeLayersForMonitorHook->hook();
-
-    // CConfigManager::getWorkspaceRuleFor
-    funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "getWorkspaceRuleFor");
-    getWorkspaceRuleForHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkGetWorkspaceRuleFor);
-    if (getWorkspaceRuleForHook)
-        getWorkspaceRuleForHook->hook();
+    // refresh on layer change
+    HyprlandAPI::registerCallbackDynamic(pHandle, "openLayer", [&] (void* thisptr, SCallbackInfo& info, std::any data) {
+        for (auto& widget : g_overviewWidgets) {
+            if (widget.get())
+                if (widget->isActive()) widget->show();
+        }
+    });
+    HyprlandAPI::registerCallbackDynamic(pHandle, "closeLayer", [&] (void* thisptr, SCallbackInfo& info, std::any data) {
+        for (auto& widget : g_overviewWidgets) {
+            if (widget.get())
+                if (widget->isActive()) widget->show();
+        }
+    });
 
     // CKeybindManager::mouse (names too generic bruh) (this is a private function btw)
     pMouseKeybind = findFunctionBySymbol(pHandle, "mouse", "CKeybindManager::mouse");
@@ -345,7 +316,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::registerCallbackDynamic(pHandle, "workspace", onWorkspaceChange);
 
     // CHyprRenderer::renderWindow
-    funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWindow");
+    auto funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWindow");
     pRenderWindow = funcSearch[0].address;
 
     // CHyprRenderer::renderLayer
@@ -359,10 +330,4 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
 }
 
 APICALL EXPORT void PLUGIN_EXIT() {
-    if (renderWorkspaceWindowsHook)
-        renderWorkspaceWindowsHook->unhook();
-    if (arrangeLayersForMonitorHook)
-        arrangeLayersForMonitorHook->unhook();
-    if (getWorkspaceRuleForHook)
-        getWorkspaceRuleForHook->unhook();
 }

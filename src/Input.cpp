@@ -57,7 +57,8 @@ bool CHyprspaceWidget::mouseEvent(bool pressed) {
             g_pCompositor->getMonitorFromID(targetWorkspace->m_iMonitorID)->changeWorkspace(targetWorkspace->m_iID);
             if (Config::exitOnSwitch && active) hide();
         }
-        g_pHyprRenderer->arrangeLayersForMonitor(getOwner()->ID);
+        //g_pHyprRenderer->arrangeLayersForMonitor(getOwner()->ID);
+        reserveArea();
     }
     // click workspace to change to workspace and exit overview
     else if (targetWorkspace && !pressed) {

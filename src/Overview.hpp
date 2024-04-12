@@ -10,9 +10,6 @@ class CHyprspaceWidget {
     SAnimationPropertyConfig curAnimationConfig;
     SAnimationPropertyConfig curAnimation;
 
-    // for slide-in animation
-    CAnimatedVariable<float> curYOffset;
-
     // for checking mouse hover for workspace drag and move
     // modified on draw call, accessed on mouse click and release
     std::vector<std::tuple<int, CBox>> workspaceBoxes;
@@ -22,6 +19,9 @@ class CHyprspaceWidget {
     CAnimatedVariable<float> workspaceScrollOffset;
 
 public:
+
+    // for slide-in animation
+    CAnimatedVariable<float> curYOffset;
 
     CHyprspaceWidget(uint64_t);
     ~CHyprspaceWidget();
@@ -34,10 +34,11 @@ public:
 
     void updateConfig();
 
-    void draw(timespec*); // call before renderWorkspaceWindows
+    void draw(); // call before renderWorkspaceWindows
 
-    void reserveArea(); // call after arrangeLayersForMonitor
-    float reserveGaps(); // TODO: implement
+    // reserves area on owner monitor
+    void reserveArea();
+    float reserveGaps();
 
     bool mouseEvent(bool);
     bool axisEvent(double);

@@ -73,7 +73,7 @@ void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverrid
 }
 
 // NOTE: rects and clipbox positions are relative to the monitor, while damagebox and layers are not, what the fuck?
-void CHyprspaceWidget::draw(timespec* time) {
+void CHyprspaceWidget::draw() {
 
     workspaceBoxes.clear();
 
@@ -82,6 +82,9 @@ void CHyprspaceWidget::draw(timespec* time) {
     auto owner = getOwner();
 
     if (!owner) return;
+
+    timespec time;
+    clock_gettime(CLOCK_MONOTONIC, &time);
 
     if (curYOffset.isBeingAnimated()) {
         g_pCompositor->scheduleFrameForMonitor(owner);
@@ -173,13 +176,13 @@ void CHyprspaceWidget::draw(timespec* time) {
             for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND]) {
                 CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                renderLayerStub(ls.get(), owner, layerBox, time);
+                renderLayerStub(ls.get(), owner, layerBox, &time);
                 g_pHyprOpenGL->m_RenderData.clipBox = CBox();
             }
             for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM]) {
                 CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                renderLayerStub(ls.get(), owner, layerBox, time);
+                renderLayerStub(ls.get(), owner, layerBox, &time);
                 g_pHyprOpenGL->m_RenderData.clipBox = CBox();
             }
         }
@@ -203,7 +206,7 @@ void CHyprspaceWidget::draw(timespec* time) {
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
                     g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
-                    renderWindowStub(w.get(), owner, owner->activeWorkspace, curWindowBox, time);
+                    renderWindowStub(w.get(), owner, owner->activeWorkspace, curWindowBox, &time);
                     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
                 }
             }
@@ -219,7 +222,7 @@ void CHyprspaceWidget::draw(timespec* time) {
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
                     g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
-                    renderWindowStub(w.get(), owner, owner->activeWorkspace, curWindowBox, time);
+                    renderWindowStub(w.get(), owner, owner->activeWorkspace, curWindowBox, &time);
                     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
                 }
             }
@@ -235,7 +238,7 @@ void CHyprspaceWidget::draw(timespec* time) {
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
                     g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
-                    renderWindowStub(w, owner, owner->activeWorkspace, curWindowBox, time);
+                    renderWindowStub(w, owner, owner->activeWorkspace, curWindowBox, &time);
                     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
                 }
         }
@@ -245,19 +248,21 @@ void CHyprspaceWidget::draw(timespec* time) {
             for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
                 CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                renderLayerStub(ls.get(), owner, layerBox, time);
+                renderLayerStub(ls.get(), owner, layerBox, &time);
                 g_pHyprOpenGL->m_RenderData.clipBox = CBox();
             }
 
             for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
                 CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                renderLayerStub(ls.get(), owner, layerBox, time);
+                renderLayerStub(ls.get(), owner, layerBox, &time);
                 g_pHyprOpenGL->m_RenderData.clipBox = CBox();
             }
         }
 
-        // resets workspaceBox absolute position for input detection
+        // resets workspaceBox to absolute position for input detection
+        curWorkspaceBox.x *= owner->scale;
+        curWorkspaceBox.y *= owner->scale;
         curWorkspaceBox.x += owner->vecPosition.x * owner->scale;
         curWorkspaceBox.y += owner->vecPosition.y * owner->scale;
         workspaceBoxes.emplace_back(std::make_tuple(wsID, curWorkspaceBox));

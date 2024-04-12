@@ -50,7 +50,8 @@ void CHyprspaceWidget::show() {
 
     active = true;
     curYOffset = 0;
-    g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
+    //g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
+    reserveArea();
     g_pCompositor->scheduleFrameForMonitor(owner);
 }
 
@@ -69,7 +70,8 @@ void CHyprspaceWidget::hide() {
     }
     active = false;
     curYOffset = Config::panelHeight * owner->scale;
-    g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
+    //g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
+    reserveArea();
     g_pCompositor->scheduleFrameForMonitor(owner);
 }
 
