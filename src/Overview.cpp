@@ -42,12 +42,10 @@ void CHyprspaceWidget::show() {
     for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
         ls->startAnimation(false);
         ls->readyToDelete = false;
-        ls->fadingOut = false;
     }
     for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
         ls->startAnimation(false);
         ls->readyToDelete = false;
-        ls->fadingOut = false;
     }
 
     active = true;
@@ -62,9 +60,11 @@ void CHyprspaceWidget::hide() {
 
     // restore layer state
     for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
+        ls->fadingOut = false;
         ls->startAnimation(true);
     }
     for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
+        ls->fadingOut = false;
         ls->startAnimation(true);
     }
     active = false;

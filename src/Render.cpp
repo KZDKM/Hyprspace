@@ -57,19 +57,15 @@ void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverrid
 
     const float curScaling = rectOverride.w / (oSize.x);
 
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, ((pMonitor->vecPosition) + ((rectOverride.pos() / curScaling)) - (oRealPosition))});
+    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, pMonitor->vecPosition + (rectOverride.pos() / curScaling) - oRealPosition});
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
-    //pLayer->realPosition.setValue(rectOverride.pos());
-    //pLayer->realSize.setValue(rectOverride.size());
     pLayer->alpha.setValue(1);
 
     g_useMipmapping = true;
     (*(tRenderLayer)pRenderLayer)(g_pHyprRenderer.get(), pLayer, pMonitor, time, false);
     g_useMipmapping = false;
 
-    //pLayer->realPosition.setValue(oRealPosition);
-    //pLayer->realSize.setValue(oSize);
     pLayer->alpha.setValue(oAlpha);
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = oRenderModifEnable;
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
@@ -262,8 +258,8 @@ void CHyprspaceWidget::draw(timespec* time) {
         }
 
         // resets workspaceBox absolute position for input detection
-        curWorkspaceBox.x += owner->vecPosition.x;
-        curWorkspaceBox.y += owner->vecPosition.y;
+        curWorkspaceBox.x += owner->vecPosition.x * owner->scale;
+        curWorkspaceBox.y += owner->vecPosition.y * owner->scale;
         workspaceBoxes.emplace_back(std::make_tuple(wsID, curWorkspaceBox));
 
         curWorkspaceRectOffsetX += workspaceBoxW + Config::workspaceMargin * owner->scale;

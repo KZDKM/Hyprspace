@@ -10,8 +10,6 @@ CFunctionHook* renderWorkspaceWindowsHook;
 CFunctionHook* arrangeLayersForMonitorHook;
 CFunctionHook* changeWorkspaceHook;
 CFunctionHook* getWorkspaceRuleForHook;
-CFunctionHook* onMouseEventHook;
-CFunctionHook* onAxisEventHook;
 CFunctionHook* glTexParameteriHook;
 
 void* pMouseKeybind;
@@ -101,11 +99,14 @@ void hkArrangeLayersForMonitor(CHyprRenderer* thisptr, const int& monitor) {
 }
 
 
-// currently this is only here to re-hide top layer panels on workspace change
-//TODO: use event hook instead of function hook
-void hkChangeWorkspace(CMonitor* thisptr, const PHLWORKSPACE& pWorkspace, bool internal, bool noMouseMove, bool noFocus) {
-    (*(tChangeWorkspace)changeWorkspaceHook->m_pOriginal)(thisptr, pWorkspace, internal, noMouseMove, noFocus);
-    auto widget = getWidgetForMonitor(thisptr);
+// event hook, currently this is only here to re-hide top layer panels on workspace change
+void onWorkspaceChange(void* thisptr, SCallbackInfo& info, std::any args) {
+
+    // wiki is outdated, this is PHLWORKSPACE rather than CWorkspace*
+    const auto pWorkspace = std::any_cast<PHLWORKSPACE>(args);
+    if (!pWorkspace) return;
+
+    auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromID(pWorkspace->m_iMonitorID));
     if (widget.get())
         if (widget->isActive())
             widget->show();
@@ -139,8 +140,11 @@ void hkGLTexParameteri(GLenum target, GLenum pname, GLint param) {
     (*(tGLTexParameteri)glTexParameteriHook->m_pOriginal)(target, pname, param);
 }
 
-// for dragging windows into workspace
-bool hkOnMouseEvent(CKeybindManager* thisptr, wlr_pointer_button_event* e) {
+// event hook for click and drag interaction
+void onMouseButton(void* thisptr, SCallbackInfo& info, std::any args) {
+
+    const auto e = std::any_cast<wlr_pointer_button_event*>(args);
+    if (!e) return;
 
     const auto pressed = e->state == WL_POINTER_BUTTON_STATE_PRESSED;
     const auto pMonitor = g_pCompositor->getMonitorFromCursor();
@@ -148,28 +152,30 @@ bool hkOnMouseEvent(CKeybindManager* thisptr, wlr_pointer_button_event* e) {
         const auto widget = getWidgetForMonitor(pMonitor);
         if (widget) {
             if (widget->isActive()) {
-                return widget->mouseEvent(pressed);
+                info.cancelled = !widget->mouseEvent(pressed);
             }
         }
     }
 
-    return (*(tOnMouseEvent)onMouseEventHook->m_pOriginal)(thisptr, e);
 }
 
-// for scrolling through panel and switching workspace
-bool hkOnAxisEvent(CKeybindManager* thisptr, wlr_pointer_axis_event* e) {
+// event hook for scrolling through panel and workspaces
+void onMouseAxis(void* thisptr, SCallbackInfo& info, std::any args) {
+
+    const auto e = std::any_cast<wlr_pointer_axis_event*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["event"]);
+    if (!e) return;
+
     const auto pMonitor = g_pCompositor->getMonitorFromCursor();
     if (pMonitor) {
         const auto widget = getWidgetForMonitor(pMonitor);
         if (widget) {
             if (widget->isActive()) {
                 if (e->source == WL_POINTER_AXIS_SOURCE_WHEEL && e->orientation == WL_POINTER_AXIS_VERTICAL_SCROLL)
-                    return widget->axisEvent(e->delta);
+                    info.cancelled = !widget->axisEvent(e->delta);
             }
         }
     }
 
-    return (*(tOnAxisEvent)onAxisEventHook->m_pOriginal)(thisptr, e);
 }
 
 void dispatchToggleOverview(std::string arg) {
@@ -232,7 +238,7 @@ void reloadConfig() {
     Config::onTop = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:onTop")->getValue());
     Config::hideBackgroundLayers = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:hideBackgroundLayers")->getValue());
     Config::drawActiveWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:drawActiveWorkspace")->getValue());
-    
+
     Config::overrideGaps = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:overrideGaps")->getValue());
     Config::gapsIn = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:gapsIn")->getValue());
     Config::gapsOut = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:gapsOut")->getValue());
@@ -275,11 +281,11 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
 
     Debug::log(LOG, "Loading overview plugin");
 
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelColor", Hyprlang::INT{CColor(0,0,0,0).getAsHex()});
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceActiveBackground", Hyprlang::INT{CColor(0,0,0,0.25).getAsHex()});
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceInactiveBackground", Hyprlang::INT{CColor(0,0,0,0.5).getAsHex()});
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceActiveBorder", Hyprlang::INT{CColor(1,1,1,0.25).getAsHex()});
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceInactiveBorder", Hyprlang::INT{CColor(1,1,1,0).getAsHex()});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelColor", Hyprlang::INT{CColor(0, 0, 0, 0).getAsHex()});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceActiveBackground", Hyprlang::INT{CColor(0, 0, 0, 0.25).getAsHex()});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceInactiveBackground", Hyprlang::INT{CColor(0, 0, 0, 0.5).getAsHex()});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceActiveBorder", Hyprlang::INT{CColor(1, 1, 1, 0.25).getAsHex()});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceInactiveBorder", Hyprlang::INT{CColor(1, 1, 1, 0).getAsHex()});
 
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelHeight", Hyprlang::INT{250});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceMargin", Hyprlang::INT{12});
@@ -289,7 +295,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:onTop", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:hideBackgroundLayers", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:drawActiveWorkspace", Hyprlang::INT{1});
-    
+
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:overrideGaps", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:gapsIn", Hyprlang::INT{20});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:gapsOut", Hyprlang::INT{60});
@@ -324,27 +330,19 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     if (arrangeLayersForMonitorHook)
         arrangeLayersForMonitorHook->hook();
 
-    // CMonitor::changeWorkspace
-    changeWorkspaceHook = HyprlandAPI::createFunctionHook(pHandle, findFunctionBySymbol(pHandle, "changeWorkspace", "CMonitor::changeWorkspace(std::shared_ptr<CWorkspace> const&, bool, bool, bool)"), (void*)&hkChangeWorkspace);
-    if (changeWorkspaceHook)
-        changeWorkspaceHook->hook();
-
     // CConfigManager::getWorkspaceRuleFor
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "getWorkspaceRuleFor");
     getWorkspaceRuleForHook = HyprlandAPI::createFunctionHook(pHandle, funcSearch[0].address, (void*)&hkGetWorkspaceRuleFor);
     if (getWorkspaceRuleForHook)
         getWorkspaceRuleForHook->hook();
 
-    // CKeybindManager::mouse (names too generic bruh)
+    // CKeybindManager::mouse (names too generic bruh) (this is a private function btw)
     pMouseKeybind = findFunctionBySymbol(pHandle, "mouse", "CKeybindManager::mouse");
 
-    onMouseEventHook = HyprlandAPI::createFunctionHook(pHandle, findFunctionBySymbol(pHandle, "onMouseEvent", "CKeybindManager::onMouseEvent"), (void*)&hkOnMouseEvent);
-    if (onMouseEventHook)
-        onMouseEventHook->hook();
+    HyprlandAPI::registerCallbackDynamic(pHandle, "mouseButton", onMouseButton);
+    HyprlandAPI::registerCallbackDynamic(pHandle, "mouseAxis", onMouseAxis);
 
-    onAxisEventHook = HyprlandAPI::createFunctionHook(pHandle, findFunctionBySymbol(pHandle, "onAxisEvent", "CKeybindManager::onAxisEvent"), (void*)hkOnAxisEvent);
-    if (onAxisEventHook)
-        onAxisEventHook->hook();
+    HyprlandAPI::registerCallbackDynamic(pHandle, "workspace", onWorkspaceChange);
 
     // CHyprRenderer::renderWindow
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWindow");
@@ -365,12 +363,6 @@ APICALL EXPORT void PLUGIN_EXIT() {
         renderWorkspaceWindowsHook->unhook();
     if (arrangeLayersForMonitorHook)
         arrangeLayersForMonitorHook->unhook();
-    if (changeWorkspaceHook)
-        changeWorkspaceHook->unhook();
     if (getWorkspaceRuleForHook)
         getWorkspaceRuleForHook->unhook();
-    if (onMouseEventHook)
-        onMouseEventHook->unhook();
-    if (onAxisEventHook)
-        onAxisEventHook->unhook();
 }
