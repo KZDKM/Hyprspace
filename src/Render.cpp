@@ -4,10 +4,8 @@
 void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorkspaceOverride, CBox rectOverride, timespec* time) {
     if (!pWindow || !pMonitor || !pWorkspaceOverride || !time) return;
 
-    // just kill me
     const auto oWorkspace = pWindow->m_pWorkspace;
     const auto oFullscreen = pWindow->m_bIsFullscreen;
-    const auto oPosition = pWindow->m_vPosition;
     const auto oRealPosition = pWindow->m_vRealPosition.value();
     const auto oSize = pWindow->m_vRealSize.value();
     const auto oUseNearestNeighbor = pWindow->m_sAdditionalConfigData.nearestNeighbor.toUnderlying();
@@ -23,12 +21,9 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
     pWindow->m_pWorkspace = pWorkspaceOverride;
-    pWindow->m_bIsFullscreen = false;
-    //pWindow->m_vPosition = pMonitor->vecPosition + (rectOverride.pos() / curScaling) / pMonitor->scale;
-    //pWindow->m_vRealPosition.setValue(pMonitor->vecPosition + (rectOverride.pos() / curScaling) / pMonitor->scale);
+    pWindow->m_bIsFullscreen = false; // FIXME: no windows should be in fullscreen when overview is open, reject all fullscreen requests when active
     pWindow->m_sAdditionalConfigData.nearestNeighbor = false; // FIX: this wont do, need to scale surface texture down properly so that windows arent shown as pixelated mess
     pWindow->m_bIsFloating = false; // weird shit happened so hack fix
-    //pWorkspaceOverride->m_vRenderOffset.setValue({0, 0}); // no workspace sliding, bPinned = true also works
     pWindow->m_bPinned = true;
     g_pInputManager->currentlyDraggedWindow = pWindow; // override these and force INTERACTIVERESIZEINPROGRESS = true to trick the renderer
     g_pInputManager->dragMode = MBIND_RESIZE;
@@ -41,8 +36,6 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     // restore values for normal window render
     pWindow->m_pWorkspace = oWorkspace;
     pWindow->m_bIsFullscreen = oFullscreen;
-    //pWindow->m_vPosition = oPosition;
-    //pWindow->m_vRealPosition.setValue(oRealPosition);
     pWindow->m_sAdditionalConfigData.nearestNeighbor = oUseNearestNeighbor;
     pWindow->m_bIsFloating = oFloating;
     pWindow->m_bPinned = oPinned;
@@ -53,6 +46,7 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
 }
 
+// FIXME: use renderModif instead of setValue to override scale and position
 void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverride, timespec* time) {
     if (!pLayer || !pMonitor || !time) return;
 
@@ -90,7 +84,6 @@ void CHyprspaceWidget::draw(timespec* time) {
 
     g_pHyprOpenGL->m_RenderData.pCurrentMonData->blurFBShouldRender = true; // true to keep blur framebuffer when no window is present
 
-    // TODO: set clipbox to the current monitor so that the slide in animation dont fuck up other monitors
     CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, Config::panelHeight * owner->scale}; //TODO: update size on monitor change
 
     g_pHyprRenderer->damageBox(&widgetBox);
@@ -118,7 +111,6 @@ void CHyprspaceWidget::draw(timespec* time) {
         int wsIDStart = 1;
         int wsIDEnd = highestID;
         // hyprsplit compatibility
-        // fixes the problem that empty workspaces which should belong to previous monitors being shown
         if (hyprsplitNumWorkspaces > 0) {
             wsIDStart = std::min<int>(hyprsplitNumWorkspaces * ownerID + 1, lowestID);
             wsIDEnd = std::max<int>(hyprsplitNumWorkspaces * ownerID + 1, highestID); // always show the initial workspace for current monitor
@@ -130,16 +122,14 @@ void CHyprspaceWidget::draw(timespec* time) {
         }
     }
 
+    // add new empty workspace
     if (Config::showNewWorkspace) {
         // get the lowest empty workspce id after the highest id of current workspace
         while (g_pCompositor->getWorkspaceByID(highestID) != nullptr) highestID++;
-
-        // add new empty workspace
         workspaces.push_back(highestID);
     }
 
     std::sort(workspaces.begin(), workspaces.end());
-
 
     // render workspace boxes
     int wsCount = workspaces.size();
@@ -259,10 +249,18 @@ void CHyprspaceWidget::draw(timespec* time) {
                 renderLayerStub(ls.get(), owner, layerBox, time);
                 g_pHyprOpenGL->m_RenderData.clipBox = CBox();
             }
+
+            for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
+                CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
+                layerBox.x += owner->vecPosition.x;
+                layerBox.y += owner->vecPosition.y;
+                g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
+                renderLayerStub(ls.get(), owner, layerBox, time);
+                g_pHyprOpenGL->m_RenderData.clipBox = CBox();
+            }
         }
 
-        // no reasons to render overlay layers atm...
-
+        // resets workspaceBox absolute position for input detection
         curWorkspaceBox.x += owner->vecPosition.x;
         curWorkspaceBox.y += owner->vecPosition.y;
         workspaceBoxes.emplace_back(std::make_tuple(wsID, curWorkspaceBox));

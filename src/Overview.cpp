@@ -19,6 +19,7 @@ CHyprspaceWidget::CHyprspaceWidget(uint64_t inOwnerID) {
     workspaceScrollOffset.setValueAndWarp(0);
 }
 
+// TODO: implement deconstructor and delete widget on monitor unplug
 CHyprspaceWidget::~CHyprspaceWidget() { }
 
 CMonitor* CHyprspaceWidget::getOwner() {

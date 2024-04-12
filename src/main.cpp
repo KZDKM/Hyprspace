@@ -54,6 +54,7 @@ float Config::dragAlpha = 0.2;
 
 int hyprsplitNumWorkspaces = -1;
 
+// unused, for now
 bool g_useMipmapping = false;
 
 APICALL EXPORT string PLUGIN_API_VERSION() {
@@ -129,8 +130,7 @@ SWorkspaceRule hkGetWorkspaceRuleFor(CConfigManager* thisptr, PHLWORKSPACE pWork
     return oReturn;
 }
 
-// for generating mipmap on miniature windows
-
+// for generating mipmap for overview surfaces, unused
 void hkGLTexParameteri(GLenum target, GLenum pname, GLint param) {
     if (g_useMipmapping && pname == GL_TEXTURE_MIN_FILTER && param == GL_LINEAR) {
         param = GL_LINEAR_MIPMAP_LINEAR;
@@ -157,7 +157,6 @@ bool hkOnMouseEvent(CKeybindManager* thisptr, wlr_pointer_button_event* e) {
 }
 
 // for scrolling through panel and switching workspace
-
 bool hkOnAxisEvent(CKeybindManager* thisptr, wlr_pointer_axis_event* e) {
     const auto pMonitor = g_pCompositor->getMonitorFromCursor();
     if (pMonitor) {
@@ -347,11 +346,6 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     if (onAxisEventHook)
         onAxisEventHook->hook();
 
-    // gotta find other ways to hook
-    //glTexParameteriHook = HyprlandAPI::createFunctionHook(pHandle, (void*)&glTexParameteri, (void*)hkGLTexParameteri);
-    //if (glTexParameteriHook)
-    //    glTexParameteriHook->hook();
-
     // CHyprRenderer::renderWindow
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWindow");
     pRenderWindow = funcSearch[0].address;
@@ -379,6 +373,4 @@ APICALL EXPORT void PLUGIN_EXIT() {
         onMouseEventHook->unhook();
     if (onAxisEventHook)
         onAxisEventHook->unhook();
-    //if (glTexParameteriHook)
-    //    glTexParameteriHook->unhook();
 }
