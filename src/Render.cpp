@@ -17,7 +17,7 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
 
     const float curScaling = rectOverride.w / (oSize.x * pMonitor->scale);
 
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, (pMonitor->vecPosition + (rectOverride.pos() / curScaling) / pMonitor->scale) - oRealPosition});
+    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, (pMonitor->vecPosition * pMonitor->scale) + (rectOverride.pos() / curScaling) - (oRealPosition * pMonitor->scale)});
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
     pWindow->m_pWorkspace = pWorkspaceOverride;
@@ -53,18 +53,27 @@ void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverrid
     Vector2D oRealPosition = pLayer->realPosition.value();
     Vector2D oSize = pLayer->realSize.value();
     float oAlpha = pLayer->alpha.value(); // set to 1 to show hidden top layer
+    const auto oRenderModifEnable = g_pHyprOpenGL->m_RenderData.renderModif.enabled;
 
-    pLayer->realPosition.setValue(rectOverride.pos());
-    pLayer->realSize.setValue(rectOverride.size());
+    const float curScaling = rectOverride.w / (oSize.x);
+
+    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, ((pMonitor->vecPosition) + ((rectOverride.pos() / curScaling)) - (oRealPosition))});
+    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
+    g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
+    //pLayer->realPosition.setValue(rectOverride.pos());
+    //pLayer->realSize.setValue(rectOverride.size());
     pLayer->alpha.setValue(1);
 
     g_useMipmapping = true;
     (*(tRenderLayer)pRenderLayer)(g_pHyprRenderer.get(), pLayer, pMonitor, time, false);
     g_useMipmapping = false;
 
-    pLayer->realPosition.setValue(oRealPosition);
-    pLayer->realSize.setValue(oSize);
+    //pLayer->realPosition.setValue(oRealPosition);
+    //pLayer->realSize.setValue(oSize);
     pLayer->alpha.setValue(oAlpha);
+    g_pHyprOpenGL->m_RenderData.renderModif.enabled = oRenderModifEnable;
+    g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
+    g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
 }
 
 // NOTE: rects and clipbox positions are relative to the monitor, while damagebox and layers are not, what the fuck?
@@ -167,16 +176,12 @@ void CHyprspaceWidget::draw(timespec* time) {
         if (!Config::hideBackgroundLayers) {
             for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND]) {
                 CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
-                layerBox.x += owner->vecPosition.x;
-                layerBox.y += owner->vecPosition.y;
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
                 renderLayerStub(ls.get(), owner, layerBox, time);
                 g_pHyprOpenGL->m_RenderData.clipBox = CBox();
             }
             for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM]) {
                 CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
-                layerBox.x += owner->vecPosition.x;
-                layerBox.y += owner->vecPosition.y;
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
                 renderLayerStub(ls.get(), owner, layerBox, time);
                 g_pHyprOpenGL->m_RenderData.clipBox = CBox();
@@ -243,8 +248,6 @@ void CHyprspaceWidget::draw(timespec* time) {
             // this layer is hidden for real workspace when panel is displayed
             for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
                 CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
-                layerBox.x += owner->vecPosition.x;
-                layerBox.y += owner->vecPosition.y;
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
                 renderLayerStub(ls.get(), owner, layerBox, time);
                 g_pHyprOpenGL->m_RenderData.clipBox = CBox();
@@ -252,8 +255,6 @@ void CHyprspaceWidget::draw(timespec* time) {
 
             for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
                 CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
-                layerBox.x += owner->vecPosition.x;
-                layerBox.y += owner->vecPosition.y;
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
                 renderLayerStub(ls.get(), owner, layerBox, time);
                 g_pHyprOpenGL->m_RenderData.clipBox = CBox();
