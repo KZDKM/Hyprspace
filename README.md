@@ -2,7 +2,7 @@
 
 A plugin for Hyprland that implements a workspace overview feature similar to that of KDE Plasma and macOS, aims to provide a mouse-friendly way of workspace and window management.
 
-> Only works with the latest git version currently!
+> Follows the latest hyprland-git update
 
 
 
