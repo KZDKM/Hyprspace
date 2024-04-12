@@ -54,6 +54,7 @@ void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverrid
     Vector2D oSize = pLayer->realSize.value();
     float oAlpha = pLayer->alpha.value(); // set to 1 to show hidden top layer
     const auto oRenderModifEnable = g_pHyprOpenGL->m_RenderData.renderModif.enabled;
+    const auto oFadingOut = pLayer->fadingOut;
 
     const float curScaling = rectOverride.w / (oSize.x);
 
@@ -61,11 +62,13 @@ void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverrid
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
     pLayer->alpha.setValue(1);
+    pLayer->fadingOut = false;
 
     g_useMipmapping = true;
     (*(tRenderLayer)pRenderLayer)(g_pHyprRenderer.get(), pLayer, pMonitor, time, false);
     g_useMipmapping = false;
 
+    pLayer->fadingOut = oFadingOut;
     pLayer->alpha.setValue(oAlpha);
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = oRenderModifEnable;
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
