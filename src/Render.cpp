@@ -261,8 +261,6 @@ void CHyprspaceWidget::draw() {
         }
 
         // resets workspaceBox to absolute position for input detection
-        curWorkspaceBox.x /= owner->scale;
-        curWorkspaceBox.y /= owner->scale;
         curWorkspaceBox.x += owner->vecPosition.x;
         curWorkspaceBox.y += owner->vecPosition.y;
         workspaceBoxes.emplace_back(std::make_tuple(wsID, curWorkspaceBox));

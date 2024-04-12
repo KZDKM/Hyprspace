@@ -32,7 +32,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
     for (auto& w : workspaceBoxes) {
         auto wi = std::get<0>(w);
         auto wb = std::get<1>(w);
-        if (wb.containsPoint(g_pInputManager->getMouseCoordsInternal())) {
+        if (wb.containsPoint(g_pInputManager->getMouseCoordsInternal() * getOwner()->scale)) {
             targetWorkspaceID = wi;
             break;
         }
@@ -75,7 +75,7 @@ bool CHyprspaceWidget::axisEvent(double delta) {
 
     CBox widgetBox = {getOwner()->vecPosition.x, getOwner()->vecPosition.y - curYOffset.value(), getOwner()->vecTransformedSize.x, Config::panelHeight}; //TODO: update size on monitor change
 
-    if (widgetBox.containsPoint(g_pInputManager->getMouseCoordsInternal())) {
+    if (widgetBox.containsPoint(g_pInputManager->getMouseCoordsInternal() * getOwner()->scale)) {
         workspaceScrollOffset = workspaceScrollOffset.goal() - delta * 2;
     }
     else {
