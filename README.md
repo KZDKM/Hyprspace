@@ -1,18 +1,60 @@
 # Hyprspace
 
-A plugin for Hyprland that implements a workspace overview feature similar to that of KDE Plasma and macOS, aims to provide a mouse-friendly way of workspace and window management.
+A plugin for Hyprland that implements a workspace overview feature similar to that of KDE Plasma, GNOME and macOS, aimed to provide a efficient way of workspace and window management.
 
-> Follows the latest hyprland-git update
 
+> Dont like this? Checkout [hyprexpo](https://github.com/hyprwm/hyprland-plugins/tree/main/hyprexpo) from the official plugin repo that provides a grid style overview!
 
 
 https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc0713828f9
 
+### [Jump to installation](#installation)
 
+## Plugin Compatibility
+- [x] [hyprsplit](https://github.com/shezdy/hyprsplit) (tested, explicit support)
+- [x] [hyprexpo](https://github.com/hyprwm/hyprland-plugins/tree/main/hyprexpo) (tested, minor bugs)
+- [x] Any layout & layout plugin (e.g. [hyprRiver](https://github.com/zakk4223/hyprRiver))
+
+## Roadmap
+- [x] Overview interface
+    - [x] Workspace minimap
+    - [x] Workspace display
+    - [ ] Workspace labels (workspace ID / name)
+- [x] Mouse controls
+    - [x] Moving window between workspaces
+    - [x] Creating new workspaces
+    - [ ] Dragging windows between workspace views
+- [x] Configurability
+  - [x] Styling
+    - [x] Panel background
+    - [x] Workspace background & border
+    - [ ] Panel on Bottom
+    - [ ] Vertical layout (on left / right)
+    - [ ] Panel top padding (reserved for bar / notch)
+    - [ ] Unique styling for special workspaces
+  - [ ] Behavior
+    - [x] Autodrag windows
+    - [x] Autoscroll workspaces
+    - [x] Responsive workspace switching
+    - [ ] Responsive exiting 
+      - [x] Exit on click / switch
+      - [ ] Exit with escape key
+    - [ ] Blacklisting workspaces
+      - [x] Show / hide new workspace and empty workspaces
+      - [ ] Show / hide special workspace (#11)
+    - [ ] Blacklisting layers from hiding
+- [x] Animation support
+- [x] Multi-monitor support (tested)
+- [x] Monitor scaling support (tested)
+- [x] aarch64 support (No function hook used)
+- [ ] Touchpad & gesture support
+  - [x] Workspace swipe (#9)
+  - [ ] Scrolling through workspace panel
+  - [ ] Swipe to open
 
 ## Installation
 
-- Make sure to use `hyprland-git` (versions newer than this commit: https://github.com/hyprwm/Hyprland/commit/ef23ef60c5641c5903f9cf40571ead7ad6aba1b9)
+- Follows the latest hyprland-git, support for main release version is not guaranteed (will NOT build with versions older than this [commit](https://github.com/hyprwm/Hyprland/commit/ef23ef60c5641c5903f9cf40571ead7ad6aba1b9))
 - For Fedora, install `hyprland-git` and `hyprland-git-devel` package from COPR and build manually
 
 ### Manual
@@ -93,42 +135,4 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - `plugin:overview:showNewWorkspace` add a new empty workspace at the end of workspaces view
 - `plugin:overview:showEmptyWorkspace` show empty workspaces that are inbetween non-empty workspaces
 
-## Roadmap
-- [x] Overview interface
-    - [x] Workspace minimap
-    - [x] Workspace display
-    - [ ] Workspace labels (workspace ID / name)
-- [x] Mouse controls
-    - [x] Moving window between workspaces
-    - [x] Creating new workspaces
-    - [ ] Dragging windows between workspace views
-- [x] Configurability
-  - [x] Styling
-    - [x] Panel background
-    - [x] Workspace background & border
-    - [ ] Panel on Bottom
-    - [ ] Vertical layout (on left / right)
-    - [ ] Panel top padding (reserved for bar / notch)
-    - [ ] Unique styling for special workspaces
-  - [ ] Behavior
-    - [x] Autodrag windows
-    - [x] Autoscroll workspaces
-    - [x] Responsive workspace switching
-    - [ ] Responsive exiting 
-      - [x] Exit on click / switch
-      - [ ] Exit with escape key
-    - [ ] Blacklisting workspaces
-      - [x] Show / hide new workspace and empty workspaces
-      - [ ] Show / hide special workspace (#11)
-    - [ ] Blacklisting layers from hiding
-- [x] Animation support
-- [x] Multi-monitor support
-- [x] Monitor scaling support
-- [x] aarch64 support
-- [ ] Touchpad & gesture support
-  - [ ] Workspace swipe (#9)
-  - [ ] Scrolling through workspace panel (untested)
-  - [ ] Swipe to open
 
-## Plugin Compatibility
-- [x] [hyprsplit](https://github.com/shezdy/hyprsplit) (tested)
