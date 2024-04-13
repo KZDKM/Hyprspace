@@ -15,7 +15,7 @@
   outputs = { self, nixpkgs, hyprland, hyprlandPlugins }:
     let
       # System types to support.
-      supportedSystems = [ "x86_64-linux", "aarch64-linux" ];
+      supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
       # Nixpkgs instantiated for supported system types.
       pkgsFor = forAllSystems (system:
