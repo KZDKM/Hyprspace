@@ -116,7 +116,9 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - `plugin:overview:reservedArea` padding on top of the panel, for Macbook camera notch
 - `plugin:overview:workspaceBorderSize`
 - `plugin:overview:centerAligned` whether if workspaces should be aligned at the center (KDE / macOS style) or at the left (Windows style)
-- `plugin:overview:hideBackgroundLayers` do not draw background layers in overview
+- `plugin:overview:hideBackgroundLayers` do not draw background and bottom layers in overview
+- `plugin:overview:hideTopLayers` do not draw top layers in overview
+- `plugin:overview:hideOverlayLayers` do not draw overlay layers in overview
 - `plugin:overview:drawActiveWorkspace` draw the active workspace in overview as-is
 - `plugin:overview:overrideGaps` whether if overview should override the layout gaps in the current workspace using the following values
 - `plugin:overview:gapsIn`

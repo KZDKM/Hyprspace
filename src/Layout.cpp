@@ -3,7 +3,7 @@
 
 // FIXME: preserve original workspace rules
 void CHyprspaceWidget::updateLayout() {
-    const auto currentHeight = active ? Config::panelHeight + Config::reservedArea : 0;
+    const auto currentHeight = Config::panelHeight + Config::reservedArea;
     const auto pMonitor = getOwner();
     // reset reserved areas
     g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
@@ -14,7 +14,7 @@ void CHyprspaceWidget::updateLayout() {
     auto* const PGAPSOUT = (CCssGapData*)(PGAPSOUTDATA.ptr())->getData();
 
     // Geneva Convention violation type hack but idc atm
-    if (currentHeight > pMonitor->vecReservedTopLeft.y) {
+    if (active) {
         const auto oActiveWorkspace = pMonitor->activeWorkspace;
 
         for (auto& ws : g_pCompositor->m_vWorkspaces) { // HACK: recalculate other workspaces without reserved area

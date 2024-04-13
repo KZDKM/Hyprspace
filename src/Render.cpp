@@ -49,6 +49,8 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
 void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverride, timespec* time) {
     if (!pLayer || !pMonitor || !time) return;
 
+    if (!pLayer->layerSurface) return;
+
     Vector2D oRealPosition = pLayer->realPosition.value();
     Vector2D oSize = pLayer->realSize.value();
     float oAlpha = pLayer->alpha.value(); // set to 1 to show hidden top layer
@@ -247,19 +249,21 @@ void CHyprspaceWidget::draw() {
 
         if (owner->activeWorkspace != ws) {
             // this layer is hidden for real workspace when panel is displayed
-            for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
-                CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
-                g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                renderLayerStub(ls.get(), owner, layerBox, &time);
-                g_pHyprOpenGL->m_RenderData.clipBox = CBox();
-            }
+            if (!Config::hideTopLayers)
+                for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
+                    CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
+                    g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
+                    renderLayerStub(ls.get(), owner, layerBox, &time);
+                    g_pHyprOpenGL->m_RenderData.clipBox = CBox();
+                }
 
-            for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
-                CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
-                g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                renderLayerStub(ls.get(), owner, layerBox, &time);
-                g_pHyprOpenGL->m_RenderData.clipBox = CBox();
-            }
+            if (!Config::hideOverlayLayers)
+                for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
+                    CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
+                    g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
+                    renderLayerStub(ls.get(), owner, layerBox, &time);
+                    g_pHyprOpenGL->m_RenderData.clipBox = CBox();
+                }
         }
 
         // resets workspaceBox to absolute position for input detection

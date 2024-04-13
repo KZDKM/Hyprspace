@@ -31,7 +31,9 @@ namespace Config {
     extern bool adaptiveHeight; // TODO: implement
     extern bool centerAligned;
     extern bool onTop; // TODO: implement
-    extern bool hideBackgroundLayers; // TODO: implement
+    extern bool hideBackgroundLayers;
+    extern bool hideTopLayers;
+    extern bool hideOverlayLayers;
     extern bool drawActiveWorkspace;
 
     extern bool overrideGaps;
