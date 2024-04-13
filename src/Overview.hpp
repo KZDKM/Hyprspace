@@ -21,7 +21,6 @@ class CHyprspaceWidget {
     double avgSwipeSpeed = 0.;
     int swipePoints = 0;
     double curSwipeOffset = 10.;
-    std::chrono::system_clock::time_point lastSwipeUpdate = std::chrono::high_resolution_clock::now();
 
     CAnimatedVariable<float> workspaceScrollOffset;
 

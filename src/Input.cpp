@@ -105,7 +105,6 @@ bool CHyprspaceWidget::isSwiping() {
 bool CHyprspaceWidget::beginSwipe(wlr_pointer_swipe_begin_event* e) {
     swiping = true;
     activeBeforeSwipe = active;
-    lastSwipeUpdate = std::chrono::high_resolution_clock::now();
     avgSwipeSpeed = 0;
     swipePoints = 0;
     return false;
@@ -119,11 +118,7 @@ bool CHyprspaceWidget::updateSwipe(wlr_pointer_swipe_update_event* e) {
             curSwipeOffset += e->dy * 2;
             curSwipeOffset = std::clamp<double>(curSwipeOffset, -10, ((Config::panelHeight + Config::reservedArea) * getOwner()->scale));
 
-            double curSpeed = e->dy * (1000. / std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - lastSwipeUpdate).count());
-
             avgSwipeSpeed = (avgSwipeSpeed * swipePoints + e->dy) / (swipePoints + 1);
-
-            lastSwipeUpdate = std::chrono::high_resolution_clock::now();
 
             curYOffset.setValueAndWarp(((Config::panelHeight + Config::reservedArea) * getOwner()->scale) - curSwipeOffset);
             if (activeBeforeSwipe) {
