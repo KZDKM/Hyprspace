@@ -47,6 +47,8 @@ bool Config::exitOnSwitch = false;
 bool Config::showNewWorkspace = true;
 bool Config::showEmptyWorkspace = true;
 
+bool Config::disableGestures = false;
+
 float Config::overrideAnimSpeed = 0;
 
 float Config::dragAlpha = 0.2;
@@ -167,6 +169,8 @@ void onMouseAxis(void* thisptr, SCallbackInfo& info, std::any args) {
 
 void onSwipeBegin(void* thisptr, SCallbackInfo& info, std::any args) {
 
+    if (Config::disableGestures) return;
+
     const auto e = std::any_cast<wlr_pointer_swipe_begin_event*>(args);
 
     const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
@@ -183,6 +187,8 @@ void onSwipeBegin(void* thisptr, SCallbackInfo& info, std::any args) {
 
 void onSwipeUpdate(void* thisptr, SCallbackInfo& info, std::any args) {
     
+    if (Config::disableGestures) return;
+
     const auto e = std::any_cast<wlr_pointer_swipe_update_event*>(args);
 
     const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
@@ -191,6 +197,8 @@ void onSwipeUpdate(void* thisptr, SCallbackInfo& info, std::any args) {
 }
 
 void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
+
+    if (Config::disableGestures) return;
 
     const auto e = std::any_cast<wlr_pointer_swipe_end_event*>(args);
 
@@ -275,6 +283,8 @@ void reloadConfig() {
     Config::exitOnSwitch = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:exitOnSwitch")->getValue());
     Config::showNewWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:showNewWorkspace")->getValue());
     Config::showEmptyWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:showEmptyWorkspace")->getValue());
+    
+    Config::disableGestures = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:disableGestures")->getValue());
 
     Config::overrideAnimSpeed = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:overrideAnimSpeed")->getValue());
 
@@ -336,6 +346,8 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:exitOnSwitch", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:showNewWorkspace", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:showEmptyWorkspace", Hyprlang::INT{1});
+
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:disableGestures", Hyprlang::INT{1});
 
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:overrideAnimSpeed", Hyprlang::FLOAT{0.0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:dragAlpha", Hyprlang::FLOAT{0.2});
