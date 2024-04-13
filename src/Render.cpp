@@ -46,7 +46,6 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
 }
 
-// FIXME: use renderModif instead of setValue to override scale and position
 void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverride, timespec* time) {
     if (!pLayer || !pMonitor || !time) return;
 
@@ -95,7 +94,7 @@ void CHyprspaceWidget::draw() {
 
     g_pHyprOpenGL->m_RenderData.pCurrentMonData->blurFBShouldRender = true; // true to keep blur framebuffer when no window is present
 
-    CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, Config::panelHeight * owner->scale}; //TODO: update size on monitor change
+    CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale}; //TODO: update size on monitor change
 
     g_pHyprRenderer->damageBox(&widgetBox);
     widgetBox.x -= owner->vecPosition.x;
@@ -149,7 +148,7 @@ void CHyprspaceWidget::draw() {
     double workspaceBoxH = owner->vecTransformedSize.y * monitorSizeScaleFactor;
     double workspaceGroupWidth = workspaceBoxW * wsCount + (Config::workspaceMargin * owner->scale) * (wsCount - 1);
     double curWorkspaceRectOffsetX = Config::centerAligned ? workspaceScrollOffset.value() + (widgetBox.w / 2.) - (workspaceGroupWidth / 2.) : workspaceScrollOffset.value() + Config::workspaceMargin;
-    double curWorkspaceRectOffsetY = 0 + (Config::workspaceMargin * owner->scale) - curYOffset.value();
+    double curWorkspaceRectOffsetY = 0 + ((Config::reservedArea + Config::workspaceMargin) * owner->scale) - curYOffset.value();
     double workspaceOverflowSize = std::max<double>(((workspaceGroupWidth - widgetBox.w) / 2) + (Config::workspaceMargin * owner->scale), 0);
 
     workspaceScrollOffset = std::clamp<double>(workspaceScrollOffset.goal(), -workspaceOverflowSize, workspaceOverflowSize);

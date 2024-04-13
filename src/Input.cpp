@@ -73,7 +73,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
 
 bool CHyprspaceWidget::axisEvent(double delta) {
 
-    CBox widgetBox = {getOwner()->vecPosition.x, getOwner()->vecPosition.y - curYOffset.value(), getOwner()->vecTransformedSize.x, Config::panelHeight}; //TODO: update size on monitor change
+    CBox widgetBox = {getOwner()->vecPosition.x, getOwner()->vecPosition.y - curYOffset.value(), getOwner()->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * getOwner()->scale};
 
     if (widgetBox.containsPoint(g_pInputManager->getMouseCoordsInternal() * getOwner()->scale)) {
         workspaceScrollOffset = workspaceScrollOffset.goal() - delta * 2;
@@ -95,5 +95,91 @@ bool CHyprspaceWidget::axisEvent(double delta) {
     }
 
 
+    return false;
+}
+
+bool CHyprspaceWidget::isSwiping() {
+    return swiping;
+}
+
+bool CHyprspaceWidget::beginSwipe(wlr_pointer_swipe_begin_event* e) {
+    swiping = true;
+    activeBeforeSwipe = active;
+    lastSwipeUpdate = std::chrono::high_resolution_clock::now();
+    avgSwipeSpeed = 0;
+    swipePoints = 0;
+    return false;
+}
+
+bool CHyprspaceWidget::updateSwipe(wlr_pointer_swipe_update_event* e) {
+    if (!e) return false;
+    int fingers = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_fingers")->getValue());
+    if (abs(e->dx) / abs(e->dy) < 1) {
+        if (swiping && e->fingers == fingers) {
+            curSwipeOffset += e->dy * 2;
+            curSwipeOffset = std::clamp<double>(curSwipeOffset, -10, ((Config::panelHeight + Config::reservedArea) * getOwner()->scale));
+
+            double curSpeed = e->dy * (1000. / std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - lastSwipeUpdate).count());
+
+            avgSwipeSpeed = (avgSwipeSpeed * swipePoints + e->dy) / (swipePoints + 1);
+
+            lastSwipeUpdate = std::chrono::high_resolution_clock::now();
+
+            curYOffset.setValueAndWarp(((Config::panelHeight + Config::reservedArea) * getOwner()->scale) - curSwipeOffset);
+            if (activeBeforeSwipe) {
+                if (curSwipeOffset < 10 && active) hide();
+            }
+            else {
+                if (curSwipeOffset > 10 && !active) show();
+            }
+            return false;
+        }
+    }
+    else {
+        if (e->fingers == fingers && active) {
+            CBox widgetBox = {getOwner()->vecPosition.x, getOwner()->vecPosition.y - curYOffset.value(), getOwner()->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * getOwner()->scale};
+            if (widgetBox.containsPoint(g_pInputManager->getMouseCoordsInternal() * getOwner()->scale)) {
+                workspaceScrollOffset.setValueAndWarp(workspaceScrollOffset.goal() + e->dx * 2);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool CHyprspaceWidget::endSwipe(wlr_pointer_swipe_end_event* e) {
+    swiping = false;
+    // force cancel swipe
+    if (!e) {
+        if (active) hide();
+        curSwipeOffset = -10.;
+    }
+    else {
+        int swipeForceSpeed = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_min_speed_to_force")->getValue());
+        if (activeBeforeSwipe) {
+            if ((curSwipeOffset < 20) || avgSwipeSpeed < -swipeForceSpeed) {
+                hide();
+                curSwipeOffset = -10.;
+            }
+            else {
+                // cancel
+                show();
+                curSwipeOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
+            }
+        }
+        else {
+            if ((curSwipeOffset > ((Config::panelHeight + Config::reservedArea) * getOwner()->scale) - 20) || avgSwipeSpeed > swipeForceSpeed) {
+                show();
+                curSwipeOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
+            }
+            else {
+                // cancel
+                hide();
+                curSwipeOffset = -10.;
+            }
+        }
+    }
+    avgSwipeSpeed = 0;
+    swipePoints = 0;
     return false;
 }

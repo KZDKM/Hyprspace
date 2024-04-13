@@ -25,6 +25,7 @@ CColor Config::workspaceInactiveBorder = CColor(1, 1, 1, 0);
 
 int Config::panelHeight = 250;
 int Config::workspaceMargin = 12;
+int Config::reservedArea = 0;
 int Config::workspaceBorderSize = 1;
 bool Config::adaptiveHeight = false; // TODO: implement
 bool Config::centerAligned = true;
@@ -150,6 +151,40 @@ void onMouseAxis(void* thisptr, SCallbackInfo& info, std::any args) {
 
 }
 
+void onSwipeBegin(void* thisptr, SCallbackInfo& info, std::any args) {
+
+    const auto e = std::any_cast<wlr_pointer_swipe_begin_event*>(args);
+
+    const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
+    if (widget.get())
+        widget->beginSwipe(e);
+
+    // end other widget swipe
+    for (auto& w : g_overviewWidgets) {
+        if (w != widget && w->isSwiping()) {
+            w->endSwipe(0);
+        }
+    }
+}
+
+void onSwipeUpdate(void* thisptr, SCallbackInfo& info, std::any args) {
+    
+    const auto e = std::any_cast<wlr_pointer_swipe_update_event*>(args);
+
+    const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
+    if (widget.get())
+        info.cancelled = !widget->updateSwipe(e);
+}
+
+void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
+
+    const auto e = std::any_cast<wlr_pointer_swipe_end_event*>(args);
+
+    const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
+    if (widget.get())
+        widget->endSwipe(e);
+}
+
 void dispatchToggleOverview(std::string arg) {
     auto currentMonitor = g_pCompositor->getMonitorFromCursor();
     auto widget = getWidgetForMonitor(currentMonitor);
@@ -204,6 +239,7 @@ void reloadConfig() {
 
     Config::panelHeight = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:panelHeight")->getValue());
     Config::workspaceMargin = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceMargin")->getValue());
+    Config::reservedArea = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:reservedArea")->getValue());
     Config::workspaceBorderSize = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceBorderSize")->getValue());
     Config::adaptiveHeight = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:adaptiveHeight")->getValue());
     Config::centerAligned = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:centerAligned")->getValue());
@@ -263,6 +299,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelHeight", Hyprlang::INT{250});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceMargin", Hyprlang::INT{12});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceBorderSize", Hyprlang::INT{1});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:reservedArea", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:adaptiveHeight", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:centerAligned", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:onTop", Hyprlang::INT{1});
@@ -284,8 +321,8 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:overrideAnimSpeed", Hyprlang::FLOAT{0.0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:dragAlpha", Hyprlang::FLOAT{0.2});
 
-    reloadConfig();
     HyprlandAPI::registerCallbackDynamic(pHandle, "configReloaded", [&] (void* thisptr, SCallbackInfo& info, std::any data) { reloadConfig(); });
+    reloadConfig();
 
     HyprlandAPI::addDispatcher(pHandle, "overview:toggle", dispatchToggleOverview);
     HyprlandAPI::addDispatcher(pHandle, "overview:open", dispatchOpenOverview);
@@ -312,6 +349,10 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
 
     HyprlandAPI::registerCallbackDynamic(pHandle, "mouseButton", onMouseButton);
     HyprlandAPI::registerCallbackDynamic(pHandle, "mouseAxis", onMouseAxis);
+
+    HyprlandAPI::registerCallbackDynamic(pHandle, "swipeBegin", onSwipeBegin);
+    HyprlandAPI::registerCallbackDynamic(pHandle, "swipeUpdate", onSwipeUpdate);
+    HyprlandAPI::registerCallbackDynamic(pHandle, "swipeEnd", onSwipeEnd);
 
     HyprlandAPI::registerCallbackDynamic(pHandle, "workspace", onWorkspaceChange);
 

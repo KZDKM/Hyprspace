@@ -4,6 +4,8 @@
 CHyprspaceWidget::CHyprspaceWidget(uint64_t inOwnerID) {
     ownerID = inOwnerID;
 
+    HyprlandAPI::reloadConfig();
+
     curAnimationConfig = *g_pConfigManager->getAnimationPropertyConfig("windows");
 
     // the fuck is pValues???
@@ -49,7 +51,11 @@ void CHyprspaceWidget::show() {
     }
 
     active = true;
-    curYOffset = 0;
+
+    // swiping panel offset should be handled at updateSwipe
+    if (!swiping)
+        curYOffset = 0;
+
     //g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
     updateLayout();
     g_pCompositor->scheduleFrameForMonitor(owner);
@@ -69,7 +75,9 @@ void CHyprspaceWidget::hide() {
         ls->startAnimation(true);
     }
     active = false;
-    curYOffset = Config::panelHeight * owner->scale;
+
+    if (!swiping)
+        curYOffset = (Config::panelHeight + Config::reservedArea) * owner->scale;
     //g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
     updateLayout();
     g_pCompositor->scheduleFrameForMonitor(owner);

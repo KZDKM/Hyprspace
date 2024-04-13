@@ -16,6 +16,13 @@ class CHyprspaceWidget {
 
     std::chrono::system_clock::time_point lastPressedTime = std::chrono::high_resolution_clock::now();
 
+    bool swiping = false;
+    bool activeBeforeSwipe = false;
+    double avgSwipeSpeed = 0.;
+    int swipePoints = 0;
+    double curSwipeOffset = 10.;
+    std::chrono::system_clock::time_point lastSwipeUpdate = std::chrono::high_resolution_clock::now();
+
     CAnimatedVariable<float> workspaceScrollOffset;
 
 public:
@@ -41,5 +48,11 @@ public:
 
     bool buttonEvent(bool);
     bool axisEvent(double);
+
+    bool isSwiping();
+
+    bool beginSwipe(wlr_pointer_swipe_begin_event*);
+    bool updateSwipe(wlr_pointer_swipe_update_event*);
+    bool endSwipe(wlr_pointer_swipe_end_event*);
 
 };

@@ -3,6 +3,7 @@
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/config/ConfigValue.hpp>
+#include <numeric>
 
 inline HANDLE pHandle = NULL;
 
@@ -25,6 +26,7 @@ namespace Config {
 
     extern int panelHeight;
     extern int workspaceMargin;
+    extern int reservedArea;
     extern int workspaceBorderSize;
     extern bool adaptiveHeight; // TODO: implement
     extern bool centerAligned;

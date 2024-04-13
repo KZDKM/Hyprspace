@@ -3,7 +3,7 @@
 
 // FIXME: preserve original workspace rules
 void CHyprspaceWidget::updateLayout() {
-    const auto currentHeight = Config::panelHeight - curYOffset.goal();
+    const auto currentHeight = active ? Config::panelHeight + Config::reservedArea : 0;
     const auto pMonitor = getOwner();
     // reset reserved areas
     g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
