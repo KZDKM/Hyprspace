@@ -53,8 +53,6 @@ float Config::dragAlpha = 0.2;
 
 int hyprsplitNumWorkspaces = -1;
 
-// unused, for now
-bool g_useMipmapping = false;
 
 APICALL EXPORT string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;
@@ -71,13 +69,27 @@ std::shared_ptr<CHyprspaceWidget> getWidgetForMonitor(CMonitor* pMonitor) {
     return nullptr;
 }
 
+void refreshWidgets() {
+    for (auto& widget : g_overviewWidgets) {
+        if (widget.get())
+            if (widget->isActive())
+                widget->show();
+    }
+}
+
+bool g_layoutNeedsRefresh = true;
 float g_oAlpha = -1;
 void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
 
     const auto renderStage = std::any_cast<eRenderStage>(args);
 
-
-    if (renderStage == eRenderStage::RENDER_PRE_WINDOWS) {
+    // refresh layout after scheduled recalculation on monitors were carried out in renderMonitor
+    if (renderStage == eRenderStage::RENDER_PRE) {
+        if (g_layoutNeedsRefresh) {
+            refreshWidgets();
+            g_layoutNeedsRefresh = false;
+        }
+    } else if (renderStage == eRenderStage::RENDER_PRE_WINDOWS) {
 
 
         const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_RenderData.pMonitor);
@@ -187,13 +199,6 @@ void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
         widget->endSwipe(e);
 }
 
-void refreshWidgets() {
-    for (auto& widget : g_overviewWidgets) {
-        if (widget.get())
-            if (widget->isActive())
-                widget->show();
-    }
-}
 
 void dispatchToggleOverview(std::string arg) {
     auto currentMonitor = g_pCompositor->getMonitorFromCursor();
@@ -345,12 +350,9 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::registerCallbackDynamic(pHandle, "render", onRender);
 
     // refresh on layer change
-    HyprlandAPI::registerCallbackDynamic(pHandle, "openLayer", [&] (void* thisptr, SCallbackInfo& info, std::any data) {
-        refreshWidgets();
-    });
-    HyprlandAPI::registerCallbackDynamic(pHandle, "closeLayer", [&] (void* thisptr, SCallbackInfo& info, std::any data) {
-        refreshWidgets();
-    });
+    HyprlandAPI::registerCallbackDynamic(pHandle, "openLayer", [&] (void* thisptr, SCallbackInfo& info, std::any data) { g_layoutNeedsRefresh = true; });
+    HyprlandAPI::registerCallbackDynamic(pHandle, "closeLayer", [&] (void* thisptr, SCallbackInfo& info, std::any data) { g_layoutNeedsRefresh = true; });
+
 
     // CKeybindManager::mouse (names too generic bruh) (this is a private function btw)
     pMouseKeybind = findFunctionBySymbol(pHandle, "mouse", "CKeybindManager::mouse");

@@ -7,8 +7,6 @@
 
 inline HANDLE pHandle = NULL;
 
-extern bool g_useMipmapping;
-
 typedef void (*tMouseKeybind)(std::string);
 extern void* pMouseKeybind;
 

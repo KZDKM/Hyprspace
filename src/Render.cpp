@@ -28,10 +28,7 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     g_pInputManager->currentlyDraggedWindow = pWindow; // override these and force INTERACTIVERESIZEINPROGRESS = true to trick the renderer
     g_pInputManager->dragMode = MBIND_RESIZE;
 
-
-    g_useMipmapping = true;
     (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), pWindow, pMonitor, time, false, RENDER_PASS_MAIN, false, true); // ignoreGeometry needs to be true
-    g_useMipmapping = false;
 
     // restore values for normal window render
     pWindow->m_pWorkspace = oWorkspace;
@@ -49,7 +46,8 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
 void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverride, timespec* time) {
     if (!pLayer || !pMonitor || !time) return;
 
-    if (!pLayer->layerSurface) return;
+    if (pLayer->readyToDelete) return;
+    if (!g_pCompositor->getLayerSurfaceFromSurface(pLayer->surface.wlr())) return;
 
     Vector2D oRealPosition = pLayer->realPosition.value();
     Vector2D oSize = pLayer->realSize.value();
@@ -65,9 +63,7 @@ void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverrid
     pLayer->alpha.setValue(1);
     pLayer->fadingOut = false;
 
-    g_useMipmapping = true;
     (*(tRenderLayer)pRenderLayer)(g_pHyprRenderer.get(), pLayer, pMonitor, time, false);
-    g_useMipmapping = false;
 
     pLayer->fadingOut = oFadingOut;
     pLayer->alpha.setValue(oAlpha);
