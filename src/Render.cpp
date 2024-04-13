@@ -46,7 +46,7 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
 void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverride, timespec* time) {
     if (!pLayer || !pMonitor || !time) return;
 
-    if (!pLayer->mapped || pLayer->readyToDelete || pLayer->fadingOut || !pLayer->layerSurface) return;
+    if (!pLayer->mapped || pLayer->readyToDelete || !pLayer->layerSurface) return;
 
     Vector2D oRealPosition = pLayer->realPosition.value();
     Vector2D oSize = pLayer->realSize.value();
