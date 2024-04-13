@@ -136,6 +136,7 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - `plugin:overview:exitOnSwitch` overview exits when overview is switched by clicking on workspace view or by `switchOnDrop`
 - `plugin:overview:showNewWorkspace` add a new empty workspace at the end of workspaces view
 - `plugin:overview:showEmptyWorkspace` show empty workspaces that are inbetween non-empty workspaces
+- `plugin:overview:showSpecialWorkspace` defaults to false
 - `plugin:overview:disableGestures`
 - Touchpad gesture behavior follows Hyprland workspace swipe behavior
   - `gestures:workspace_swipe_fingers`

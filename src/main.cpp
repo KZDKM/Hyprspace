@@ -46,6 +46,7 @@ bool Config::switchOnDrop = false;
 bool Config::exitOnSwitch = false;
 bool Config::showNewWorkspace = true;
 bool Config::showEmptyWorkspace = true;
+bool Config::showSpecialWorkspace = false;
 
 bool Config::disableGestures = false;
 
@@ -283,6 +284,7 @@ void reloadConfig() {
     Config::exitOnSwitch = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:exitOnSwitch")->getValue());
     Config::showNewWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:showNewWorkspace")->getValue());
     Config::showEmptyWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:showEmptyWorkspace")->getValue());
+    Config::showSpecialWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:showSpecialWorkspace")->getValue());
     
     Config::disableGestures = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:disableGestures")->getValue());
 
@@ -291,6 +293,7 @@ void reloadConfig() {
     for (auto& widget : g_overviewWidgets) {
         widget->updateConfig();
         widget->hide();
+        widget->endSwipe(0);
     }
 
     Config::dragAlpha = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:dragAlpha")->getValue());
@@ -346,6 +349,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:exitOnSwitch", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:showNewWorkspace", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:showEmptyWorkspace", Hyprlang::INT{1});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:showSpecialWorkspace", Hyprlang::INT{0});
 
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:disableGestures", Hyprlang::INT{1});
 

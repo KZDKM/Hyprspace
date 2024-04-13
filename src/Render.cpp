@@ -107,6 +107,7 @@ void CHyprspaceWidget::draw() {
     int highestID = 1;
     for (auto& ws : g_pCompositor->m_vWorkspaces) {
         if (!ws) continue;
+        if (ws->m_bIsSpecialWorkspace && !Config::showSpecialWorkspace) continue;
         if (ws->m_iMonitorID == ownerID) {
             workspaces.push_back(ws->m_iID);
             if (highestID < ws->m_iID) highestID = ws->m_iID;

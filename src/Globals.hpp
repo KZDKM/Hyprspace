@@ -45,6 +45,7 @@ namespace Config {
     extern bool exitOnSwitch;
     extern bool showNewWorkspace;
     extern bool showEmptyWorkspace;
+    extern bool showSpecialWorkspace;
 
     extern bool disableGestures;
 
