@@ -49,6 +49,7 @@ bool Config::showEmptyWorkspace = true;
 bool Config::showSpecialWorkspace = false;
 
 bool Config::disableGestures = false;
+bool Config::reverseSwipe = false;
 
 float Config::overrideAnimSpeed = 0;
 
@@ -318,6 +319,7 @@ void reloadConfig() {
     Config::showSpecialWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:showSpecialWorkspace")->getValue());
 
     Config::disableGestures = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:disableGestures")->getValue());
+    Config::reverseSwipe = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:reverseSwipe")->getValue());
 
     Config::overrideAnimSpeed = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:overrideAnimSpeed")->getValue());
 
@@ -383,6 +385,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:showSpecialWorkspace", Hyprlang::INT{0});
 
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:disableGestures", Hyprlang::INT{0});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:reverseSwipe", Hyprlang::INT{0});
 
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:overrideAnimSpeed", Hyprlang::FLOAT{0.0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:dragAlpha", Hyprlang::FLOAT{0.2});

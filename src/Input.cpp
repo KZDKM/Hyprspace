@@ -119,10 +119,13 @@ bool CHyprspaceWidget::updateSwipe(wlr_pointer_swipe_update_event* e) {
     int fingers = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_fingers")->getValue());
     if (abs(e->dx) / abs(e->dy) < 1) {
         if (swiping && e->fingers == fingers) {
-            curSwipeOffset += e->dy * 2;
+
+            double scrollDifferential = e->dy * (Config::reverseSwipe ? -1 : 1);
+
+            curSwipeOffset += scrollDifferential;
             curSwipeOffset = std::clamp<double>(curSwipeOffset, -10, ((Config::panelHeight + Config::reservedArea) * getOwner()->scale));
 
-            avgSwipeSpeed = (avgSwipeSpeed * swipePoints + e->dy) / (swipePoints + 1);
+            avgSwipeSpeed = (avgSwipeSpeed * swipePoints + scrollDifferential) / (swipePoints + 1);
 
             curYOffset.setValueAndWarp(((Config::panelHeight + Config::reservedArea) * getOwner()->scale) - curSwipeOffset);
             if (activeBeforeSwipe) {
@@ -155,21 +158,23 @@ bool CHyprspaceWidget::endSwipe(wlr_pointer_swipe_end_event* e) {
     }
     else {
         int swipeForceSpeed = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_min_speed_to_force")->getValue());
+        float cancelRatio = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_cancel_ratio")->getValue());
+        double swipeTravel = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
         if (activeBeforeSwipe) {
-            if ((curSwipeOffset < 20) || avgSwipeSpeed < -swipeForceSpeed) {
+            if ((curSwipeOffset < swipeTravel * cancelRatio) || avgSwipeSpeed < -swipeForceSpeed) {
                 hide();
                 curSwipeOffset = -10.;
             }
             else {
                 // cancel
                 show();
-                curSwipeOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
+                curSwipeOffset = swipeTravel;
             }
         }
         else {
-            if ((curSwipeOffset > ((Config::panelHeight + Config::reservedArea) * getOwner()->scale) - 20) || avgSwipeSpeed > swipeForceSpeed) {
+            if ((curSwipeOffset > swipeTravel * (1.f - cancelRatio)) || avgSwipeSpeed > swipeForceSpeed) {
                 show();
-                curSwipeOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
+                curSwipeOffset = swipeTravel;
             }
             else {
                 // cancel

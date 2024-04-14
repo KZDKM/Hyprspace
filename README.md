@@ -31,7 +31,7 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
     - [ ] Vertical layout (on left / right)
     - [x] Panel top padding (reserved for bar / notch)
     - [ ] Unique styling for special workspaces
-  - [ ] Behavior
+  - [x] Behavior
     - [x] Autodrag windows
     - [x] Autoscroll workspaces
     - [x] Responsive workspace switching
@@ -41,7 +41,6 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
     - [x] Blacklisting workspaces
       - [x] Show / hide new workspace and empty workspaces
       - [x] Show / hide special workspace (#11)
-    - [ ] Blacklisting layers from hiding
 - [x] Animation support
 - [x] Multi-monitor support (tested)
 - [x] Monitor scaling support (tested)
@@ -138,8 +137,10 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - `plugin:overview:showEmptyWorkspace` show empty workspaces that are inbetween non-empty workspaces
 - `plugin:overview:showSpecialWorkspace` defaults to false
 - `plugin:overview:disableGestures`
+- `plugin:overview:reverseSwipe` reverses the direction of swipe gesture, for macOS peeps?
 - Touchpad gesture behavior follows Hyprland workspace swipe behavior
   - `gestures:workspace_swipe_fingers`
+  - `gestures:workspace_swipe_cancel_ratio`
   - `gestures:workspace_swipe_min_speed_to_force`
 
 

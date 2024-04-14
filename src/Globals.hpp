@@ -48,6 +48,7 @@ namespace Config {
     extern bool showSpecialWorkspace;
 
     extern bool disableGestures;
+    extern bool reverseSwipe;
 
     extern float overrideAnimSpeed;
     extern float dragAlpha;
