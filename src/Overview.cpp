@@ -43,11 +43,9 @@ void CHyprspaceWidget::show() {
     // FIXME: ensure input is disabled for hidden layers
     for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
         ls->startAnimation(false);
-        ls->readyToDelete = false;
     }
     for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
         ls->startAnimation(false);
-        ls->readyToDelete = false;
     }
 
     active = true;
