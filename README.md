@@ -38,9 +38,9 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
     - [ ] Responsive exiting 
       - [x] Exit on click / switch
       - [ ] Exit with escape key
-    - [ ] Blacklisting workspaces
+    - [x] Blacklisting workspaces
       - [x] Show / hide new workspace and empty workspaces
-      - [ ] Show / hide special workspace (#11)
+      - [x] Show / hide special workspace (#11)
     - [ ] Blacklisting layers from hiding
 - [x] Animation support
 - [x] Multi-monitor support (tested)
@@ -101,7 +101,7 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - Use `overview:toggle` dispatcher to toggle workspace overview on current monitor
 - Use `overview:close` to close the overview on current monitor if opened
 - Use `overview:open` to open the overview on current monitor if closed
-- Adding the `all` argument to `overview:close` and `overview:open` would open / close overview on all monitors
+- Adding the `all` argument to these dispatchers would toggle / open / close overview on all monitors
 ### Styling
 #### Colors
 - `plugin:overview:panelColor`

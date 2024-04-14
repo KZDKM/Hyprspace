@@ -26,7 +26,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
     }
     Return = false;
 
-    int targetWorkspaceID = -1;
+    int targetWorkspaceID = SPECIAL_WORKSPACE_START - 1;
 
     // find which workspace the mouse hovers over
     for (auto& w : workspaceBoxes) {
@@ -41,7 +41,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
     auto targetWorkspace = g_pCompositor->getWorkspaceByID(targetWorkspaceID);
 
     // create new workspace
-    if (!targetWorkspace && targetWorkspaceID >= 0) {
+    if (!targetWorkspace && targetWorkspaceID >= SPECIAL_WORKSPACE_START) {
         targetWorkspace = g_pCompositor->createNewWorkspace(targetWorkspaceID, getOwner()->ID);
     }
 
@@ -62,7 +62,11 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
     }
     // click workspace to change to workspace and exit overview
     else if (targetWorkspace && !pressed) {
-        g_pCompositor->getMonitorFromID(targetWorkspace->m_iMonitorID)->changeWorkspace(targetWorkspace->m_iID);
+        if (targetWorkspace->m_bIsSpecialWorkspace)
+            getOwner()->activeSpecialWorkspaceID() == targetWorkspaceID ? getOwner()->setSpecialWorkspace(nullptr) : getOwner()->setSpecialWorkspace(targetWorkspaceID);
+        else {
+            g_pCompositor->getMonitorFromID(targetWorkspace->m_iMonitorID)->changeWorkspace(targetWorkspace->m_iID);
+        }
         if (Config::exitOnSwitch && active) hide();
     }
     // click elsewhere to exit overview

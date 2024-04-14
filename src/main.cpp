@@ -92,7 +92,8 @@ void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
             refreshWidgets();
             g_layoutNeedsRefresh = false;
         }
-    } else if (renderStage == eRenderStage::RENDER_PRE_WINDOWS) {
+    }
+    else if (renderStage == eRenderStage::RENDER_PRE_WINDOWS) {
 
 
         const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_RenderData.pMonitor);
@@ -187,7 +188,7 @@ void onSwipeBegin(void* thisptr, SCallbackInfo& info, std::any args) {
 }
 
 void onSwipeUpdate(void* thisptr, SCallbackInfo& info, std::any args) {
-    
+
     if (Config::disableGestures) return;
 
     const auto e = std::any_cast<wlr_pointer_swipe_update_event*>(args);
@@ -208,12 +209,42 @@ void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
         widget->endSwipe(e);
 }
 
+void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
+    const auto e = std::any_cast<wlr_keyboard_key_event*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["event"]);
+    const auto k = std::any_cast<SKeyboard*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["keyboard"]);
+
+    if (e->keycode == KEY_ESC) {
+        const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
+        if (widget.get())
+            if (widget->isActive()) {
+                widget->hide();
+                info.cancelled = true;
+            }
+    }
+}
 
 void dispatchToggleOverview(std::string arg) {
     auto currentMonitor = g_pCompositor->getMonitorFromCursor();
     auto widget = getWidgetForMonitor(currentMonitor);
-    if (widget)
-        widget->isActive() ? widget->hide() : widget->show();
+    if (widget) {
+        if (arg.contains("all")) {
+            if (widget->isActive()) {
+                for (auto& widget : g_overviewWidgets) {
+                    if (widget.get())
+                        if (widget->isActive()) 
+                            widget->hide();
+                }
+            }
+            else {
+                for (auto& widget : g_overviewWidgets) {
+                    if (widget.get())
+                        if (!widget->isActive()) 
+                            widget->show();
+                }
+            }
+        } else
+            widget->isActive() ? widget->hide() : widget->show();
+    }
 }
 
 void dispatchOpenOverview(std::string arg) {
@@ -285,7 +316,7 @@ void reloadConfig() {
     Config::showNewWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:showNewWorkspace")->getValue());
     Config::showEmptyWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:showEmptyWorkspace")->getValue());
     Config::showSpecialWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:showSpecialWorkspace")->getValue());
-    
+
     Config::disableGestures = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:disableGestures")->getValue());
 
     Config::overrideAnimSpeed = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:overrideAnimSpeed")->getValue());
@@ -379,6 +410,8 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::registerCallbackDynamic(pHandle, "swipeBegin", onSwipeBegin);
     HyprlandAPI::registerCallbackDynamic(pHandle, "swipeUpdate", onSwipeUpdate);
     HyprlandAPI::registerCallbackDynamic(pHandle, "swipeEnd", onSwipeEnd);
+
+    HyprlandAPI::registerCallbackDynamic(pHandle, "keyPress", onKeyPress);
 
     HyprlandAPI::registerCallbackDynamic(pHandle, "workspace", onWorkspaceChange);
 

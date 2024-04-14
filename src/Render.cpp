@@ -103,11 +103,17 @@ void CHyprspaceWidget::draw() {
     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
 
     std::vector<int> workspaces;
+
+    if (Config::showSpecialWorkspace) {
+        workspaces.push_back(SPECIAL_WORKSPACE_START);
+    }
+
     int lowestID = INFINITY;
     int highestID = 1;
     for (auto& ws : g_pCompositor->m_vWorkspaces) {
         if (!ws) continue;
-        if (ws->m_bIsSpecialWorkspace && !Config::showSpecialWorkspace) continue;
+        // normal workspaces start from 1, special workspaces ends on -2
+        if (ws->m_iID < 1) continue;
         if (ws->m_iMonitorID == ownerID) {
             workspaces.push_back(ws->m_iID);
             if (highestID < ws->m_iID) highestID = ws->m_iID;
@@ -124,6 +130,7 @@ void CHyprspaceWidget::draw() {
             wsIDEnd = std::max<int>(hyprsplitNumWorkspaces * ownerID + 1, highestID); // always show the initial workspace for current monitor
         }
         for (int i = wsIDStart; i <= wsIDEnd; i++) {
+            if (i == owner->activeSpecialWorkspaceID()) continue;
             const auto pWorkspace = g_pCompositor->getWorkspaceByID(i);
             if (pWorkspace == nullptr)
                 workspaces.push_back(i);
