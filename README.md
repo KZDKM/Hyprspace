@@ -29,15 +29,15 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
     - [x] Workspace background & border
     - [ ] Panel on Bottom
     - [ ] Vertical layout (on left / right)
-    - [ ] Panel top padding (reserved for bar / notch)
+    - [x] Panel top padding (reserved for bar / notch)
     - [ ] Unique styling for special workspaces
   - [ ] Behavior
     - [x] Autodrag windows
     - [x] Autoscroll workspaces
     - [x] Responsive workspace switching
-    - [ ] Responsive exiting 
+    - [x] Responsive exiting 
       - [x] Exit on click / switch
-      - [ ] Exit with escape key
+      - [x] Exit with escape key
     - [x] Blacklisting workspaces
       - [x] Show / hide new workspace and empty workspaces
       - [x] Show / hide special workspace (#11)
