@@ -65,12 +65,16 @@ void CHyprspaceWidget::hide() {
 
     // restore layer state
     for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
-        ls->fadingOut = false;
-        ls->startAnimation(true);
+        if (!ls->readyToDelete && ls->mapped) {
+            ls->fadingOut = false;
+            ls->startAnimation(true);
+        }
     }
     for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
-        ls->fadingOut = false;
-        ls->startAnimation(true);
+        if (!ls->readyToDelete && ls->mapped) {
+            ls->fadingOut = false;
+            ls->startAnimation(true);
+        }
     }
     active = false;
 
