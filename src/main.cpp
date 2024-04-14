@@ -1,10 +1,7 @@
 #include <hyprland/src/plugins/PluginSystem.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
-#include <hyprland/src/plugins/HookSystem.hpp>
 #include "Overview.hpp"
 #include "Globals.hpp"
-
-using namespace std;
 
 CFunctionHook* renderWorkspaceWindowsHook;
 CFunctionHook* getWorkspaceRuleForHook;
@@ -58,7 +55,7 @@ float Config::dragAlpha = 0.2;
 int hyprsplitNumWorkspaces = -1;
 
 
-APICALL EXPORT string PLUGIN_API_VERSION() {
+APICALL EXPORT std::string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;
 }
 
