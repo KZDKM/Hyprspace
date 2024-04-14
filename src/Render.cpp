@@ -30,7 +30,7 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     g_pInputManager->currentlyDraggedWindow = pWindow; // override these and force INTERACTIVERESIZEINPROGRESS = true to trick the renderer
     g_pInputManager->dragMode = MBIND_RESIZE;
 
-    (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), pWindow, pMonitor, time, false, RENDER_PASS_MAIN, false, false); // ignoreGeometry needs to be true
+    (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), pWindow, pMonitor, time, true, RENDER_PASS_MAIN, false, false);
 
     // restore values for normal window render
     pWindow->m_pWorkspace = oWorkspace;
@@ -88,12 +88,10 @@ void CHyprspaceWidget::draw() {
     timespec time;
     clock_gettime(CLOCK_MONOTONIC, &time);
 
-    if (curYOffset.isBeingAnimated()) {
-        g_pCompositor->scheduleFrameForMonitor(owner);
-    }
+    g_pCompositor->scheduleFrameForMonitor(owner);
 
-    g_pHyprOpenGL->m_RenderData.pCurrentMonData->blurFBShouldRender = true; // true to keep blur framebuffer when no window is present
-    g_pHyprOpenGL->markBlurDirtyForMonitor(getOwner());
+    g_pHyprOpenGL->markBlurDirtyForMonitor(owner);
+    g_pHyprOpenGL->preRender(owner);
 
     CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale}; //TODO: update size on monitor change
 
