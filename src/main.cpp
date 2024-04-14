@@ -388,7 +388,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:dragAlpha", Hyprlang::FLOAT{0.2});
 
     HyprlandAPI::registerCallbackDynamic(pHandle, "configReloaded", [&] (void* thisptr, SCallbackInfo& info, std::any data) { reloadConfig(); });
-    reloadConfig();
+    HyprlandAPI::reloadConfig();
 
     HyprlandAPI::addDispatcher(pHandle, "overview:toggle", dispatchToggleOverview);
     HyprlandAPI::addDispatcher(pHandle, "overview:open", dispatchOpenOverview);
