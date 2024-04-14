@@ -14,6 +14,7 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     const auto oDragMode = g_pInputManager->dragMode;
     const auto oRenderModifEnable = g_pHyprOpenGL->m_RenderData.renderModif.enabled;
     const auto oFloating = pWindow->m_bIsFloating;
+    const auto oSpecialRounding = pWindow->m_sAdditionalConfigData.rounding;
 
     const float curScaling = rectOverride.w / (oSize.x * pMonitor->scale);
 
@@ -25,10 +26,11 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     pWindow->m_sAdditionalConfigData.nearestNeighbor = false; // FIX: this wont do, need to scale surface texture down properly so that windows arent shown as pixelated mess
     pWindow->m_bIsFloating = false; // weird shit happened so hack fix
     pWindow->m_bPinned = true;
+    pWindow->m_sAdditionalConfigData.rounding = pWindow->rounding() * pMonitor->scale * curScaling;
     g_pInputManager->currentlyDraggedWindow = pWindow; // override these and force INTERACTIVERESIZEINPROGRESS = true to trick the renderer
     g_pInputManager->dragMode = MBIND_RESIZE;
 
-    (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), pWindow, pMonitor, time, false, RENDER_PASS_MAIN, false, true); // ignoreGeometry needs to be true
+    (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), pWindow, pMonitor, time, false, RENDER_PASS_MAIN, false, false); // ignoreGeometry needs to be true
 
     // restore values for normal window render
     pWindow->m_pWorkspace = oWorkspace;
@@ -36,6 +38,7 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
     pWindow->m_sAdditionalConfigData.nearestNeighbor = oUseNearestNeighbor;
     pWindow->m_bIsFloating = oFloating;
     pWindow->m_bPinned = oPinned;
+    pWindow->m_sAdditionalConfigData.rounding = oSpecialRounding;
     g_pInputManager->currentlyDraggedWindow = oDraggedWindow;
     g_pInputManager->dragMode = oDragMode;
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = oRenderModifEnable;
@@ -90,6 +93,7 @@ void CHyprspaceWidget::draw() {
     }
 
     g_pHyprOpenGL->m_RenderData.pCurrentMonData->blurFBShouldRender = true; // true to keep blur framebuffer when no window is present
+    g_pHyprOpenGL->markBlurDirtyForMonitor(getOwner());
 
     CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale}; //TODO: update size on monitor change
 
@@ -212,7 +216,7 @@ void CHyprspaceWidget::draw() {
                     if (!(wW > 0 && wH > 0)) continue;
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                    g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
+                    //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
                     renderWindowStub(w.get(), owner, owner->activeWorkspace, curWindowBox, &time);
                     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
                 }
@@ -228,7 +232,7 @@ void CHyprspaceWidget::draw() {
                     if (!(wW > 0 && wH > 0)) continue;
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                    g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
+                    //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
                     renderWindowStub(w.get(), owner, owner->activeWorkspace, curWindowBox, &time);
                     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
                 }
@@ -244,7 +248,7 @@ void CHyprspaceWidget::draw() {
                     if (!(wW > 0 && wH > 0)) continue;
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                    g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
+                    //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
                     renderWindowStub(w, owner, owner->activeWorkspace, curWindowBox, &time);
                     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
                 }
