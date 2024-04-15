@@ -93,6 +93,21 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 }
 ```
 
+## Usage
+
+### Opening Overview
+- Bind the `overview:toggle` or perform a workspace swipe vertically would open / close the panel.
+### Interaction
+- Window management:
+    - Click on workspace to change to it
+    - Click on a window to drag it
+    - Drag a window into a workspace would move the window to the workspace
+- Exiting
+    - Click without dragging the window exits the overview
+    - Pressing ESC exits the overview
+- Navigating
+    - When there are many workspaces open, scroll / swipe on the panel to pan through opened workspaces
+
 ## Configuration
 ### Dispatchers
 - Use `overview:toggle` dispatcher to toggle workspace overview on current monitor
