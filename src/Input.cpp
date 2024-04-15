@@ -117,10 +117,13 @@ bool CHyprspaceWidget::beginSwipe(wlr_pointer_swipe_begin_event* e) {
 bool CHyprspaceWidget::updateSwipe(wlr_pointer_swipe_update_event* e) {
     if (!e) return false;
     int fingers = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_fingers")->getValue());
+    int distance = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_distance")->getValue());
     if (abs(e->dx) / abs(e->dy) < 1) {
         if (swiping && e->fingers == fingers) {
 
-            double scrollDifferential = e->dy * (Config::reverseSwipe ? -1 : 1);
+            float currentScaling = g_pCompositor->getMonitorFromCursor()->vecSize.x / distance;
+
+            double scrollDifferential = e->dy * (Config::reverseSwipe ? -1 : 1) * currentScaling;
 
             curSwipeOffset += scrollDifferential;
             curSwipeOffset = std::clamp<double>(curSwipeOffset, -10, ((Config::panelHeight + Config::reservedArea) * getOwner()->scale));
