@@ -14,6 +14,8 @@ class CHyprspaceWidget {
     // modified on draw call, accessed on mouse click and release
     std::vector<std::tuple<int, CBox>> workspaceBoxes;
 
+    std::vector<std::tuple<uint32_t, eFullscreenMode>> prevFullscreen;
+
     std::chrono::system_clock::time_point lastPressedTime = std::chrono::high_resolution_clock::now();
 
     bool swiping = false;

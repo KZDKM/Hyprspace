@@ -30,10 +30,17 @@ void CHyprspaceWidget::show() {
     auto owner = getOwner();
     if (!owner) return;
 
-    // unfullscreen all windows
-    for (auto& w : g_pCompositor->m_vWindows) {
-        if (w->m_iMonitorID == ownerID) {
-            g_pCompositor->setWindowFullscreen(w.get(), false);
+    if (prevFullscreen.empty()) {
+        // unfullscreen all windows
+        for (auto& ws : g_pCompositor->m_vWorkspaces) {
+            if (ws->m_iMonitorID == ownerID) {
+                const auto w = g_pCompositor->getFullscreenWindowOnWorkspace(ws->m_iID);
+                if (w != nullptr && ws->m_efFullscreenMode != FULLSCREEN_INVALID) {
+                    // we use the getWindowFromHandle function to prevent dangling pointers
+                    prevFullscreen.emplace_back(std::make_tuple((uint32_t)(((uint64_t)w) & 0xFFFFFFFF), ws->m_efFullscreenMode)); 
+                    g_pCompositor->setWindowFullscreen(w, false);
+                }
+            }
         }
     }
 
@@ -49,8 +56,10 @@ void CHyprspaceWidget::show() {
     active = true;
 
     // swiping panel offset should be handled at updateSwipe
-    if (!swiping)
+    if (!swiping) {
         curYOffset = 0;
+        curSwipeOffset = (Config::panelHeight + Config::reservedArea) * owner->scale;
+    }
 
     //g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
     updateLayout();
@@ -74,10 +83,23 @@ void CHyprspaceWidget::hide() {
             ls->startAnimation(true);
         }
     }
+
+    if (!swiping) {
+        // restore fullscreen state
+        for (auto& fs : prevFullscreen) {
+            const auto w = g_pCompositor->getWindowFromHandle(std::get<0>(fs));
+            const auto oFullscreenMode = std::get<1>(fs);
+            g_pCompositor->setWindowFullscreen(w, true, oFullscreenMode);
+        }
+        prevFullscreen.clear();
+    }
+
     active = false;
 
-    if (!swiping)
+    if (!swiping) {
         curYOffset = (Config::panelHeight + Config::reservedArea) * owner->scale;
+        curSwipeOffset = -10.;
+    }
     //g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
     updateLayout();
     g_pCompositor->scheduleFrameForMonitor(owner);

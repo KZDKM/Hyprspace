@@ -163,23 +163,19 @@ bool CHyprspaceWidget::endSwipe(wlr_pointer_swipe_end_event* e) {
         if (activeBeforeSwipe) {
             if ((curSwipeOffset < swipeTravel * cancelRatio) || avgSwipeSpeed < -swipeForceSpeed) {
                 hide();
-                curSwipeOffset = -10.;
             }
             else {
                 // cancel
                 show();
-                curSwipeOffset = swipeTravel;
             }
         }
         else {
             if ((curSwipeOffset > swipeTravel * (1.f - cancelRatio)) || avgSwipeSpeed > swipeForceSpeed) {
                 show();
-                curSwipeOffset = swipeTravel;
             }
             else {
                 // cancel
                 hide();
-                curSwipeOffset = -10.;
             }
         }
     }
