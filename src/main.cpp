@@ -135,6 +135,8 @@ void onMouseButton(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<wlr_pointer_button_event*>(args);
     if (!e) return;
 
+    if (e->button != BTN_LEFT) return;
+
     const auto pressed = e->state == WL_POINTER_BUTTON_STATE_PRESSED;
     const auto pMonitor = g_pCompositor->getMonitorFromCursor();
     if (pMonitor) {
