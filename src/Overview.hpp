@@ -16,6 +16,8 @@ class CHyprspaceWidget {
 
     std::vector<std::tuple<uint32_t, eFullscreenMode>> prevFullscreen;
 
+    std::vector<std::tuple<SLayerSurface*, float>> oLayerAlpha;
+
     std::chrono::system_clock::time_point lastPressedTime = std::chrono::high_resolution_clock::now();
 
     bool swiping = false;

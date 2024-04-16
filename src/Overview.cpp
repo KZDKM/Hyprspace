@@ -37,7 +37,7 @@ void CHyprspaceWidget::show() {
                 const auto w = g_pCompositor->getFullscreenWindowOnWorkspace(ws->m_iID);
                 if (w != nullptr && ws->m_efFullscreenMode != FULLSCREEN_INVALID) {
                     // we use the getWindowFromHandle function to prevent dangling pointers
-                    prevFullscreen.emplace_back(std::make_tuple((uint32_t)(((uint64_t)w) & 0xFFFFFFFF), ws->m_efFullscreenMode)); 
+                    prevFullscreen.emplace_back(std::make_tuple((uint32_t)(((uint64_t)w) & 0xFFFFFFFF), ws->m_efFullscreenMode));
                     g_pCompositor->setWindowFullscreen(w, false);
                 }
             }
@@ -46,11 +46,19 @@ void CHyprspaceWidget::show() {
 
     // hide top and overlay layers
     // FIXME: ensure input is disabled for hidden layers
-    for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
-        ls->startAnimation(false);
-    }
-    for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
-        ls->startAnimation(false);
+    if (oLayerAlpha.empty()) {
+        for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
+            //ls->startAnimation(false);
+            oLayerAlpha.emplace_back(std::make_tuple(ls.get(), ls->alpha.goal()));
+            ls->alpha = 0.f;
+            ls->fadingOut = true;
+        }
+        for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
+            //ls->startAnimation(false);
+            oLayerAlpha.emplace_back(std::make_tuple(ls.get(), ls->alpha.goal()));
+            ls->alpha = 0.f;
+            ls->fadingOut = true;
+        }
     }
 
     active = true;
@@ -70,21 +78,30 @@ void CHyprspaceWidget::hide() {
     auto owner = getOwner();
     if (!owner) return;
 
-    // restore layer state
-    for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
-        if (!ls->readyToDelete && ls->mapped && ls->fadingOut) {
-            ls->fadingOut = false;
-            ls->startAnimation(true);
-        }
-    }
-    for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
-        if (!ls->readyToDelete && ls->mapped && ls->fadingOut) {
-            ls->fadingOut = false;
-            ls->startAnimation(true);
-        }
-    }
-
     if (!swiping) {
+        // restore layer state
+        for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
+            if (!ls->readyToDelete && ls->mapped && ls->fadingOut) {
+                auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls.get();});
+                if (oAlpha != oLayerAlpha.end()) {
+                    ls->fadingOut = false;
+                    ls->alpha = std::get<1>(*oAlpha);
+                }
+                //ls->startAnimation(true);
+            }
+        }
+        for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
+            if (!ls->readyToDelete && ls->mapped && ls->fadingOut) {
+                auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls.get();});
+                if (oAlpha != oLayerAlpha.end()) {
+                    ls->fadingOut = false;
+                    ls->alpha = std::get<1>(*oAlpha);
+                }
+                //ls->startAnimation(true);
+            }
+        }
+        oLayerAlpha.clear();
+
         // restore fullscreen state
         for (auto& fs : prevFullscreen) {
             const auto w = g_pCompositor->getWindowFromHandle(std::get<0>(fs));
