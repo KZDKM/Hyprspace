@@ -78,38 +78,36 @@ void CHyprspaceWidget::hide() {
     auto owner = getOwner();
     if (!owner) return;
 
-    if (!swiping) {
-        // restore layer state
-        for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
-            if (!ls->readyToDelete && ls->mapped && ls->fadingOut) {
-                auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls.get();});
-                if (oAlpha != oLayerAlpha.end()) {
-                    ls->fadingOut = false;
-                    ls->alpha = std::get<1>(*oAlpha);
-                }
-                //ls->startAnimation(true);
+    // restore layer state
+    for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
+        if (!ls->readyToDelete && ls->mapped && ls->fadingOut) {
+            auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls.get();});
+            if (oAlpha != oLayerAlpha.end()) {
+                ls->fadingOut = false;
+                ls->alpha = std::get<1>(*oAlpha);
             }
+            //ls->startAnimation(true);
         }
-        for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
-            if (!ls->readyToDelete && ls->mapped && ls->fadingOut) {
-                auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls.get();});
-                if (oAlpha != oLayerAlpha.end()) {
-                    ls->fadingOut = false;
-                    ls->alpha = std::get<1>(*oAlpha);
-                }
-                //ls->startAnimation(true);
-            }
-        }
-        oLayerAlpha.clear();
-
-        // restore fullscreen state
-        for (auto& fs : prevFullscreen) {
-            const auto w = g_pCompositor->getWindowFromHandle(std::get<0>(fs));
-            const auto oFullscreenMode = std::get<1>(fs);
-            g_pCompositor->setWindowFullscreen(w, true, oFullscreenMode);
-        }
-        prevFullscreen.clear();
     }
+    for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
+        if (!ls->readyToDelete && ls->mapped && ls->fadingOut) {
+            auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls.get();});
+            if (oAlpha != oLayerAlpha.end()) {
+                ls->fadingOut = false;
+                ls->alpha = std::get<1>(*oAlpha);
+            }
+            //ls->startAnimation(true);
+        }
+    }
+    oLayerAlpha.clear();
+
+    // restore fullscreen state
+    for (auto& fs : prevFullscreen) {
+        const auto w = g_pCompositor->getWindowFromHandle(std::get<0>(fs));
+        const auto oFullscreenMode = std::get<1>(fs);
+        g_pCompositor->setWindowFullscreen(w, true, oFullscreenMode);
+    }
+    prevFullscreen.clear();
 
     active = false;
 

@@ -131,12 +131,10 @@ bool CHyprspaceWidget::updateSwipe(wlr_pointer_swipe_update_event* e) {
             avgSwipeSpeed = (avgSwipeSpeed * swipePoints + scrollDifferential) / (swipePoints + 1);
 
             curYOffset.setValueAndWarp(((Config::panelHeight + Config::reservedArea) * getOwner()->scale) - curSwipeOffset);
-            if (activeBeforeSwipe) {
-                if (curSwipeOffset < 10 && active) hide();
-            }
-            else {
-                if (curSwipeOffset > 10 && !active) show();
-            }
+
+            if (curSwipeOffset < 10 && active) hide();
+            else if (curSwipeOffset > 10 && !active) show();
+
             return false;
         }
     }
@@ -165,20 +163,36 @@ bool CHyprspaceWidget::endSwipe(wlr_pointer_swipe_end_event* e) {
         double swipeTravel = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
         if (activeBeforeSwipe) {
             if ((curSwipeOffset < swipeTravel * cancelRatio) || avgSwipeSpeed < -swipeForceSpeed) {
-                hide();
+                if (active) hide();
+                else {
+                    curYOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
+                    curSwipeOffset = -10.;
+                }
             }
             else {
                 // cancel
-                show();
+                if (!active) show();
+                else {
+                    curYOffset = 0;
+                    curSwipeOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
+                }
             }
         }
         else {
             if ((curSwipeOffset > swipeTravel * (1.f - cancelRatio)) || avgSwipeSpeed > swipeForceSpeed) {
-                show();
+                if (!active) show();
+                else {
+                    curYOffset = 0;
+                    curSwipeOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
+                }
             }
             else {
                 // cancel
-                hide();
+                if (active) hide();
+                else {
+                    curYOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
+                    curSwipeOffset = -10.;
+                }
             }
         }
     }
