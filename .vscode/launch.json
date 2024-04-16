@@ -22,7 +22,7 @@
                     "ignoreFailures": true
                 },
             ],
-            "preLaunchTask": "make_all", // Task to compile your C++ project, adjust this according to your setup
+            //"preLaunchTask": "make_all", // Task to compile your C++ project, adjust this according to your setup
             "stopAtEntry": false
         }
     ]
