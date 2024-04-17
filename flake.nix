@@ -84,5 +84,21 @@
           nixpkgs.overlays = self.overlays;
           environment.systemPackages = [ pkgs.Hyprspace ];
         };
+
+      devShells = forAllSystems (system: {
+        default = pkgsFor.${system}.mkShell {
+          shellHook = ''
+            meson setup build --reconfigure
+            sed -e 's/c++23/c++2b/g' ./build/compile_commands.json > ./compile_commands.json
+          '';
+          name = "Hyprspace-shell";
+          nativeBuildInputs = with pkgsFor.${system}; [gcc13];
+          buildInputs = [hyprland.packages.${system}.hyprland];
+          inputsFrom = [
+            hyprland.packages.${system}.hyprland
+            self.packages.${system}.Hyprspace
+          ];
+        };
+      });
     };
 }
