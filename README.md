@@ -137,6 +137,7 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - `plugin:overview:overrideGaps` whether if overview should override the layout gaps in the current workspace using the following values
 - `plugin:overview:gapsIn`
 - `plugin:overview:gapsOut`
+- `plugin:overview:affectStrut` whether the panel should push window aside, disabling this option also disables `overrideGaps`
 
 ### Animation
 - The panel uses the `windows` curve for a slide-in animation

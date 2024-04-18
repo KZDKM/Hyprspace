@@ -34,6 +34,7 @@ namespace Config {
     extern bool hideOverlayLayers;
     extern bool drawActiveWorkspace;
     extern bool hideRealLayers;
+    extern bool affectStrut;
 
     extern bool overrideGaps;
     extern int gapsIn;

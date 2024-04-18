@@ -12,19 +12,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
         lastPressedTime = std::chrono::high_resolution_clock::now();
     else
         if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - lastPressedTime).count() < 200)
-            couldExit = true;
-
-    if (Config::autoDrag) {
-        // when overview is active, always drag windows on mouse click
-        if (g_pInputManager->currentlyDraggedWindow) {
-            g_pLayoutManager->getCurrentLayout()->onEndDragWindow();
-            g_pInputManager->currentlyDraggedWindow = nullptr;
-            g_pInputManager->dragMode = MBIND_INVALID;
-        }
-        std::string keybind = (pressed ? "1" : "0") + std::string("movewindow");
-        (*(tMouseKeybind)pMouseKeybind)(keybind);
-    }
-    Return = false;
+            couldExit = true; 
 
     int targetWorkspaceID = SPECIAL_WORKSPACE_START - 1;
 
@@ -41,9 +29,21 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
     auto targetWorkspace = g_pCompositor->getWorkspaceByID(targetWorkspaceID);
 
     // create new workspace
-    if (!targetWorkspace && targetWorkspaceID >= SPECIAL_WORKSPACE_START) {
+    if (!targetWorkspace.get() && targetWorkspaceID >= SPECIAL_WORKSPACE_START) {
         targetWorkspace = g_pCompositor->createNewWorkspace(targetWorkspaceID, getOwner()->ID);
     }
+    
+    if (Config::autoDrag && (!targetWorkspace.get() || !pressed)) {
+        // when overview is active, always drag windows on mouse click
+        if (g_pInputManager->currentlyDraggedWindow) {
+            g_pLayoutManager->getCurrentLayout()->onEndDragWindow();
+            g_pInputManager->currentlyDraggedWindow = nullptr;
+            g_pInputManager->dragMode = MBIND_INVALID;
+        }
+        std::string keybind = (pressed ? "1" : "0") + std::string("movewindow");
+        (*(tMouseKeybind)pMouseKeybind)(keybind);
+    }
+    Return = false;
 
     // release window on workspace to drop it in
     if (targetWindow && targetWorkspace.get() && !pressed) {
@@ -70,7 +70,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
         if (Config::exitOnSwitch && active) hide();
     }
     // click elsewhere to exit overview
-    else if (Config::exitOnClick && !targetWorkspace.get() && active && couldExit && !pressed) hide();
+    else if (Config::exitOnClick && !targetWorkspace.get() && active && couldExit && !pressed) hide(); 
 
     return Return;
 }
