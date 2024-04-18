@@ -8,6 +8,7 @@ void CHyprspaceWidget::updateLayout() {
 
     const auto currentHeight = Config::panelHeight + Config::reservedArea;
     const auto pMonitor = getOwner();
+
     // reset reserved areas
     g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
 
@@ -16,6 +17,10 @@ void CHyprspaceWidget::updateLayout() {
     auto* const PGAPSIN = (CCssGapData*)(PGAPSINDATA.ptr())->getData();
     auto* const PGAPSOUT = (CCssGapData*)(PGAPSOUTDATA.ptr())->getData();
 
+    // gaps are created via workspace rules
+    // there are no way to write to m_dWorkspaceRules directly
+    // and we want to refrain from using function hooks
+    // so we create a workspace rule for ALL workspaces through handleWorkspaceRules
     // Geneva Convention violation type hack but idc atm
     if (active) {
         const auto oActiveWorkspace = pMonitor->activeWorkspace;

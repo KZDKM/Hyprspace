@@ -18,6 +18,8 @@ void renderWindowStub(CWindow* pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorksp
 
     const float curScaling = rectOverride.w / (oSize.x * pMonitor->scale);
 
+    // using renderModif struct to override the position and scale of windows
+    // this will be replaced by matrix transformations in hyprland
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, (pMonitor->vecPosition * pMonitor->scale) + (rectOverride.pos() / curScaling) - (oRealPosition * pMonitor->scale)});
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
@@ -101,12 +103,13 @@ void CHyprspaceWidget::draw() {
     if (Config::onBottom) widgetBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
 
     g_pHyprRenderer->damageBox(&widgetBox);
+
+    // set widgetBox relative to current monitor for rendering panel
     widgetBox.x -= owner->vecPosition.x;
     widgetBox.y -= owner->vecPosition.y;
 
     g_pHyprOpenGL->m_RenderData.clipBox = CBox({0, 0}, owner->vecTransformedSize);
-    // crashes with xray true
-    g_pHyprOpenGL->renderRectWithBlur(&widgetBox, Config::panelBaseColor); // need blurfbshouldrender = true
+    g_pHyprOpenGL->renderRectWithBlur(&widgetBox, Config::panelBaseColor);
     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
 
     std::vector<int> workspaces;
@@ -115,6 +118,7 @@ void CHyprspaceWidget::draw() {
         workspaces.push_back(SPECIAL_WORKSPACE_START);
     }
 
+    // find the lowest and highest workspace id to determine which empty workspaces to insert
     int lowestID = INFINITY;
     int highestID = 1;
     for (auto& ws : g_pCompositor->m_vWorkspaces) {
@@ -131,11 +135,13 @@ void CHyprspaceWidget::draw() {
     if (Config::showEmptyWorkspace) {
         int wsIDStart = 1;
         int wsIDEnd = highestID;
+
         // hyprsplit compatibility
         if (hyprsplitNumWorkspaces > 0) {
             wsIDStart = std::min<int>(hyprsplitNumWorkspaces * ownerID + 1, lowestID);
             wsIDEnd = std::max<int>(hyprsplitNumWorkspaces * ownerID + 1, highestID); // always show the initial workspace for current monitor
         }
+
         for (int i = wsIDStart; i <= wsIDEnd; i++) {
             if (i == owner->activeSpecialWorkspaceID()) continue;
             const auto pWorkspace = g_pCompositor->getWorkspaceByID(i);
@@ -169,6 +175,8 @@ void CHyprspaceWidget::draw() {
     for (auto wsID : workspaces) {
         const auto ws = g_pCompositor->getWorkspaceByID(wsID);
         CBox curWorkspaceBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY, workspaceBoxW, workspaceBoxH};
+
+        // workspace background rect (NOT background layer) and border
         if (ws == owner->activeWorkspace) {
             if (Config::workspaceBorderSize >= 1 && Config::workspaceActiveBorder.a > 0) {
                 g_pHyprOpenGL->renderBorder(&curWorkspaceBox, CGradientValueData(Config::workspaceActiveBorder), 0, Config::workspaceBorderSize);
@@ -186,6 +194,7 @@ void CHyprspaceWidget::draw() {
             g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, Config::workspaceInactiveBackground);
         }
 
+        // background and bottom layers
         if (!Config::hideBackgroundLayers) {
             for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND]) {
                 CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
@@ -201,6 +210,7 @@ void CHyprspaceWidget::draw() {
             }
         }
 
+        // the mini panel to cover the awkward empty space reserved by the panel
         if (owner->activeWorkspace == ws && Config::affectStrut) {
             CBox miniPanelBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY, widgetBox.w * monitorSizeScaleFactor, widgetBox.h * monitorSizeScaleFactor};
             if (Config::onBottom) miniPanelBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY + workspaceBoxH - widgetBox.h * monitorSizeScaleFactor, widgetBox.w * monitorSizeScaleFactor, widgetBox.h * monitorSizeScaleFactor};
@@ -208,7 +218,6 @@ void CHyprspaceWidget::draw() {
         }
 
         if (ws != nullptr) {
-
             // draw tiled windows
             for (auto& w : g_pCompositor->m_vWindows) {
                 if (!w) continue;
@@ -282,6 +291,7 @@ void CHyprspaceWidget::draw() {
         curWorkspaceBox.y += owner->vecPosition.y;
         workspaceBoxes.emplace_back(std::make_tuple(wsID, curWorkspaceBox));
 
+        // set the current position to the next workspace box
         curWorkspaceRectOffsetX += workspaceBoxW + Config::workspaceMargin * owner->scale;
     }
 }

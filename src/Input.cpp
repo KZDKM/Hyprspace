@@ -6,13 +6,13 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
 
     const auto targetWindow = g_pInputManager->currentlyDraggedWindow;
 
-    // click to exit
+    // this is for click to exit, we set a timeout for button release
     bool couldExit = false;
     if (pressed)
         lastPressedTime = std::chrono::high_resolution_clock::now();
     else
         if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - lastPressedTime).count() < 200)
-            couldExit = true; 
+            couldExit = true;
 
     int targetWorkspaceID = SPECIAL_WORKSPACE_START - 1;
 
@@ -32,7 +32,8 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
     if (!targetWorkspace.get() && targetWorkspaceID >= SPECIAL_WORKSPACE_START) {
         targetWorkspace = g_pCompositor->createNewWorkspace(targetWorkspaceID, getOwner()->ID);
     }
-    
+
+    // if the cursor is hovering over workspace, clicking should switch workspace instead of starting window drag
     if (Config::autoDrag && (!targetWorkspace.get() || !pressed)) {
         // when overview is active, always drag windows on mouse click
         if (g_pInputManager->currentlyDraggedWindow) {
@@ -57,7 +58,6 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
             g_pCompositor->getMonitorFromID(targetWorkspace->m_iMonitorID)->changeWorkspace(targetWorkspace->m_iID);
             if (Config::exitOnSwitch && active) hide();
         }
-        //g_pHyprRenderer->arrangeLayersForMonitor(getOwner()->ID);
         updateLayout();
     }
     // click workspace to change to workspace and exit overview
@@ -70,7 +70,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
         if (Config::exitOnSwitch && active) hide();
     }
     // click elsewhere to exit overview
-    else if (Config::exitOnClick && !targetWorkspace.get() && active && couldExit && !pressed) hide(); 
+    else if (Config::exitOnClick && !targetWorkspace.get() && active && couldExit && !pressed) hide();
 
     return Return;
 }
@@ -79,11 +79,12 @@ bool CHyprspaceWidget::axisEvent(double delta) {
 
     CBox widgetBox = {getOwner()->vecPosition.x, getOwner()->vecPosition.y - curYOffset.value(), getOwner()->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * getOwner()->scale};
 
+    // scroll through panel if cursor is on it
     if (widgetBox.containsPoint(g_pInputManager->getMouseCoordsInternal() * getOwner()->scale)) {
         workspaceScrollOffset = workspaceScrollOffset.goal() - delta * 2;
     }
+    // otherwise, scroll to switch active workspace
     else {
-
         if (delta < 0) {
             std::string outName;
             int wsID = getWorkspaceIDFromString("r-1", outName);
@@ -118,6 +119,8 @@ bool CHyprspaceWidget::updateSwipe(wlr_pointer_swipe_update_event* e) {
     if (!e) return false;
     int fingers = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_fingers")->getValue());
     int distance = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_distance")->getValue());
+
+    // restrict swipe to a axis with the most significant movement to prevent misinput
     if (abs(e->dx) / abs(e->dy) < 1) {
         if (swiping && e->fingers == fingers) {
 
@@ -139,6 +142,7 @@ bool CHyprspaceWidget::updateSwipe(wlr_pointer_swipe_update_event* e) {
         }
     }
     else {
+        // scroll through panel
         if (e->fingers == fingers && active) {
             CBox widgetBox = {getOwner()->vecPosition.x, getOwner()->vecPosition.y - curYOffset.value(), getOwner()->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * getOwner()->scale};
             if (widgetBox.containsPoint(g_pInputManager->getMouseCoordsInternal() * getOwner()->scale)) {
@@ -147,9 +151,11 @@ bool CHyprspaceWidget::updateSwipe(wlr_pointer_swipe_update_event* e) {
             }
         }
     }
+    // otherwise, do not cancel the event and perform workspace swipe normally
     return true;
 }
 
+// janky asf
 bool CHyprspaceWidget::endSwipe(wlr_pointer_swipe_end_event* e) {
     swiping = false;
     // force cancel swipe

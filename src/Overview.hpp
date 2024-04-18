@@ -7,6 +7,7 @@ class CHyprspaceWidget {
 
     uint64_t ownerID;
 
+    // animation override stuff
     SAnimationPropertyConfig curAnimationConfig;
     SAnimationPropertyConfig curAnimation;
 
@@ -14,23 +15,29 @@ class CHyprspaceWidget {
     // modified on draw call, accessed on mouse click and release
     std::vector<std::tuple<int, CBox>> workspaceBoxes;
 
+    // for storing the fullscreen state of windows prior to overview activation (which unfullscreens all windows)
     std::vector<std::tuple<uint32_t, eFullscreenMode>> prevFullscreen;
 
+    // for storing the layer alpha values prior to overview activation (which sets all panel to transparent when configured)
     std::vector<std::tuple<SLayerSurface*, float>> oLayerAlpha;
 
+    // for click-to-exit
     std::chrono::system_clock::time_point lastPressedTime = std::chrono::high_resolution_clock::now();
 
     bool swiping = false;
+    // whether if the panel is active before the current swiping event
     bool activeBeforeSwipe = false;
     double avgSwipeSpeed = 0.;
+    // number of swiping speed frames recorded
     int swipePoints = 0;
+    // on second thought, this seems redundant as we could just write to curYOffset while swiping
     double curSwipeOffset = 10.;
 
     CAnimatedVariable<float> workspaceScrollOffset;
 
 public:
 
-    // for slide-in animation
+    // for slide-in animation and swiping
     CAnimatedVariable<float> curYOffset;
 
     CHyprspaceWidget(uint64_t);
@@ -44,7 +51,8 @@ public:
 
     void updateConfig();
 
-    void draw(); // call before renderWorkspaceWindows
+    // should be called active or not
+    void draw();
 
     // reserves area on owner monitor
     void updateLayout();

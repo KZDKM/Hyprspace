@@ -63,13 +63,12 @@ void CHyprspaceWidget::show() {
 
     active = true;
 
-    // swiping panel offset should be handled at updateSwipe
+    // panel offset should be handled by swipe event when swiping
     if (!swiping) {
         curYOffset = 0;
         curSwipeOffset = (Config::panelHeight + Config::reservedArea) * owner->scale;
     }
 
-    //g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
     updateLayout();
     g_pCompositor->scheduleFrameForMonitor(owner);
 }
@@ -111,11 +110,12 @@ void CHyprspaceWidget::hide() {
 
     active = false;
 
+    // panel offset should be handled by swipe event when swiping
     if (!swiping) {
         curYOffset = (Config::panelHeight + Config::reservedArea) * owner->scale;
         curSwipeOffset = -10.;
     }
-    //g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
+
     updateLayout();
     g_pCompositor->scheduleFrameForMonitor(owner);
 }

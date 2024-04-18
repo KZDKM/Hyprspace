@@ -72,6 +72,7 @@ std::shared_ptr<CHyprspaceWidget> getWidgetForMonitor(CMonitor* pMonitor) {
     return nullptr;
 }
 
+// used to enforce the layout
 void refreshWidgets() {
     for (auto& widget : g_overviewWidgets) {
         if (widget.get())
@@ -81,7 +82,10 @@ void refreshWidgets() {
 }
 
 bool g_layoutNeedsRefresh = true;
+
+// for restroing dragged window's alpha value
 float g_oAlpha = -1;
+
 void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
 
     const auto renderStage = std::any_cast<eRenderStage>(args);
@@ -183,6 +187,7 @@ void onMouseAxis(void* thisptr, SCallbackInfo& info, std::any args) {
 
 }
 
+// event hook for swipe
 void onSwipeBegin(void* thisptr, SCallbackInfo& info, std::any args) {
 
     if (Config::disableGestures) return;
@@ -201,6 +206,7 @@ void onSwipeBegin(void* thisptr, SCallbackInfo& info, std::any args) {
     }
 }
 
+// event hook for update swipe, most of the swiping mechanics are here
 void onSwipeUpdate(void* thisptr, SCallbackInfo& info, std::any args) {
 
     if (Config::disableGestures) return;
@@ -212,6 +218,7 @@ void onSwipeUpdate(void* thisptr, SCallbackInfo& info, std::any args) {
         info.cancelled = !widget->updateSwipe(e);
 }
 
+// event hook for end swipe
 void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
 
     if (Config::disableGestures) return;
@@ -223,6 +230,7 @@ void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
         widget->endSwipe(e);
 }
 
+// atm this is only for ESC to exit
 void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<wlr_keyboard_key_event*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["event"]);
     const auto k = std::any_cast<SKeyboard*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["keyboard"]);
