@@ -76,7 +76,7 @@ void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverrid
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
 }
 
-// NOTE: rects and clipbox positions are relative to the monitor, while damagebox and layers are not, what the fuck?
+// NOTE: rects and clipbox positions are relative to the monitor, while damagebox and layers are not, what the fuck? xd
 void CHyprspaceWidget::draw() {
 
     workspaceBoxes.clear();
@@ -96,8 +96,14 @@ void CHyprspaceWidget::draw() {
     //g_pHyprOpenGL->markBlurDirtyForMonitor(owner);
     //g_pHyprOpenGL->preRender(owner);
 
+	// Background box
     CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale}; //TODO: update size on monitor change
 
+	// Border box
+    CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelBorderWidth) * owner->scale};
+
+
+	// Background box render
     g_pHyprRenderer->damageBox(&widgetBox);
     widgetBox.x -= owner->vecPosition.x;
     widgetBox.y -= owner->vecPosition.y;

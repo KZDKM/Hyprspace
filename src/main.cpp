@@ -3,7 +3,8 @@
 #include "Overview.hpp"
 #include "Globals.hpp"
 
-CFunctionHook* renderWorkspaceWindowsHook;
+CFunctionHook* 
+WorkspaceWindowsHook;
 CFunctionHook* getWorkspaceRuleForHook;
 CFunctionHook* glTexParameteriHook;
 
@@ -15,12 +16,14 @@ std::vector<std::shared_ptr<CHyprspaceWidget>> g_overviewWidgets;
 
 
 CColor Config::panelBaseColor = CColor(0, 0, 0, 0);
+CColor Config::panelBorderColor = CColor(0, 0, 0, 0);
 CColor Config::workspaceActiveBackground = CColor(0, 0, 0, 0.25);
 CColor Config::workspaceInactiveBackground = CColor(0, 0, 0, 0.5);
 CColor Config::workspaceActiveBorder = CColor(1, 1, 1, 0.3);
 CColor Config::workspaceInactiveBorder = CColor(1, 1, 1, 0);
 
 int Config::panelHeight = 250;
+int Config::panelBorderWidth = 2;
 int Config::workspaceMargin = 12;
 int Config::reservedArea = 0;
 int Config::workspaceBorderSize = 1;
@@ -287,12 +290,14 @@ void* findFunctionBySymbol(HANDLE inHandle, const std::string func, const std::s
 
 void reloadConfig() {
     Config::panelBaseColor = CColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:panelColor")->getValue()));
+    Config::panelBorderColor = CColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:panelBorderColor")->getValue()));
     Config::workspaceActiveBackground = CColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceActiveBackground")->getValue()));
     Config::workspaceInactiveBackground = CColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceInactiveBackground")->getValue()));
     Config::workspaceActiveBorder = CColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceActiveBorder")->getValue()));
     Config::workspaceInactiveBorder = CColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceInactiveBorder")->getValue()));
 
     Config::panelHeight = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:panelHeight")->getValue());
+    Config::panelBorderWidth = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:panelBorderWidth")->getValue());
     Config::workspaceMargin = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceMargin")->getValue());
     Config::reservedArea = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:reservedArea")->getValue());
     Config::workspaceBorderSize = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceBorderSize")->getValue());
@@ -353,12 +358,14 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     Debug::log(LOG, "Loading overview plugin");
 
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelColor", Hyprlang::INT{CColor(0, 0, 0, 0).getAsHex()});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelBorderColor", Hyprlang::INT{CColor(0, 0, 0, 0).getAsHex()});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceActiveBackground", Hyprlang::INT{CColor(0, 0, 0, 0.25).getAsHex()});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceInactiveBackground", Hyprlang::INT{CColor(0, 0, 0, 0.5).getAsHex()});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceActiveBorder", Hyprlang::INT{CColor(1, 1, 1, 0.25).getAsHex()});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceInactiveBorder", Hyprlang::INT{CColor(1, 1, 1, 0).getAsHex()});
 
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelHeight", Hyprlang::INT{250});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelBorderWidth", Hyprlang::INT{2});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceMargin", Hyprlang::INT{12});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceBorderSize", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:reservedArea", Hyprlang::INT{0});

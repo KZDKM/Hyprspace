@@ -31,6 +31,7 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
     - [ ] Panel on Bottom
     - [ ] Vertical layout (on left / right)
     - [x] Panel top padding (reserved for bar / notch)
+    - [x] Panel border (color / thickness)
     - [ ] Unique styling for special workspaces
   - [x] Behavior
     - [x] Autodrag windows
