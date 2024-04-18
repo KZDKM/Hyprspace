@@ -46,7 +46,7 @@ void CHyprspaceWidget::show() {
 
     // hide top and overlay layers
     // FIXME: ensure input is disabled for hidden layers
-    if (oLayerAlpha.empty()) {
+    if (oLayerAlpha.empty() && Config::hideRealLayers) {
         for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
             //ls->startAnimation(false);
             oLayerAlpha.emplace_back(std::make_tuple(ls.get(), ls->alpha.goal()));

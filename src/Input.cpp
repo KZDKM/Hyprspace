@@ -123,7 +123,7 @@ bool CHyprspaceWidget::updateSwipe(wlr_pointer_swipe_update_event* e) {
 
             float currentScaling = g_pCompositor->getMonitorFromCursor()->vecSize.x / distance;
 
-            double scrollDifferential = e->dy * (Config::reverseSwipe ? -1 : 1) * currentScaling;
+            double scrollDifferential = e->dy * (Config::reverseSwipe ? -1 : 1) * (Config::onBottom ? -1 : 1) * currentScaling;
 
             curSwipeOffset += scrollDifferential;
             curSwipeOffset = std::clamp<double>(curSwipeOffset, -10, ((Config::panelHeight + Config::reservedArea) * getOwner()->scale));

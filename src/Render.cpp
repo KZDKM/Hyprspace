@@ -98,6 +98,8 @@ void CHyprspaceWidget::draw() {
 
     CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale}; //TODO: update size on monitor change
 
+    if (Config::onBottom) widgetBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
+
     g_pHyprRenderer->damageBox(&widgetBox);
     widgetBox.x -= owner->vecPosition.x;
     widgetBox.y -= owner->vecPosition.y;
@@ -158,7 +160,7 @@ void CHyprspaceWidget::draw() {
     double workspaceBoxH = owner->vecTransformedSize.y * monitorSizeScaleFactor;
     double workspaceGroupWidth = workspaceBoxW * wsCount + (Config::workspaceMargin * owner->scale) * (wsCount - 1);
     double curWorkspaceRectOffsetX = Config::centerAligned ? workspaceScrollOffset.value() + (widgetBox.w / 2.) - (workspaceGroupWidth / 2.) : workspaceScrollOffset.value() + Config::workspaceMargin;
-    double curWorkspaceRectOffsetY = 0 + ((Config::reservedArea + Config::workspaceMargin) * owner->scale) - curYOffset.value();
+    double curWorkspaceRectOffsetY = !Config::onBottom ? (((Config::reservedArea + Config::workspaceMargin) * owner->scale) - curYOffset.value()) : (owner->vecTransformedSize.y - ((Config::reservedArea + Config::workspaceMargin) * owner->scale) - workspaceBoxH + curYOffset.value());
     double workspaceOverflowSize = std::max<double>(((workspaceGroupWidth - widgetBox.w) / 2) + (Config::workspaceMargin * owner->scale), 0);
 
     workspaceScrollOffset = std::clamp<double>(workspaceScrollOffset.goal(), -workspaceOverflowSize, workspaceOverflowSize);
@@ -201,6 +203,7 @@ void CHyprspaceWidget::draw() {
 
         if (owner->activeWorkspace == ws) {
             CBox miniPanelBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY, widgetBox.w * monitorSizeScaleFactor, widgetBox.h * monitorSizeScaleFactor};
+            if (Config::onBottom) miniPanelBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY + workspaceBoxH - widgetBox.h * monitorSizeScaleFactor, widgetBox.w * monitorSizeScaleFactor, widgetBox.h * monitorSizeScaleFactor};
             g_pHyprOpenGL->renderRectWithBlur(&miniPanelBox, CColor(0, 0, 0, 0), 0, 1.f, false);
         }
 
@@ -255,7 +258,7 @@ void CHyprspaceWidget::draw() {
                 }
         }
 
-        if (owner->activeWorkspace != ws) {
+        if (owner->activeWorkspace != ws || !Config::hideRealLayers) {
             // this layer is hidden for real workspace when panel is displayed
             if (!Config::hideTopLayers)
                 for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
