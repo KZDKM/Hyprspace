@@ -1,88 +1,77 @@
 {
   description = "Hyprspace";
 
-  # Nixpkgs / NixOS version to use.
-  inputs.nixpkgs.follows = "hyprland/nixpkgs";
+  inputs.hyprland.url = "github:hyprwm/Hyprland";
 
-  inputs.hyprland = {
-    url = github:hyprwm/Hyprland/185a3b48814cc4a1afbf32a69792a6161c4038cd;
-  };
-  inputs.hyprlandPlugins = {
-    url = "github:hyprwm/hyprland-plugins";
-    inputs.hyprland.follows = "hyprland";
-  };
+  outputs = {
+    self,
+    hyprland,
+  }: let
+    inherit (hyprland.inputs) nixpkgs;
+    inherit (nixpkgs) lib;
 
-  outputs = { self, nixpkgs, hyprland, hyprlandPlugins }:
-    let
-      # System types to support.
-      supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
-      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-      # Nixpkgs instantiated for supported system types.
-      pkgsFor = forAllSystems (system:
-        import nixpkgs {
-          localSystem.system = system;
-          overlays = with self.overlays; [ hyprland-plugins ];
-        });
+    # System types to support.
+    supportedSystems = ["x86_64-linux" "aarch64-linux"];
+    perSystem = attrs:
+      lib.genAttrs supportedSystems (system: let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in
+        attrs system pkgs);
 
-      version = "0.1";
-      mkHyprlandPlugin = hyprlandPlugins.overlays.mkHyprlandPlugin;
-      lib = nixpkgs.lib;
-    in
+    # Generate version
+    inherit (builtins) elemAt head readFile split substring;
+    mkDate = longDate: (lib.concatStringsSep "-" [
+      (substring 0 4 longDate)
+      (substring 4 2 longDate)
+      (substring 6 2 longDate)
+    ]);
+    version =
+      (head (split "'"
+        (elemAt
+          (split " version: '" (readFile ./meson.build))
+          2)))
+      + "+date=${mkDate (self.lastModifiedDate or "19700101")}_${self.shortRev or "dirty"}";
+  in {
+    # Provide some binary packages for selected system types
+    packages = perSystem (system: pkgs: {
+      Hyprspace = let
+        hyprlandPkg = hyprland.packages.${system}.hyprland;
+      in
+        pkgs.gcc13Stdenv.mkDerivation {
+          pname = "Hyprspace";
+          inherit version;
+          src = ./.;
 
-    {
-      overlays = {
-        default = self.overlays.hyprland-plugins.Hyprspace;
-        hyprland-plugins = lib.composeManyExtensions [
-          mkHyprlandPlugin
-          (final: prev:
-            let
-              inherit (final) callPackage;
-            in
-            {
-              Hyprspace = callPackage
-                ({ lib
-                 , hyprland
-                 , hyprlandPlugins
-                 }:
-                  hyprlandPlugins.mkHyprlandPlugin {
-                    pluginName = "Hyprspace";
-                    inherit version;
-                    src = ./.;
+          inherit (hyprlandPkg) nativeBuildInputs;
+          buildInputs = [hyprlandPkg] ++ hyprlandPkg.buildInputs;
 
-                    inherit (hyprland) nativeBuildInputs;
+          meta = with lib; {
+            homepage = "https://github.com/KZDKM/Hyprspace";
+            description = "Workspace overview plugin for Hyprland";
+            license = licenses.gpl2Only;
+            platforms = platforms.linux;
+          };
+        };
+      default = self.packages.${system}.Hyprspace;
+    });
 
-                    meta = with lib; {
-                      homepage = "https://github.com/KZDKM/Hyprspace";
-                      description = "Workspace overview plugin for Hyprland";
-                      license = licenses.gpl2Only;
-                      platforms = platforms.linux;
-                    };
-                  })
-                { };
-            })
+    # The default environment for 'nix develop'
+    devShells = perSystem (system: pkgs: {
+      default = pkgs.mkShell {
+        shellHook = ''
+          meson setup build --reconfigure
+          sed -e 's/c++23/c++2b/g' ./build/compile_commands.json > ./compile_commands.json
+        '';
+        name = "Hyprspace-shell";
+        nativeBuildInputs = with pkgs; [gcc13];
+        buildInputs = [hyprland.packages.${system}.hyprland];
+        inputsFrom = [
+          hyprland.packages.${system}.hyprland
+          self.packages.${system}.Hyprspace
         ];
       };
+    });
 
-      # Provide some binary packages for selected system types.
-      packages = forAllSystems
-        (system:
-          {
-            inherit (pkgsFor.${system}) Hyprspace;
-          });
-
-      # The default package for 'nix build'. This makes sense if the
-      # flake provides only one package or there is a clear "main"
-      # package.
-      defaultPackage = forAllSystems
-        (system: self.packages.${system}.Hyprspace);
-
-      # A NixOS module
-      # TODO: Pass in configuration options.
-      nixosModules.Hyprspace =
-        { pkgs, ... }:
-        {
-          nixpkgs.overlays = self.overlays;
-          environment.systemPackages = [ pkgs.Hyprspace ];
-        };
-    };
+    formatter = perSystem (_: pkgs: pkgs.alejandra);
+  };
 }

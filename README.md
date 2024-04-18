@@ -74,12 +74,13 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
   inputs = {
     # Hyprland is **such** eye candy
     hyprland ={
-      # Update for releavant commit, this is just bleeding edge as of 2024/04/11
-      url = github:hyprwm/Hyprland/ac0f3411c18497a39498b756b711e092512de9e0;
+      url = "github:hyprwm/Hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     Hyprspace = {
-      url = github:KZDKM/Hyprspace;
+      url = "github:KZDKM/Hyprspace";
+
+      # Hyprspace uses latest Hyprland. We declare this to keep them in sync.
       inputs.hyprland.follows = "hyprland";
     };
   };
