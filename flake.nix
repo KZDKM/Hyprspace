@@ -1,13 +1,7 @@
 {
   description = "Hyprspace";
 
-  inputs = {
-    hyprland = {
-      type = "github";
-      owner = "hyprwm";
-      repo = "Hyprland";
-    };
-  };
+  inputs.hyprland.url = "github:hyprwm/Hyprland";
 
   outputs = {
     self,
@@ -24,9 +18,21 @@
       in
         attrs system pkgs);
 
-    version = "0.1";
+    # Generate version
+    inherit (builtins) elemAt head readFile split substring;
+    mkDate = longDate: (lib.concatStringsSep "-" [
+      (substring 0 4 longDate)
+      (substring 4 2 longDate)
+      (substring 6 2 longDate)
+    ]);
+    version =
+      (head (split "'"
+        (elemAt
+          (split " version: '" (readFile ./meson.build))
+          2)))
+      + "+date=${mkDate (self.lastModifiedDate or "19700101")}_${self.shortRev or "dirty"}";
   in {
-    # Provide some binary packages for selected system types.
+    # Provide some binary packages for selected system types
     packages = perSystem (system: pkgs: {
       Hyprspace = let
         hyprlandPkg = hyprland.packages.${system}.hyprland;
