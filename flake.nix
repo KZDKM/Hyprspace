@@ -7,20 +7,11 @@
       owner = "hyprwm";
       repo = "Hyprland";
     };
-
-    hyprlandPlugins = {
-      type = "github";
-      owner = "hyprwm";
-      repo = "hyprland-plugins";
-
-      inputs.hyprland.follows = "hyprland";
-    };
   };
 
   outputs = {
     self,
     hyprland,
-    hyprlandPlugins,
   }: let
     inherit (hyprland.inputs) nixpkgs;
     inherit (nixpkgs) lib;
@@ -29,51 +20,32 @@
     supportedSystems = ["x86_64-linux" "aarch64-linux"];
     perSystem = attrs:
       lib.genAttrs supportedSystems (system: let
-        pkgs = import nixpkgs {
-          localSystem.system = system;
-          overlays = with self.overlays; [hyprland-plugins];
-        };
+        pkgs = nixpkgs.legacyPackages.${system};
       in
         attrs system pkgs);
 
     version = "0.1";
   in {
-    overlays = {
-      default = self.overlays.hyprland-plugins.Hyprspace;
-
-      # https://github.com/hyprwm/hyprland-plugins/blob/00d147d7f6ad2ecfbf75efe4a8402723c72edd98/flake.nix#L41
-      hyprland-plugins = lib.composeManyExtensions [
-        hyprlandPlugins.overlays.mkHyprlandPlugin
-        (final: prev: {
-          Hyprspace =
-            final.callPackage
-            ({
-              lib,
-              hyprland,
-              hyprlandPlugins,
-            }:
-              hyprlandPlugins.mkHyprlandPlugin {
-                pluginName = "Hyprspace";
-                inherit version;
-                src = ./.;
-
-                inherit (hyprland) nativeBuildInputs;
-
-                meta = with lib; {
-                  homepage = "https://github.com/KZDKM/Hyprspace";
-                  description = "Workspace overview plugin for Hyprland";
-                  license = licenses.gpl2Only;
-                  platforms = platforms.linux;
-                };
-              })
-            {};
-        })
-      ];
-    };
-
     # Provide some binary packages for selected system types.
     packages = perSystem (system: pkgs: {
-      inherit (pkgs) Hyprspace;
+      Hyprspace = let
+        hyprlandPkg = hyprland.packages.${system}.hyprland;
+      in
+        pkgs.gcc13Stdenv.mkDerivation {
+          pname = "Hyprspace";
+          inherit version;
+          src = ./.;
+
+          inherit (hyprlandPkg) nativeBuildInputs;
+          buildInputs = [hyprlandPkg] ++ hyprlandPkg.buildInputs;
+
+          meta = with lib; {
+            homepage = "https://github.com/KZDKM/Hyprspace";
+            description = "Workspace overview plugin for Hyprland";
+            license = licenses.gpl2Only;
+            platforms = platforms.linux;
+          };
+        };
       default = self.packages.${system}.Hyprspace;
     });
 
