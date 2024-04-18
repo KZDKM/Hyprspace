@@ -74,21 +74,8 @@
       forAllSystems
       (system: {
         inherit (pkgsFor.${system}) Hyprspace;
+        default = self.packages.${system}.Hyprspace;
       });
-
-    # The default package for 'nix build'. This makes sense if the
-    # flake provides only one package or there is a clear "main"
-    # package.
-    defaultPackage =
-      forAllSystems
-      (system: self.packages.${system}.Hyprspace);
-
-    # A NixOS module
-    # TODO: Pass in configuration options.
-    nixosModules.Hyprspace = {pkgs, ...}: {
-      nixpkgs.overlays = self.overlays;
-      environment.systemPackages = [pkgs.Hyprspace];
-    };
 
     # The default environment for 'nix develop'
     devShells = forAllSystems (system: {
