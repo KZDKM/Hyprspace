@@ -1,15 +1,19 @@
 {
   description = "Hyprspace";
 
-  # Nixpkgs / NixOS version to use.
-  inputs.nixpkgs.follows = "hyprland/nixpkgs";
+  inputs = {
+    nixpkgs.follows = "hyprland/nixpkgs";
 
-  inputs.hyprland = {
-    url = github:hyprwm/Hyprland/185a3b48814cc4a1afbf32a69792a6161c4038cd;
-  };
-  inputs.hyprlandPlugins = {
-    url = "github:hyprwm/hyprland-plugins";
-    inputs.hyprland.follows = "hyprland";
+    hyprland = {
+      type = "github";
+      owner = "hyprwm";
+      repo = "Hyprland";
+    };
+
+    hyprlandPlugins = {
+      url = "github:hyprwm/hyprland-plugins";
+      inputs.hyprland.follows = "hyprland";
+    };
   };
 
   outputs = {
