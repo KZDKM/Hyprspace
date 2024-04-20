@@ -36,6 +36,7 @@ void CHyprspaceWidget::show() {
             if (ws->m_iMonitorID == ownerID) {
                 const auto w = g_pCompositor->getFullscreenWindowOnWorkspace(ws->m_iID);
                 if (w != nullptr && ws->m_efFullscreenMode != FULLSCREEN_INVALID) {
+                    w->m_bFakeFullscreenState = true;
                     // we use the getWindowFromHandle function to prevent dangling pointers
                     prevFullscreen.emplace_back(std::make_tuple((uint32_t)(((uint64_t)w) & 0xFFFFFFFF), ws->m_efFullscreenMode));
                     g_pCompositor->setWindowFullscreen(w, false);
@@ -46,7 +47,7 @@ void CHyprspaceWidget::show() {
 
     // hide top and overlay layers
     // FIXME: ensure input is disabled for hidden layers
-    if (oLayerAlpha.empty()) {
+    if (oLayerAlpha.empty() && Config::hideRealLayers) {
         for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
             //ls->startAnimation(false);
             oLayerAlpha.emplace_back(std::make_tuple(ls.get(), ls->alpha.goal()));
@@ -63,13 +64,12 @@ void CHyprspaceWidget::show() {
 
     active = true;
 
-    // swiping panel offset should be handled at updateSwipe
+    // panel offset should be handled by swipe event when swiping
     if (!swiping) {
         curYOffset = 0;
         curSwipeOffset = (Config::panelHeight + Config::reservedArea) * owner->scale;
     }
 
-    //g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
     updateLayout();
     g_pCompositor->scheduleFrameForMonitor(owner);
 }
@@ -106,16 +106,18 @@ void CHyprspaceWidget::hide() {
         const auto w = g_pCompositor->getWindowFromHandle(std::get<0>(fs));
         const auto oFullscreenMode = std::get<1>(fs);
         g_pCompositor->setWindowFullscreen(w, true, oFullscreenMode);
+        w->m_bFakeFullscreenState = false;
     }
     prevFullscreen.clear();
 
     active = false;
 
+    // panel offset should be handled by swipe event when swiping
     if (!swiping) {
         curYOffset = (Config::panelHeight + Config::reservedArea) * owner->scale;
         curSwipeOffset = -10.;
     }
-    //g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
+
     updateLayout();
     g_pCompositor->scheduleFrameForMonitor(owner);
 }

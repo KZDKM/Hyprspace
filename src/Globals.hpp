@@ -30,11 +30,13 @@ namespace Config {
     extern int workspaceBorderSize;
     extern bool adaptiveHeight; // TODO: implement
     extern bool centerAligned;
-    extern bool onTop; // TODO: implement
+    extern bool onBottom; // TODO: implement
     extern bool hideBackgroundLayers;
     extern bool hideTopLayers;
     extern bool hideOverlayLayers;
     extern bool drawActiveWorkspace;
+    extern bool hideRealLayers;
+    extern bool affectStrut;
 
     extern bool overrideGaps;
     extern int gapsIn;

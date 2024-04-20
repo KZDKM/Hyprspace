@@ -6,25 +6,13 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
 
     const auto targetWindow = g_pInputManager->currentlyDraggedWindow;
 
-    // click to exit
+    // this is for click to exit, we set a timeout for button release
     bool couldExit = false;
     if (pressed)
         lastPressedTime = std::chrono::high_resolution_clock::now();
     else
         if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - lastPressedTime).count() < 200)
             couldExit = true;
-
-    if (Config::autoDrag) {
-        // when overview is active, always drag windows on mouse click
-        if (g_pInputManager->currentlyDraggedWindow) {
-            g_pLayoutManager->getCurrentLayout()->onEndDragWindow();
-            g_pInputManager->currentlyDraggedWindow = nullptr;
-            g_pInputManager->dragMode = MBIND_INVALID;
-        }
-        std::string keybind = (pressed ? "1" : "0") + std::string("movewindow");
-        (*(tMouseKeybind)pMouseKeybind)(keybind);
-    }
-    Return = false;
 
     int targetWorkspaceID = SPECIAL_WORKSPACE_START - 1;
 
@@ -41,9 +29,22 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
     auto targetWorkspace = g_pCompositor->getWorkspaceByID(targetWorkspaceID);
 
     // create new workspace
-    if (!targetWorkspace && targetWorkspaceID >= SPECIAL_WORKSPACE_START) {
+    if (!targetWorkspace.get() && targetWorkspaceID >= SPECIAL_WORKSPACE_START) {
         targetWorkspace = g_pCompositor->createNewWorkspace(targetWorkspaceID, getOwner()->ID);
     }
+
+    // if the cursor is hovering over workspace, clicking should switch workspace instead of starting window drag
+    if (Config::autoDrag && (!targetWorkspace.get() || !pressed)) {
+        // when overview is active, always drag windows on mouse click
+        if (g_pInputManager->currentlyDraggedWindow) {
+            g_pLayoutManager->getCurrentLayout()->onEndDragWindow();
+            g_pInputManager->currentlyDraggedWindow = nullptr;
+            g_pInputManager->dragMode = MBIND_INVALID;
+        }
+        std::string keybind = (pressed ? "1" : "0") + std::string("movewindow");
+        (*(tMouseKeybind)pMouseKeybind)(keybind);
+    }
+    Return = false;
 
     // release window on workspace to drop it in
     if (targetWindow && targetWorkspace.get() && !pressed) {
@@ -57,7 +58,6 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
             g_pCompositor->getMonitorFromID(targetWorkspace->m_iMonitorID)->changeWorkspace(targetWorkspace->m_iID);
             if (Config::exitOnSwitch && active) hide();
         }
-        //g_pHyprRenderer->arrangeLayersForMonitor(getOwner()->ID);
         updateLayout();
     }
     // click workspace to change to workspace and exit overview
@@ -77,13 +77,16 @@ bool CHyprspaceWidget::buttonEvent(bool pressed) {
 
 bool CHyprspaceWidget::axisEvent(double delta) {
 
+    const auto owner = getOwner();
     CBox widgetBox = {getOwner()->vecPosition.x, getOwner()->vecPosition.y - curYOffset.value(), getOwner()->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * getOwner()->scale};
+    if (Config::onBottom) widgetBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
 
+    // scroll through panel if cursor is on it
     if (widgetBox.containsPoint(g_pInputManager->getMouseCoordsInternal() * getOwner()->scale)) {
         workspaceScrollOffset = workspaceScrollOffset.goal() - delta * 2;
     }
+    // otherwise, scroll to switch active workspace
     else {
-
         if (delta < 0) {
             std::string outName;
             int wsID = getWorkspaceIDFromString("r-1", outName);
@@ -118,12 +121,14 @@ bool CHyprspaceWidget::updateSwipe(wlr_pointer_swipe_update_event* e) {
     if (!e) return false;
     int fingers = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_fingers")->getValue());
     int distance = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_distance")->getValue());
+
+    // restrict swipe to a axis with the most significant movement to prevent misinput
     if (abs(e->dx) / abs(e->dy) < 1) {
         if (swiping && e->fingers == fingers) {
 
             float currentScaling = g_pCompositor->getMonitorFromCursor()->vecSize.x / distance;
 
-            double scrollDifferential = e->dy * (Config::reverseSwipe ? -1 : 1) * currentScaling;
+            double scrollDifferential = e->dy * (Config::reverseSwipe ? -1 : 1) * (Config::onBottom ? -1 : 1) * currentScaling;
 
             curSwipeOffset += scrollDifferential;
             curSwipeOffset = std::clamp<double>(curSwipeOffset, -10, ((Config::panelHeight + Config::reservedArea) * getOwner()->scale));
@@ -139,17 +144,22 @@ bool CHyprspaceWidget::updateSwipe(wlr_pointer_swipe_update_event* e) {
         }
     }
     else {
+        // scroll through panel
         if (e->fingers == fingers && active) {
-            CBox widgetBox = {getOwner()->vecPosition.x, getOwner()->vecPosition.y - curYOffset.value(), getOwner()->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * getOwner()->scale};
+            const auto owner = getOwner();
+            CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
+            if (Config::onBottom) widgetBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
             if (widgetBox.containsPoint(g_pInputManager->getMouseCoordsInternal() * getOwner()->scale)) {
                 workspaceScrollOffset.setValueAndWarp(workspaceScrollOffset.goal() + e->dx * 2);
                 return false;
             }
         }
     }
+    // otherwise, do not cancel the event and perform workspace swipe normally
     return true;
 }
 
+// janky asf
 bool CHyprspaceWidget::endSwipe(wlr_pointer_swipe_end_event* e) {
     swiping = false;
     // force cancel swipe

@@ -34,6 +34,10 @@
 # Nix
 result
 
+# Nix devShell
+compile_commands.json
+.cache
+
 # Meson
 meson-out
 meson-info

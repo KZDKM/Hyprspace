@@ -29,11 +29,13 @@ int Config::reservedArea = 0;
 int Config::workspaceBorderSize = 1;
 bool Config::adaptiveHeight = false; // TODO: implement
 bool Config::centerAligned = true;
-bool Config::onTop = true; // TODO: implement
+bool Config::onBottom = true; // TODO: implement
 bool Config::hideBackgroundLayers = false;
 bool Config::hideTopLayers = false;
 bool Config::hideOverlayLayers = false;
 bool Config::drawActiveWorkspace = true;
+bool Config::hideRealLayers = true;
+bool Config::affectStrut = true;
 
 bool Config::overrideGaps = true;
 int Config::gapsIn = 20;
@@ -73,6 +75,7 @@ std::shared_ptr<CHyprspaceWidget> getWidgetForMonitor(CMonitor* pMonitor) {
     return nullptr;
 }
 
+// used to enforce the layout
 void refreshWidgets() {
     for (auto& widget : g_overviewWidgets) {
         if (widget.get())
@@ -82,7 +85,10 @@ void refreshWidgets() {
 }
 
 bool g_layoutNeedsRefresh = true;
+
+// for restroing dragged window's alpha value
 float g_oAlpha = -1;
+
 void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
 
     const auto renderStage = std::any_cast<eRenderStage>(args);
@@ -100,10 +106,10 @@ void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
         const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_RenderData.pMonitor);
         if (widget.get())
             if (widget->getOwner()) {
-                widget->draw();
+                //widget->draw();
                 if (g_pInputManager->currentlyDraggedWindow && widget->isActive()) {
                     g_oAlpha = g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.goal();
-                    g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(Config::dragAlpha);
+                    g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(0); // HACK: hide dragged window for the actual pass
                 }
                 else g_oAlpha = -1;
             }
@@ -112,10 +118,22 @@ void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
 
     }
     else if (renderStage == eRenderStage::RENDER_POST_WINDOWS) {
-        if (g_oAlpha != -1 && g_pInputManager->currentlyDraggedWindow) {
-            g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(g_oAlpha);
-        }
-        g_oAlpha = -1;
+
+        const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_RenderData.pMonitor);
+
+        if (widget.get())
+            if (widget->getOwner()) {
+                widget->draw();
+                if (g_oAlpha != -1 && g_pInputManager->currentlyDraggedWindow) {
+                    g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(Config::dragAlpha);
+                    timespec time;
+                    clock_gettime(CLOCK_MONOTONIC, &time);
+                    (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), g_pInputManager->currentlyDraggedWindow, widget->getOwner(), &time, true, RENDER_PASS_MAIN, false, false);
+                    g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(g_oAlpha);
+                }
+                g_oAlpha = -1;
+            }
+
     }
 }
 
@@ -172,6 +190,7 @@ void onMouseAxis(void* thisptr, SCallbackInfo& info, std::any args) {
 
 }
 
+// event hook for swipe
 void onSwipeBegin(void* thisptr, SCallbackInfo& info, std::any args) {
 
     if (Config::disableGestures) return;
@@ -190,6 +209,7 @@ void onSwipeBegin(void* thisptr, SCallbackInfo& info, std::any args) {
     }
 }
 
+// event hook for update swipe, most of the swiping mechanics are here
 void onSwipeUpdate(void* thisptr, SCallbackInfo& info, std::any args) {
 
     if (Config::disableGestures) return;
@@ -201,6 +221,7 @@ void onSwipeUpdate(void* thisptr, SCallbackInfo& info, std::any args) {
         info.cancelled = !widget->updateSwipe(e);
 }
 
+// event hook for end swipe
 void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
 
     if (Config::disableGestures) return;
@@ -212,6 +233,7 @@ void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
         widget->endSwipe(e);
 }
 
+// atm this is only for ESC to exit
 void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<wlr_keyboard_key_event*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["event"]);
     const auto k = std::any_cast<SKeyboard*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["keyboard"]);
@@ -303,11 +325,13 @@ void reloadConfig() {
     Config::workspaceBorderSize = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceBorderSize")->getValue());
     Config::adaptiveHeight = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:adaptiveHeight")->getValue());
     Config::centerAligned = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:centerAligned")->getValue());
-    Config::onTop = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:onTop")->getValue());
+    Config::onBottom = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:onBottom")->getValue());
     Config::hideBackgroundLayers = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:hideBackgroundLayers")->getValue());
     Config::hideTopLayers = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:hideTopLayers")->getValue());
     Config::hideOverlayLayers = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:hideOverlayLayers")->getValue());
     Config::drawActiveWorkspace = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:drawActiveWorkspace")->getValue());
+    Config::hideRealLayers = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:hideRealLayers")->getValue());
+    Config::affectStrut = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:affectStrut")->getValue());
 
     Config::overrideGaps = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:overrideGaps")->getValue());
     Config::gapsIn = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:gapsIn")->getValue());
@@ -371,11 +395,13 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:reservedArea", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:adaptiveHeight", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:centerAligned", Hyprlang::INT{1});
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:onTop", Hyprlang::INT{1});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:onBottom", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:hideBackgroundLayers", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:hideTopLayers", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:hideOverlayLayers", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:drawActiveWorkspace", Hyprlang::INT{1});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:hideRealLayers", Hyprlang::INT{1});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:affectStrut", Hyprlang::INT{1});
 
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:overrideGaps", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:gapsIn", Hyprlang::INT{20});

@@ -75,12 +75,13 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
   inputs = {
     # Hyprland is **such** eye candy
     hyprland ={
-      # Update for releavant commit, this is just bleeding edge as of 2024/04/11
-      url = github:hyprwm/Hyprland/ac0f3411c18497a39498b756b711e092512de9e0;
+      url = "github:hyprwm/Hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     Hyprspace = {
-      url = github:KZDKM/Hyprspace;
+      url = "github:KZDKM/Hyprspace";
+
+      # Hyprspace uses latest Hyprland. We declare this to keep them in sync.
       inputs.hyprland.follows = "hyprland";
     };
   };
@@ -125,6 +126,7 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - `plugin:overview:dragAlpha` overrides the alpha of window when dragged in overview (0 - 1, 0 = transparent, 1 = opaque)
 #### Layout
 - `plugin:overview:panelHeight`
+- `plugin:overview:onBottom` whether if panel should be on bottom instead of top
 - `plugin:overview:workspaceMargin` spacing of workspaces with eachother and the edge of the panel
 - `plugin:overview:reservedArea` padding on top of the panel, for Macbook camera notch
 - `plugin:overview:workspaceBorderSize`
@@ -132,10 +134,12 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - `plugin:overview:hideBackgroundLayers` do not draw background and bottom layers in overview
 - `plugin:overview:hideTopLayers` do not draw top layers in overview
 - `plugin:overview:hideOverlayLayers` do not draw overlay layers in overview
+- `plugin:overview:hideRealLayers` whether to hide layers in actual workspace
 - `plugin:overview:drawActiveWorkspace` draw the active workspace in overview as-is
 - `plugin:overview:overrideGaps` whether if overview should override the layout gaps in the current workspace using the following values
 - `plugin:overview:gapsIn`
 - `plugin:overview:gapsOut`
+- `plugin:overview:affectStrut` whether the panel should push window aside, disabling this option also disables `overrideGaps`
 
 ### Animation
 - The panel uses the `windows` curve for a slide-in animation
