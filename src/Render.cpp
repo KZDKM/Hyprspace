@@ -78,7 +78,7 @@ void renderLayerStub(SLayerSurface* pLayer, CMonitor* pMonitor, CBox rectOverrid
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
 }
 
-// NOTE: rects and clipbox positions are relative to the monitor, while damagebox and layers are not, what the fuck?
+// NOTE: rects and clipbox positions are relative to the monitor, while damagebox and layers are not, what the fuck? xd
 void CHyprspaceWidget::draw() {
 
     workspaceBoxes.clear();
@@ -98,8 +98,9 @@ void CHyprspaceWidget::draw() {
     //g_pHyprOpenGL->markBlurDirtyForMonitor(owner);
     //g_pHyprOpenGL->preRender(owner);
 
+	// Background box
     CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale}; //TODO: update size on monitor change
-
+    
     if (Config::onBottom) widgetBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
 
     g_pHyprRenderer->damageBox(&widgetBox);
@@ -107,9 +108,22 @@ void CHyprspaceWidget::draw() {
     // set widgetBox relative to current monitor for rendering panel
     widgetBox.x -= owner->vecPosition.x;
     widgetBox.y -= owner->vecPosition.y;
-
+    
     g_pHyprOpenGL->m_RenderData.clipBox = CBox({0, 0}, owner->vecTransformedSize);
     g_pHyprOpenGL->renderRectWithBlur(&widgetBox, Config::panelBaseColor);
+
+    // Panel Border
+     if (Config::panelBorderWidth > 0) {
+        // Border box
+        CBox borderBox = {owner->vecPosition.x, owner->vecPosition.y + Config::panelHeight - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelBorderWidth) * owner->scale};
+        if (Config::onBottom) borderBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset.value(), owner->vecTransformedSize.x, (Config::panelBorderWidth) * owner->scale};
+
+        g_pHyprRenderer->damageBox(&borderBox);
+        borderBox.x -= owner->vecPosition.x;
+        borderBox.y -= owner->vecPosition.y;
+        g_pHyprOpenGL->renderRectWithBlur(&borderBox, Config::panelBorderColor);
+    }
+
     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
 
     std::vector<int> workspaces;

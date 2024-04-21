@@ -17,12 +17,14 @@ extern void* pRenderLayer;
 
 namespace Config {
     extern CColor panelBaseColor;
+    extern CColor panelBorderColor;
     extern CColor workspaceActiveBackground;
     extern CColor workspaceInactiveBackground;
     extern CColor workspaceActiveBorder;
     extern CColor workspaceInactiveBorder;
 
     extern int panelHeight;
+    extern int panelBorderWidth;
     extern int workspaceMargin;
     extern int reservedArea;
     extern int workspaceBorderSize;
