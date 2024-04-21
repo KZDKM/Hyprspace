@@ -104,7 +104,7 @@ void CHyprspaceWidget::draw() {
     if (Config::onBottom) widgetBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
 
     // Border box
-    CBox borderBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelBorderWidth) * owner->scale};
+    CBox borderBox = {owner->vecPosition.x, owner->vecPosition.y + owner.vecTransformedSize.y - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelBorderWidth) * owner->scale};
 
     g_pHyprRenderer->damageBox(&widgetBox);
     g_pHyprRenderer->damageBox(&borderBox);
@@ -118,7 +118,7 @@ void CHyprspaceWidget::draw() {
 
     g_pHyprOpenGL->m_RenderData.clipBox = CBox({0, 0}, owner->vecTransformedSize);
     g_pHyprOpenGL->renderRectWithBlur(&widgetBox, Config::panelBaseColor);
-    g_pHyprOpenGL->renderRectWithBlur(&borderBox, Config::panelBaseColor);
+    g_pHyprOpenGL->renderRectWithBlur(&borderBox, Config::panelBorderColor);
 
     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
 
