@@ -101,12 +101,13 @@ void CHyprspaceWidget::draw() {
 	// Background box
     CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale}; //TODO: update size on monitor change
 
-    if (Config::onBottom) widgetBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
-
     // Border box
     CBox borderBox = {owner->vecPosition.x, owner->vecPosition.y + Config::panelHeight - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelBorderWidth) * owner->scale};
     
-
+    if (Config::onBottom) {
+        widgetBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
+        borderBox = {owner->vecPosition.x, owner->vecPosition.y - Config::panelHeight + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset.value(), owner->vecTransformedSize.x, (Config::panelBorderWidth) * owner->scale};
+    }
     g_pHyprRenderer->damageBox(&widgetBox);
     g_pHyprRenderer->damageBox(&borderBox);
 

@@ -28,7 +28,7 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
   - [ ] Styling
     - [x] Panel background
     - [x] Workspace background & border
-    - [ ] Panel on Bottom
+    - [x] Panel on Bottom
     - [ ] Vertical layout (on left / right)
     - [x] Panel top padding (reserved for bar / notch)
     - [x] Panel border (color / thickness)
@@ -119,6 +119,7 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 ### Styling
 #### Colors
 - `plugin:overview:panelColor`
+- `plugin:overview:panelBorderColor`
 - `plugin:overview:workspaceActiveBackground`
 - `plugin:overview:workspaceInactiveBackground`
 - `plugin:overview:workspaceActiveBorder`
@@ -126,6 +127,7 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - `plugin:overview:dragAlpha` overrides the alpha of window when dragged in overview (0 - 1, 0 = transparent, 1 = opaque)
 #### Layout
 - `plugin:overview:panelHeight`
+- `plugin:overview:panelBorderWidth`
 - `plugin:overview:onBottom` whether if panel should be on bottom instead of top
 - `plugin:overview:workspaceMargin` spacing of workspaces with eachother and the edge of the panel
 - `plugin:overview:reservedArea` padding on top of the panel, for Macbook camera notch
