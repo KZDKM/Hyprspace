@@ -3,11 +3,6 @@
 #include "Overview.hpp"
 #include "Globals.hpp"
 
-CFunctionHook* 
-WorkspaceWindowsHook;
-CFunctionHook* getWorkspaceRuleForHook;
-CFunctionHook* glTexParameteriHook;
-
 void* pMouseKeybind;
 void* pRenderWindow;
 void* pRenderLayer;
