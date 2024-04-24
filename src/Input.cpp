@@ -124,7 +124,7 @@ bool CHyprspaceWidget::updateSwipe(wlr_pointer_swipe_update_event* e) {
 
     // restrict swipe to a axis with the most significant movement to prevent misinput
     if (abs(e->dx) / abs(e->dy) < 1) {
-        if (swiping && e->fingers == fingers) {
+        if (swiping && e->fingers == (uint32_t)fingers) {
 
             float currentScaling = g_pCompositor->getMonitorFromCursor()->vecSize.x / distance;
 
@@ -145,7 +145,7 @@ bool CHyprspaceWidget::updateSwipe(wlr_pointer_swipe_update_event* e) {
     }
     else {
         // scroll through panel
-        if (e->fingers == fingers && active) {
+        if (e->fingers == (uint32_t)fingers && active) {
             const auto owner = getOwner();
             CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
             if (Config::onBottom) widgetBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset.value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};

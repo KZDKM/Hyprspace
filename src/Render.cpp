@@ -133,7 +133,7 @@ void CHyprspaceWidget::draw() {
     }
 
     // find the lowest and highest workspace id to determine which empty workspaces to insert
-    int lowestID = INFINITY;
+    int lowestID = INT_MAX;
     int highestID = 1;
     for (auto& ws : g_pCompositor->m_vWorkspaces) {
         if (!ws) continue;

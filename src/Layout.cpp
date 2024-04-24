@@ -38,7 +38,7 @@ void CHyprspaceWidget::updateLayout() {
             pMonitor->vecReservedTopLeft.y = currentHeight;
         else
             pMonitor->vecReservedBottomRight.y = currentHeight;
-            const auto curRules = std::to_string(pMonitor->activeWorkspaceID()) + ", gapsin:" + std::to_string(Config::gapsIn) + ", gapsout:" + std::to_string(Config::gapsOut);
+        const auto curRules = std::to_string(pMonitor->activeWorkspaceID()) + ", gapsin:" + std::to_string(Config::gapsIn) + ", gapsout:" + std::to_string(Config::gapsOut);
         if (Config::overrideGaps) g_pConfigManager->handleWorkspaceRules("", curRules);
         g_pLayoutManager->getCurrentLayout()->recalculateMonitor(ownerID);
 

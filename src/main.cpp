@@ -231,7 +231,7 @@ void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
 // atm this is only for ESC to exit
 void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<wlr_keyboard_key_event*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["event"]);
-    const auto k = std::any_cast<SKeyboard*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["keyboard"]);
+    //const auto k = std::any_cast<SKeyboard*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["keyboard"]);
 
     if (e->keycode == KEY_ESC) {
         const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
