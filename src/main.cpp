@@ -73,7 +73,7 @@ std::shared_ptr<CHyprspaceWidget> getWidgetForMonitor(CMonitor* pMonitor) {
 // used to enforce the layout
 void refreshWidgets() {
     for (auto& widget : g_overviewWidgets) {
-        if (widget.get())
+        if (widget != nullptr)
             if (widget->isActive())
                 widget->show();
     }
@@ -99,7 +99,7 @@ void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
 
 
         const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_RenderData.pMonitor);
-        if (widget.get())
+        if (widget != nullptr)
             if (widget->getOwner()) {
                 //widget->draw();
                 if (g_pInputManager->currentlyDraggedWindow && widget->isActive()) {
@@ -116,7 +116,7 @@ void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
 
         const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_RenderData.pMonitor);
 
-        if (widget.get())
+        if (widget != nullptr)
             if (widget->getOwner()) {
                 widget->draw();
                 if (g_oAlpha != -1 && g_pInputManager->currentlyDraggedWindow) {
@@ -140,7 +140,7 @@ void onWorkspaceChange(void* thisptr, SCallbackInfo& info, std::any args) {
     if (!pWorkspace) return;
 
     auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromID(pWorkspace->m_iMonitorID));
-    if (widget.get())
+    if (widget != nullptr)
         if (widget->isActive())
             widget->show();
 }
@@ -193,7 +193,7 @@ void onSwipeBegin(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<wlr_pointer_swipe_begin_event*>(args);
 
     const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
-    if (widget.get())
+    if (widget != nullptr)
         widget->beginSwipe(e);
 
     // end other widget swipe
@@ -212,7 +212,7 @@ void onSwipeUpdate(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<wlr_pointer_swipe_update_event*>(args);
 
     const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
-    if (widget.get())
+    if (widget != nullptr)
         info.cancelled = !widget->updateSwipe(e);
 }
 
@@ -224,7 +224,7 @@ void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<wlr_pointer_swipe_end_event*>(args);
 
     const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
-    if (widget.get())
+    if (widget != nullptr)
         widget->endSwipe(e);
 }
 
@@ -235,7 +235,7 @@ void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
 
     if (e->keycode == KEY_ESC) {
         const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
-        if (widget.get())
+        if (widget != nullptr)
             if (widget->isActive()) {
                 widget->hide();
                 info.cancelled = true;
@@ -268,14 +268,14 @@ void dispatchToggleOverview(std::string arg) {
         if (arg.contains("all")) {
             if (widget->isActive()) {
                 for (auto& widget : g_overviewWidgets) {
-                    if (widget.get())
+                    if (widget != nullptr)
                         if (widget->isActive()) 
                             widget->hide();
                 }
             }
             else {
                 for (auto& widget : g_overviewWidgets) {
-                    if (widget.get())
+                    if (widget != nullptr)
                         if (!widget->isActive()) 
                             widget->show();
                 }

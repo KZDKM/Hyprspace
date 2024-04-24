@@ -29,12 +29,12 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
     auto targetWorkspace = g_pCompositor->getWorkspaceByID(targetWorkspaceID);
 
     // create new workspace
-    if (!targetWorkspace.get() && targetWorkspaceID >= SPECIAL_WORKSPACE_START) {
+    if (targetWorkspace == nullptr && targetWorkspaceID >= SPECIAL_WORKSPACE_START) {
         targetWorkspace = g_pCompositor->createNewWorkspace(targetWorkspaceID, getOwner()->ID);
     }
 
     // if the cursor is hovering over workspace, clicking should switch workspace instead of starting window drag
-    if (Config::autoDrag && (!targetWorkspace.get() || !pressed)) {
+    if (Config::autoDrag && (targetWorkspace == nullptr || !pressed)) {
         // when overview is active, always drag windows on mouse click
         if (g_pInputManager->currentlyDraggedWindow) {
             g_pLayoutManager->getCurrentLayout()->onEndDragWindow();
@@ -47,7 +47,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
     Return = false;
 
     // release window on workspace to drop it in
-    if (targetWindow && targetWorkspace.get() && !pressed) {
+    if (targetWindow && targetWorkspace != nullptr && !pressed) {
         g_pCompositor->moveWindowToWorkspaceSafe(targetWindow, targetWorkspace);
         if (targetWindow->m_bIsFloating) {
             auto targetPos = getOwner()->vecPosition + (getOwner()->vecSize / 2.) - (targetWindow->m_vReportedSize / 2.);
@@ -70,7 +70,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
         if (Config::exitOnSwitch && active) hide();
     }
     // click elsewhere to exit overview
-    else if (Config::exitOnClick && !targetWorkspace.get() && active && couldExit && !pressed) hide();
+    else if (Config::exitOnClick && targetWorkspace == nullptr && active && couldExit && !pressed) hide();
 
     return Return;
 }
