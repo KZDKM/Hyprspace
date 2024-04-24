@@ -57,8 +57,8 @@ public:
     // reserves area on owner monitor
     void updateLayout();
 
-    bool buttonEvent(bool);
-    bool axisEvent(double);
+    bool buttonEvent(bool, Vector2D coords);
+    bool axisEvent(double, Vector2D coords);
 
     bool isSwiping();
 

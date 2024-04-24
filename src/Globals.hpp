@@ -3,7 +3,6 @@
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/config/ConfigValue.hpp>
-#include <numeric>
 
 inline HANDLE pHandle = NULL;
 
