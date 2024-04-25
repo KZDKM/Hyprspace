@@ -5,6 +5,9 @@ authors = ["KZdkm"]
 [Hyprspace]
 description = "Workspace overview"
 authors = ["KZdkm"]
+commit_pins = [
+    [ "fe7b748eb668136dd0558b7c8279bfcd7ab4d759", "a44d834af279f233a269d065d2e14fe4101d6f41" ]
+]
 output = "Hyprspace.so"
 build = [
     "make all"
