@@ -54,6 +54,22 @@ float Config::dragAlpha = 0.2;
 
 int hyprsplitNumWorkspaces = -1;
 
+// casual breaking change upstream screwed the entire thing up
+// API stability my ass
+std::shared_ptr<HOOK_CALLBACK_FN> g_pRenderHook;
+std::shared_ptr<HOOK_CALLBACK_FN> g_pConfigReloadHook;
+std::shared_ptr<HOOK_CALLBACK_FN> g_pOpenLayerHook;
+std::shared_ptr<HOOK_CALLBACK_FN> g_pCloseLayerHook;
+std::shared_ptr<HOOK_CALLBACK_FN> g_pMouseButtonHook;
+std::shared_ptr<HOOK_CALLBACK_FN> g_pMouseAxisHook;
+std::shared_ptr<HOOK_CALLBACK_FN> g_pTouchDownHook;
+std::shared_ptr<HOOK_CALLBACK_FN> g_pTouchUpHook;
+std::shared_ptr<HOOK_CALLBACK_FN> g_pSwipeBeginHook;
+std::shared_ptr<HOOK_CALLBACK_FN> g_pSwipeUpdateHook;
+std::shared_ptr<HOOK_CALLBACK_FN> g_pSwipeEndHook;
+std::shared_ptr<HOOK_CALLBACK_FN> g_pKeyPressHook;
+std::shared_ptr<HOOK_CALLBACK_FN> g_pSwitchWorkspaceHook;
+std::shared_ptr<HOOK_CALLBACK_FN> g_pAddMonitorHook;
 
 APICALL EXPORT std::string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;
@@ -435,36 +451,36 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:overrideAnimSpeed", Hyprlang::FLOAT{0.0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:dragAlpha", Hyprlang::FLOAT{0.2});
 
-    HyprlandAPI::registerCallbackDynamic(pHandle, "configReloaded", [&] (void* thisptr, SCallbackInfo& info, std::any data) { reloadConfig(); });
+    g_pConfigReloadHook = HyprlandAPI::registerCallbackDynamic(pHandle, "configReloaded", [&] (void* thisptr, SCallbackInfo& info, std::any data) { reloadConfig(); });
     HyprlandAPI::reloadConfig();
 
     HyprlandAPI::addDispatcher(pHandle, "overview:toggle", dispatchToggleOverview);
     HyprlandAPI::addDispatcher(pHandle, "overview:open", dispatchOpenOverview);
     HyprlandAPI::addDispatcher(pHandle, "overview:close", dispatchCloseOverview);
 
-    HyprlandAPI::registerCallbackDynamic(pHandle, "render", onRender);
+    g_pRenderHook = HyprlandAPI::registerCallbackDynamic(pHandle, "render", onRender);
 
     // refresh on layer change
-    HyprlandAPI::registerCallbackDynamic(pHandle, "openLayer", [&] (void* thisptr, SCallbackInfo& info, std::any data) { g_layoutNeedsRefresh = true; });
-    HyprlandAPI::registerCallbackDynamic(pHandle, "closeLayer", [&] (void* thisptr, SCallbackInfo& info, std::any data) { g_layoutNeedsRefresh = true; });
+    g_pOpenLayerHook = HyprlandAPI::registerCallbackDynamic(pHandle, "openLayer", [&] (void* thisptr, SCallbackInfo& info, std::any data) { g_layoutNeedsRefresh = true; });
+    g_pCloseLayerHook = HyprlandAPI::registerCallbackDynamic(pHandle, "closeLayer", [&] (void* thisptr, SCallbackInfo& info, std::any data) { g_layoutNeedsRefresh = true; });
 
 
     // CKeybindManager::mouse (names too generic bruh) (this is a private function btw)
     pMouseKeybind = findFunctionBySymbol(pHandle, "mouse", "CKeybindManager::mouse");
 
-    HyprlandAPI::registerCallbackDynamic(pHandle, "mouseButton", onMouseButton);
-    HyprlandAPI::registerCallbackDynamic(pHandle, "mouseAxis", onMouseAxis);
+    g_pMouseButtonHook = HyprlandAPI::registerCallbackDynamic(pHandle, "mouseButton", onMouseButton);
+    g_pMouseAxisHook = HyprlandAPI::registerCallbackDynamic(pHandle, "mouseAxis", onMouseAxis);
 
-    HyprlandAPI::registerCallbackDynamic(pHandle, "touchDown", onTouchDown);
-    HyprlandAPI::registerCallbackDynamic(pHandle, "touchUp", onTouchUp);
+    g_pTouchDownHook = HyprlandAPI::registerCallbackDynamic(pHandle, "touchDown", onTouchDown);
+    g_pTouchUpHook = HyprlandAPI::registerCallbackDynamic(pHandle, "touchUp", onTouchUp);
 
-    HyprlandAPI::registerCallbackDynamic(pHandle, "swipeBegin", onSwipeBegin);
-    HyprlandAPI::registerCallbackDynamic(pHandle, "swipeUpdate", onSwipeUpdate);
-    HyprlandAPI::registerCallbackDynamic(pHandle, "swipeEnd", onSwipeEnd);
+    g_pSwipeBeginHook = HyprlandAPI::registerCallbackDynamic(pHandle, "swipeBegin", onSwipeBegin);
+    g_pSwipeUpdateHook = HyprlandAPI::registerCallbackDynamic(pHandle, "swipeUpdate", onSwipeUpdate);
+    g_pSwipeEndHook = HyprlandAPI::registerCallbackDynamic(pHandle, "swipeEnd", onSwipeEnd);
 
-    HyprlandAPI::registerCallbackDynamic(pHandle, "keyPress", onKeyPress);
+    g_pKeyPressHook = HyprlandAPI::registerCallbackDynamic(pHandle, "keyPress", onKeyPress);
 
-    HyprlandAPI::registerCallbackDynamic(pHandle, "workspace", onWorkspaceChange);
+    g_pSwitchWorkspaceHook = HyprlandAPI::registerCallbackDynamic(pHandle, "workspace", onWorkspaceChange);
 
     // CHyprRenderer::renderWindow
     auto funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWindow");
@@ -475,7 +491,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     pRenderLayer = funcSearch[0].address;
 
     registerMonitors();
-    HyprlandAPI::registerCallbackDynamic(pHandle, "monitorAdded", [&] (void* thisptr, SCallbackInfo& info, std::any data) { registerMonitors(); });
+    g_pAddMonitorHook = HyprlandAPI::registerCallbackDynamic(pHandle, "monitorAdded", [&] (void* thisptr, SCallbackInfo& info, std::any data) { registerMonitors(); });
 
     return {"Hyprspace", "Workspace overview", "KZdkm", "0.1"};
 }
