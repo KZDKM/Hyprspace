@@ -1,5 +1,6 @@
 #include <hyprland/src/plugins/PluginSystem.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
+#include <hyprland/src/devices/IKeyboard.hpp>
 #include "Overview.hpp"
 #include "Globals.hpp"
 
@@ -118,9 +119,11 @@ void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
         if (widget != nullptr)
             if (widget->getOwner()) {
                 //widget->draw();
-                if (g_pInputManager->currentlyDraggedWindow && widget->isActive()) {
-                    g_oAlpha = g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.goal();
-                    g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(0); // HACK: hide dragged window for the actual pass
+                if (const auto curWindow = g_pInputManager->currentlyDraggedWindow.lock()) {
+                    if (widget->isActive()) {
+                        g_oAlpha = curWindow->m_fActiveInactiveAlpha.goal();
+                        curWindow->m_fActiveInactiveAlpha.setValueAndWarp(0); // HACK: hide dragged window for the actual pass
+                    }
                 }
                 else g_oAlpha = -1;
             }
@@ -135,12 +138,14 @@ void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
         if (widget != nullptr)
             if (widget->getOwner()) {
                 widget->draw();
-                if (g_oAlpha != -1 && g_pInputManager->currentlyDraggedWindow) {
-                    g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(Config::dragAlpha);
-                    timespec time;
-                    clock_gettime(CLOCK_MONOTONIC, &time);
-                    (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), g_pInputManager->currentlyDraggedWindow, widget->getOwner(), &time, true, RENDER_PASS_MAIN, false, false);
-                    g_pInputManager->currentlyDraggedWindow->m_fActiveInactiveAlpha.setValueAndWarp(g_oAlpha);
+                if (g_oAlpha != -1) {
+                    if (const auto curWindow = g_pInputManager->currentlyDraggedWindow.lock()) {
+                        curWindow->m_fActiveInactiveAlpha.setValueAndWarp(Config::dragAlpha);
+                        timespec time;
+                        clock_gettime(CLOCK_MONOTONIC, &time);
+                        (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), curWindow, widget->getOwner(), &time, true, RENDER_PASS_MAIN, false, false);
+                        curWindow->m_fActiveInactiveAlpha.setValueAndWarp(g_oAlpha);
+                    }
                 }
                 g_oAlpha = -1;
             }
@@ -246,10 +251,10 @@ void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
 
 // atm this is only for ESC to exit
 void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
-    const auto e = std::any_cast<wlr_keyboard_key_event*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["event"]);
+    const auto e = std::any_cast<IKeyboard::SKeyEvent>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["event"]);
     //const auto k = std::any_cast<SKeyboard*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["keyboard"]);
 
-    if (e->keycode == KEY_ESC) {
+    if (e.keycode == KEY_ESC) {
         const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
         if (widget != nullptr)
             if (widget->isActive()) {
@@ -285,18 +290,19 @@ void dispatchToggleOverview(std::string arg) {
             if (widget->isActive()) {
                 for (auto& widget : g_overviewWidgets) {
                     if (widget != nullptr)
-                        if (widget->isActive()) 
+                        if (widget->isActive())
                             widget->hide();
                 }
             }
             else {
                 for (auto& widget : g_overviewWidgets) {
                     if (widget != nullptr)
-                        if (!widget->isActive()) 
+                        if (!widget->isActive())
                             widget->show();
                 }
             }
-        } else
+        }
+        else
             widget->isActive() ? widget->hide() : widget->show();
     }
 }

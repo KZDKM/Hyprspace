@@ -40,7 +40,7 @@ void CHyprspaceWidget::show() {
                     // fixes youtube fullscreen not restoring properly
                     if (ws->m_efFullscreenMode == FULLSCREEN_FULL) w->m_bFakeFullscreenState = true;
                     // we use the getWindowFromHandle function to prevent dangling pointers
-                    prevFullscreen.emplace_back(std::make_tuple((uint32_t)(((uint64_t)w) & 0xFFFFFFFF), ws->m_efFullscreenMode));
+                    prevFullscreen.emplace_back(std::make_tuple((uint32_t)(((uint64_t)w.get()) & 0xFFFFFFFF), ws->m_efFullscreenMode));
                     g_pCompositor->setWindowFullscreen(w, false);
                 }
             }
@@ -83,7 +83,7 @@ void CHyprspaceWidget::hide() {
     // restore layer state
     for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
         if (!ls->readyToDelete && ls->mapped && ls->fadingOut) {
-            auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls.get();});
+            auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls;});
             if (oAlpha != oLayerAlpha.end()) {
                 ls->fadingOut = false;
                 ls->alpha = std::get<1>(*oAlpha);
@@ -93,7 +93,7 @@ void CHyprspaceWidget::hide() {
     }
     for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
         if (!ls->readyToDelete && ls->mapped && ls->fadingOut) {
-            auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls.get();});
+            auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls;});
             if (oAlpha != oLayerAlpha.end()) {
                 ls->fadingOut = false;
                 ls->alpha = std::get<1>(*oAlpha);
