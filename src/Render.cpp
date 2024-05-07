@@ -115,8 +115,8 @@ void CHyprspaceWidget::draw() {
     // Panel Border
      if (Config::panelBorderWidth > 0) {
         // Border box
-        CBox borderBox = {owner->vecPosition.x, owner->vecPosition.y + Config::panelHeight + Config::reservedArea - curYOffset.value(), owner->vecTransformedSize.x, (Config::panelBorderWidth) * owner->scale};
-        if (Config::onBottom) borderBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset.value(), owner->vecTransformedSize.x, (Config::panelBorderWidth) * owner->scale};
+        CBox borderBox = {owner->vecPosition.x, owner->vecPosition.y + (Config::panelHeight + Config::reservedArea)*owner->scale - curYOffset.value(), owner->vecTransformedSize.x, Config::panelBorderWidth};
+        if (Config::onBottom) borderBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset.value(), owner->vecTransformedSize.x, Config::panelBorderWidth};
 
         g_pHyprRenderer->damageBox(&borderBox);
         borderBox.x -= owner->vecPosition.x;
