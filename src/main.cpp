@@ -111,18 +111,6 @@ void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
             refreshWidgets();
             g_layoutNeedsRefresh = false;
         }
-
-        // since 0.39.1, hyprland would no longer rerender when the damage is empty
-        // this causes overview not showing when no other clients are damaging the monitor
-        // RENDER_PRE is still before begin() is called so renderdata does not contain monitor...
-        // hacky fix
-        for (auto m : g_pCompositor->m_vMonitors) {
-            const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_RenderData.pMonitor);
-            if (widget != nullptr)
-                if (widget->isActive()) {
-                    g_pHyprRenderer->damageMonitor(widget->getOwner());
-                }
-        }
     }
     else if (renderStage == eRenderStage::RENDER_PRE_WINDOWS) {
 
