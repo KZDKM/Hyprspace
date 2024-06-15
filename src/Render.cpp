@@ -50,7 +50,7 @@ void renderWindowStub(PHLWINDOW pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorks
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
 }
 
-void renderLayerStub(PHLLS pLayer, CMonitor* pMonitor, CBox rectOverride, timespec* time) {
+void renderLayerStub(Hyprutils::Memory::CWeakPointer<CLayerSurface> pLayer, CMonitor* pMonitor, CBox rectOverride, timespec* time) {
     if (!pLayer || !pMonitor || !time) return;
 
     if (!pLayer->mapped || pLayer->readyToDelete || !pLayer->layerSurface) return;
@@ -209,13 +209,13 @@ void CHyprspaceWidget::draw() {
 
         // background and bottom layers
         if (!Config::hideBackgroundLayers) {
-            for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND]) {
+            for (auto& ls : owner->m_aLayerSurfaceLayers[0]) {
                 CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
                 renderLayerStub(ls, owner, layerBox, &time);
                 g_pHyprOpenGL->m_RenderData.clipBox = CBox();
             }
-            for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM]) {
+            for (auto& ls : owner->m_aLayerSurfaceLayers[1]) {
                 CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
                 g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
                 renderLayerStub(ls, owner, layerBox, &time);
@@ -283,7 +283,7 @@ void CHyprspaceWidget::draw() {
         if (owner->activeWorkspace != ws || !Config::hideRealLayers) {
             // this layer is hidden for real workspace when panel is displayed
             if (!Config::hideTopLayers)
-                for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
+                for (auto& ls : owner->m_aLayerSurfaceLayers[2]) {
                     CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
                     renderLayerStub(ls, owner, layerBox, &time);
@@ -291,7 +291,7 @@ void CHyprspaceWidget::draw() {
                 }
 
             if (!Config::hideOverlayLayers)
-                for (auto& ls : owner->m_aLayerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
+                for (auto& ls : owner->m_aLayerSurfaceLayers[3]) {
                     CBox layerBox = {curWorkspaceBox.pos() + (ls->realPosition.value() - owner->vecPosition) * monitorSizeScaleFactor, ls->realSize.value() * monitorSizeScaleFactor};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
                     renderLayerStub(ls, owner, layerBox, &time);

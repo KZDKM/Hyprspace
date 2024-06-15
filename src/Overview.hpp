@@ -19,7 +19,7 @@ class CHyprspaceWidget {
     std::vector<std::tuple<uint32_t, eFullscreenMode>> prevFullscreen;
 
     // for storing the layer alpha values prior to overview activation (which sets all panel to transparent when configured)
-    std::vector<std::tuple<PHLLS, float>> oLayerAlpha;
+    std::vector<std::tuple<Hyprutils::Memory::CWeakPointer<CLayerSurface>, float>> oLayerAlpha;
 
     // for click-to-exit
     std::chrono::system_clock::time_point lastPressedTime = std::chrono::high_resolution_clock::now();

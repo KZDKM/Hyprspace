@@ -55,22 +55,20 @@ float Config::dragAlpha = 0.2;
 
 int hyprsplitNumWorkspaces = -1;
 
-// casual breaking change upstream screwed the entire thing up
-// API stability my ass
-std::shared_ptr<HOOK_CALLBACK_FN> g_pRenderHook;
-std::shared_ptr<HOOK_CALLBACK_FN> g_pConfigReloadHook;
-std::shared_ptr<HOOK_CALLBACK_FN> g_pOpenLayerHook;
-std::shared_ptr<HOOK_CALLBACK_FN> g_pCloseLayerHook;
-std::shared_ptr<HOOK_CALLBACK_FN> g_pMouseButtonHook;
-std::shared_ptr<HOOK_CALLBACK_FN> g_pMouseAxisHook;
-std::shared_ptr<HOOK_CALLBACK_FN> g_pTouchDownHook;
-std::shared_ptr<HOOK_CALLBACK_FN> g_pTouchUpHook;
-std::shared_ptr<HOOK_CALLBACK_FN> g_pSwipeBeginHook;
-std::shared_ptr<HOOK_CALLBACK_FN> g_pSwipeUpdateHook;
-std::shared_ptr<HOOK_CALLBACK_FN> g_pSwipeEndHook;
-std::shared_ptr<HOOK_CALLBACK_FN> g_pKeyPressHook;
-std::shared_ptr<HOOK_CALLBACK_FN> g_pSwitchWorkspaceHook;
-std::shared_ptr<HOOK_CALLBACK_FN> g_pAddMonitorHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pRenderHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pConfigReloadHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pOpenLayerHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pCloseLayerHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pMouseButtonHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pMouseAxisHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pTouchDownHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pTouchUpHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pSwipeBeginHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pSwipeUpdateHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pSwipeEndHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pKeyPressHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pSwitchWorkspaceHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pAddMonitorHook;
 
 APICALL EXPORT std::string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;

@@ -1,5 +1,5 @@
-CXXFLAGS=-shared -fPIC --no-gnu-unique -Wall -g -DWLR_USE_UNSTABLE -std=c++23 -O2
-INCLUDES = `pkg-config --cflags pixman-1 libdrm hyprland`
+CXXFLAGS=-shared -fPIC --no-gnu-unique -Wall -g -DWLR_USE_UNSTABLE -std=c++2b -O2
+INCLUDES = `pkg-config --cflags pixman-1 libdrm hyprland pangocairo libinput libudev wayland-server xkbcommon`
 SRC = $(wildcard src/*.cpp)
 TARGET = Hyprspace.so
 
