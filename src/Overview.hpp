@@ -62,8 +62,8 @@ public:
 
     bool isSwiping();
 
-    bool beginSwipe(wlr_pointer_swipe_begin_event*);
-    bool updateSwipe(wlr_pointer_swipe_update_event*);
-    bool endSwipe(wlr_pointer_swipe_end_event*);
+    bool beginSwipe(IPointer::SSwipeBeginEvent);
+    bool updateSwipe(IPointer::SSwipeUpdateEvent);
+    bool endSwipe(IPointer::SSwipeEndEvent);
 
 };

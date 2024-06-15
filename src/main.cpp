@@ -167,12 +167,11 @@ void onWorkspaceChange(void* thisptr, SCallbackInfo& info, std::any args) {
 // event hook for click and drag interaction
 void onMouseButton(void* thisptr, SCallbackInfo& info, std::any args) {
 
-    const auto e = std::any_cast<wlr_pointer_button_event*>(args);
-    if (!e) return;
+    const auto e = std::any_cast<IPointer::SButtonEvent>(args);
 
-    if (e->button != BTN_LEFT) return;
+    if (e.button != BTN_LEFT) return;
 
-    const auto pressed = e->state == WL_POINTER_BUTTON_STATE_PRESSED;
+    const auto pressed = e.state == WL_POINTER_BUTTON_STATE_PRESSED;
     const auto pMonitor = g_pCompositor->getMonitorFromCursor();
     if (pMonitor) {
         const auto widget = getWidgetForMonitor(pMonitor);
@@ -188,16 +187,15 @@ void onMouseButton(void* thisptr, SCallbackInfo& info, std::any args) {
 // event hook for scrolling through panel and workspaces
 void onMouseAxis(void* thisptr, SCallbackInfo& info, std::any args) {
 
-    const auto e = std::any_cast<wlr_pointer_axis_event*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["event"]);
-    if (!e) return;
+    const auto e = std::any_cast<IPointer::SAxisEvent>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["event"]);
 
     const auto pMonitor = g_pCompositor->getMonitorFromCursor();
     if (pMonitor) {
         const auto widget = getWidgetForMonitor(pMonitor);
         if (widget) {
             if (widget->isActive()) {
-                if (e->source == WL_POINTER_AXIS_SOURCE_WHEEL && e->orientation == WL_POINTER_AXIS_VERTICAL_SCROLL)
-                    info.cancelled = !widget->axisEvent(e->delta, g_pInputManager->getMouseCoordsInternal());
+                if (e.source == WL_POINTER_AXIS_SOURCE_WHEEL)
+                    info.cancelled = !widget->axisEvent(e.delta, g_pInputManager->getMouseCoordsInternal());
             }
         }
     }
@@ -209,7 +207,7 @@ void onSwipeBegin(void* thisptr, SCallbackInfo& info, std::any args) {
 
     if (Config::disableGestures) return;
 
-    const auto e = std::any_cast<wlr_pointer_swipe_begin_event*>(args);
+    const auto e = std::any_cast<IPointer::SSwipeBeginEvent>(args);
 
     const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
     if (widget != nullptr)
@@ -218,7 +216,9 @@ void onSwipeBegin(void* thisptr, SCallbackInfo& info, std::any args) {
     // end other widget swipe
     for (auto& w : g_overviewWidgets) {
         if (w != widget && w->isSwiping()) {
-            w->endSwipe(0);
+            IPointer::SSwipeEndEvent dummy;
+            dummy.cancelled = true;
+            w->endSwipe(dummy);
         }
     }
 }
@@ -228,7 +228,7 @@ void onSwipeUpdate(void* thisptr, SCallbackInfo& info, std::any args) {
 
     if (Config::disableGestures) return;
 
-    const auto e = std::any_cast<wlr_pointer_swipe_update_event*>(args);
+    const auto e = std::any_cast<IPointer::SSwipeUpdateEvent>(args);
 
     const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
     if (widget != nullptr)
@@ -240,7 +240,7 @@ void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
 
     if (Config::disableGestures) return;
 
-    const auto e = std::any_cast<wlr_pointer_swipe_end_event*>(args);
+    const auto e = std::any_cast<IPointer::SSwipeEndEvent>(args);
 
     const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
     if (widget != nullptr)
@@ -387,7 +387,9 @@ void reloadConfig() {
     for (auto& widget : g_overviewWidgets) {
         widget->updateConfig();
         widget->hide();
-        widget->endSwipe(0);
+        IPointer::SSwipeEndEvent dummy;
+        dummy.cancelled = true;
+        widget->endSwipe(dummy);
     }
 
     Config::dragAlpha = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:dragAlpha")->getValue());
