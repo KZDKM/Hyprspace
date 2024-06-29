@@ -75,8 +75,10 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 {
   inputs = {
     # Hyprland is **such** eye candy
-    hyprland ={
-      url = "github:hyprwm/Hyprland";
+    hyprland = {
+      type = "git";
+      url = "https://github.com/hyprwm/Hyprland";
+      submodules = true;
       inputs.nixpkgs.follows = "nixpkgs";
     };
     Hyprspace = {
