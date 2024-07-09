@@ -88,16 +88,14 @@ bool CHyprspaceWidget::axisEvent(double delta, Vector2D coords) {
     // otherwise, scroll to switch active workspace
     else {
         if (delta < 0) {
-            std::string outName;
-            int wsID = getWorkspaceIDFromString("r-1", outName);
-            if (g_pCompositor->getWorkspaceByID(wsID) == nullptr) g_pCompositor->createNewWorkspace(wsID, ownerID);
-            getOwner()->changeWorkspace(wsID);
+            SWorkspaceIDName wsIDName = getWorkspaceIDNameFromString("r-1");
+            if (g_pCompositor->getWorkspaceByID(wsIDName.id) == nullptr) g_pCompositor->createNewWorkspace(wsIDName.id, ownerID);
+            getOwner()->changeWorkspace(wsIDName.id);
         }
         else {
-            std::string outName;
-            int wsID = getWorkspaceIDFromString("r+1", outName);
-            if (g_pCompositor->getWorkspaceByID(wsID) == nullptr) g_pCompositor->createNewWorkspace(wsID, ownerID);
-            getOwner()->changeWorkspace(wsID);
+            SWorkspaceIDName wsIDName = getWorkspaceIDNameFromString("r+1");
+            if (g_pCompositor->getWorkspaceByID(wsIDName.id) == nullptr) g_pCompositor->createNewWorkspace(wsIDName.id, ownerID);
+            getOwner()->changeWorkspace(wsIDName.id);
         }
     }
 
