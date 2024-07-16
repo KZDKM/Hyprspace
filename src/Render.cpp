@@ -299,7 +299,14 @@ void CHyprspaceWidget::draw() {
                 }
         }
 
-        // resets workspaceBox to absolute position for input detection
+        // Resets workspaceBox to scaled absolute coordinates for input detection.
+        // While rendering is done in pixel coordinates, input detection is done in
+        // scaled coordinates, taking into account monitor scaling.
+        // Since the monitor position is already given in scaled coordinates,
+        // we only have to scale all relative coordinates, then add them to the
+        // monitor position to get a scaled absolute position.
+        curWorkspaceBox.scale(1 / owner->scale);
+
         curWorkspaceBox.x += owner->vecPosition.x;
         curWorkspaceBox.y += owner->vecPosition.y;
         workspaceBoxes.emplace_back(std::make_tuple(wsID, curWorkspaceBox));

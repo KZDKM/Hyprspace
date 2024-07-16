@@ -20,7 +20,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
     for (auto& w : workspaceBoxes) {
         auto wi = std::get<0>(w);
         auto wb = std::get<1>(w);
-        if (wb.containsPoint(coords * getOwner()->scale)) {
+        if (wb.containsPoint(coords)) {
             targetWorkspaceID = wi;
             break;
         }
