@@ -108,7 +108,7 @@ void CHyprspaceWidget::hide() {
     for (auto& fs : prevFullscreen) {
         const auto w = g_pCompositor->getWindowFromHandle(std::get<0>(fs));
         const auto oFullscreenMode = std::get<1>(fs);
-        g_pCompositor->changeWindowFullscreenModeInternal(w, oFullscreenMode, true); 
+        g_pCompositor->setWindowFullscreenState(w, sFullscreenState(oFullscreenMode)); 
         if (oFullscreenMode == FSMODE_FULLSCREEN) w->m_bWantsInitialFullscreen = false;
     }
     prevFullscreen.clear();

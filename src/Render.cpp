@@ -8,7 +8,7 @@ void renderWindowStub(PHLWINDOW pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorks
     const auto oFullscreen = pWindow->m_sFullscreenState;
     const auto oRealPosition = pWindow->m_vRealPosition.value();
     const auto oSize = pWindow->m_vRealSize.value();
-    const auto oUseNearestNeighbor = pWindow->m_sWindowData.nearestNeighbor.value();
+    const auto oUseNearestNeighbor = pWindow->m_sWindowData.nearestNeighbor;
     const auto oPinned = pWindow->m_bPinned;
     const auto oDraggedWindow = g_pInputManager->currentlyDraggedWindow;
     const auto oDragMode = g_pInputManager->dragMode;
