@@ -5,7 +5,7 @@ class CHyprspaceWidget {
 
     bool active = false;
 
-    uint64_t ownerID;
+    int64_t ownerID;
 
     // animation override stuff
     SAnimationPropertyConfig curAnimationConfig;
