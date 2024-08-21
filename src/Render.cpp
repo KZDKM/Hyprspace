@@ -5,16 +5,16 @@ void renderWindowStub(PHLWINDOW pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorks
     if (!pWindow || !pMonitor || !pWorkspaceOverride || !time) return;
 
     const auto oWorkspace = pWindow->m_pWorkspace;
-    const auto oFullscreen = pWindow->m_bIsFullscreen;
+    const auto oFullscreen = pWindow->m_sFullscreenState;
     const auto oRealPosition = pWindow->m_vRealPosition.value();
     const auto oSize = pWindow->m_vRealSize.value();
-    const auto oUseNearestNeighbor = pWindow->m_sAdditionalConfigData.nearestNeighbor.toUnderlying();
+    const auto oUseNearestNeighbor = pWindow->m_sWindowData.nearestNeighbor;
     const auto oPinned = pWindow->m_bPinned;
     const auto oDraggedWindow = g_pInputManager->currentlyDraggedWindow;
     const auto oDragMode = g_pInputManager->dragMode;
     const auto oRenderModifEnable = g_pHyprOpenGL->m_RenderData.renderModif.enabled;
     const auto oFloating = pWindow->m_bIsFloating;
-    const auto oSpecialRounding = pWindow->m_sAdditionalConfigData.rounding;
+    const auto oSpecialRounding = pWindow->m_sWindowData.rounding;
 
     const float curScaling = rectOverride.w / (oSize.x * pMonitor->scale);
 
@@ -24,11 +24,11 @@ void renderWindowStub(PHLWINDOW pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorks
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
     pWindow->m_pWorkspace = pWorkspaceOverride;
-    pWindow->m_bIsFullscreen = false; // FIXME: no windows should be in fullscreen when overview is open, reject all fullscreen requests when active
-    pWindow->m_sAdditionalConfigData.nearestNeighbor = false; // FIX: this wont do, need to scale surface texture down properly so that windows arent shown as pixelated mess
+    pWindow->m_sFullscreenState = sFullscreenState(FSMODE_NONE); // FIXME: still do nothing, fullscreen requests not reject when overview active
+    pWindow->m_sWindowData.nearestNeighbor = false; // FIX: this wont do, need to scale surface texture down properly so that windows arent shown as pixelated mess
     pWindow->m_bIsFloating = false; // weird shit happened so hack fix
     pWindow->m_bPinned = true;
-    pWindow->m_sAdditionalConfigData.rounding = pWindow->rounding() * pMonitor->scale * curScaling;
+    pWindow->m_sWindowData.rounding = pWindow->rounding() * pMonitor->scale * curScaling;
     g_pInputManager->currentlyDraggedWindow = pWindow; // override these and force INTERACTIVERESIZEINPROGRESS = true to trick the renderer
     g_pInputManager->dragMode = MBIND_RESIZE;
 
@@ -38,11 +38,11 @@ void renderWindowStub(PHLWINDOW pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorks
 
     // restore values for normal window render
     pWindow->m_pWorkspace = oWorkspace;
-    pWindow->m_bIsFullscreen = oFullscreen;
-    pWindow->m_sAdditionalConfigData.nearestNeighbor = oUseNearestNeighbor;
+    pWindow->m_sFullscreenState = oFullscreen;
+    pWindow->m_sWindowData.nearestNeighbor = oUseNearestNeighbor;
     pWindow->m_bIsFloating = oFloating;
     pWindow->m_bPinned = oPinned;
-    pWindow->m_sAdditionalConfigData.rounding = oSpecialRounding;
+    pWindow->m_sWindowData.rounding = oSpecialRounding;
     g_pInputManager->currentlyDraggedWindow = oDraggedWindow;
     g_pInputManager->dragMode = oDragMode;
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = oRenderModifEnable;
