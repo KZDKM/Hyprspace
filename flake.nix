@@ -82,7 +82,3 @@
     formatter = perSystem (_: pkgs: pkgs.alejandra);
   };
 }
-
-      formatter = perSystem (_: pkgs: pkgs.alejandra);
-    };
-}
