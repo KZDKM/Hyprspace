@@ -46,7 +46,7 @@
           inherit version;
           src = ./.;
 
-          inherit (hyprlandPkg) nativeBuildInputs;
+          nativeBuildInputs = hyprlandPkg.nativeBuildInputs ++ [ pkgs.meson ];
           buildInputs = [hyprlandPkg] ++ hyprlandPkg.buildInputs;
           dontUseCmakeConfigure = true;
 
