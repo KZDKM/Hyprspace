@@ -1,5 +1,6 @@
 #include "Overview.hpp"
 #include "Globals.hpp"
+#include "src/render/OpenGL.hpp"
 
 void renderWindowStub(PHLWINDOW pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorkspaceOverride, CBox rectOverride, timespec* time) {
     if (!pWindow || !pMonitor || !pWorkspaceOverride || !time) return;
@@ -109,7 +110,12 @@ void CHyprspaceWidget::draw() {
     widgetBox.y -= owner->vecPosition.y;
     
     g_pHyprOpenGL->m_RenderData.clipBox = CBox({0, 0}, owner->vecTransformedSize);
-    g_pHyprOpenGL->renderRectWithBlur(&widgetBox, Config::panelBaseColor);
+
+    if (Config::disableBlur) {
+        g_pHyprOpenGL->renderRect(&widgetBox, Config::panelBaseColor);
+    } else {
+        g_pHyprOpenGL->renderRectWithBlur(&widgetBox, Config::panelBaseColor);
+    }
 
     // Panel Border
      if (Config::panelBorderWidth > 0) {
@@ -227,12 +233,8 @@ void CHyprspaceWidget::draw() {
         if (owner->activeWorkspace == ws && Config::affectStrut) {
             CBox miniPanelBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY, widgetBox.w * monitorSizeScaleFactor, widgetBox.h * monitorSizeScaleFactor};
             if (Config::onBottom) miniPanelBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY + workspaceBoxH - widgetBox.h * monitorSizeScaleFactor, widgetBox.w * monitorSizeScaleFactor, widgetBox.h * monitorSizeScaleFactor};
-            if (Config::disableBlur != false) {
-                g_pHyprOpenGL->renderRect(&miniPanelBox, CColor(0, 0, 0, 0));
-            } else {
-                g_pHyprOpenGL->renderRectWithBlur(&miniPanelBox, CColor(0, 0, 0, 0), 0, 1.f, false);
-
-            }
+            
+            g_pHyprOpenGL->renderRectWithBlur(&miniPanelBox, CColor(0, 0, 0, 0), 0, 1.f, false);
         }
 
         if (ws != nullptr) {
