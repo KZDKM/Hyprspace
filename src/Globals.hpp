@@ -27,6 +27,7 @@ namespace Config {
     extern int workspaceMargin;
     extern int reservedArea;
     extern int workspaceBorderSize;
+    extern bool disableBlur;
     extern bool adaptiveHeight; // TODO: implement
     extern bool centerAligned;
     extern bool onBottom; // TODO: implement
