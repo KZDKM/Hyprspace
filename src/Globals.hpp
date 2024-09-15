@@ -6,7 +6,7 @@
 
 inline HANDLE pHandle = NULL;
 
-typedef void (*tMouseKeybind)(std::string);
+typedef SDispatchResult (*tMouseKeybind)(std::string);
 extern void* pMouseKeybind;
 
 typedef void (*tRenderWindow)(void*, PHLWINDOW, CMonitor*, timespec*, bool, eRenderPassMode, bool, bool);
