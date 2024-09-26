@@ -1,5 +1,7 @@
 #include "Overview.hpp"
 #include "Globals.hpp"
+#include "src/desktop/Window.hpp"
+#include "src/desktop/Workspace.hpp"
 
 CHyprspaceWidget::CHyprspaceWidget(uint64_t inOwnerID) {
     ownerID = inOwnerID;
@@ -41,7 +43,7 @@ void CHyprspaceWidget::show() {
                     if (ws->m_efFullscreenMode == FSMODE_FULLSCREEN) w->m_bWantsInitialFullscreen = true;
                     // we use the getWindowFromHandle function to prevent dangling pointers
                     prevFullscreen.emplace_back(std::make_tuple((uint32_t)(((uint64_t)w.get()) & 0xFFFFFFFF), ws->m_efFullscreenMode));
-                    g_pCompositor->setWindowFullscreenState(w, sFullscreenState(FSMODE_NONE));
+                    g_pCompositor->setWindowFullscreenState(w, sFullscreenState{.internal = FSMODE_NONE, .client = FSMODE_NONE});
                 }
             }
         }
