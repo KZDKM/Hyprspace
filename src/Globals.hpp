@@ -9,9 +9,9 @@ inline HANDLE pHandle = NULL;
 typedef SDispatchResult (*tMouseKeybind)(std::string);
 extern void* pMouseKeybind;
 
-typedef void (*tRenderWindow)(void*, PHLWINDOW, CMonitor*, timespec*, bool, eRenderPassMode, bool, bool);
+typedef void (*tRenderWindow)(void*, PHLWINDOW, PHLMONITOR, timespec*, bool, eRenderPassMode, bool, bool);
 extern void* pRenderWindow;
-typedef void (*tRenderLayer)(void*, Hyprutils::Memory::CWeakPointer<CLayerSurface>, CMonitor*, timespec*, bool);
+typedef void (*tRenderLayer)(void*, Hyprutils::Memory::CWeakPointer<CLayerSurface>, PHLMONITOR, timespec*, bool);
 extern void* pRenderLayer;
 
 namespace Config {

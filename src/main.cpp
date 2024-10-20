@@ -75,7 +75,7 @@ APICALL EXPORT std::string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;
 }
 
-std::shared_ptr<CHyprspaceWidget> getWidgetForMonitor(CMonitor* pMonitor) {
+std::shared_ptr<CHyprspaceWidget> getWidgetForMonitor(PHLMONITORREF pMonitor) {
     for (auto& widget : g_overviewWidgets) {
         if (!widget) continue;
         if (!widget->getOwner()) continue;
@@ -407,7 +407,7 @@ void reloadConfig() {
 void registerMonitors() {
     // create a widget for each monitor
     for (auto& m : g_pCompositor->m_vMonitors) {
-        if (getWidgetForMonitor(m.get()) != nullptr) continue;
+        if (getWidgetForMonitor(m) != nullptr) continue;
         CHyprspaceWidget* widget = new CHyprspaceWidget(m->ID);
         g_overviewWidgets.emplace_back(widget);
     }

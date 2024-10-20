@@ -2,7 +2,7 @@
 #include "Globals.hpp"
 #include "src/render/OpenGL.hpp"
 
-void renderWindowStub(PHLWINDOW pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorkspaceOverride, CBox rectOverride, timespec* time) {
+void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWorkspaceOverride, CBox rectOverride, timespec* time) {
     if (!pWindow || !pMonitor || !pWorkspaceOverride || !time) return;
 
     const auto oWorkspace = pWindow->m_pWorkspace;
@@ -51,7 +51,7 @@ void renderWindowStub(PHLWINDOW pWindow, CMonitor* pMonitor, PHLWORKSPACE pWorks
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
 }
 
-void renderLayerStub(Hyprutils::Memory::CWeakPointer<CLayerSurface> pLayer, CMonitor* pMonitor, CBox rectOverride, timespec* time) {
+void renderLayerStub(Hyprutils::Memory::CWeakPointer<CLayerSurface> pLayer, PHLMONITOR pMonitor, CBox rectOverride, timespec* time) {
     if (!pLayer || !pMonitor || !time) return;
 
     if (!pLayer->mapped || pLayer->readyToDelete || !pLayer->layerSurface) return;
