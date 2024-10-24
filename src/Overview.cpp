@@ -22,7 +22,7 @@ CHyprspaceWidget::CHyprspaceWidget(uint64_t inOwnerID) {
 // TODO: implement deconstructor and delete widget on monitor unplug
 CHyprspaceWidget::~CHyprspaceWidget() {}
 
-CMonitor* CHyprspaceWidget::getOwner() {
+PHLMONITOR CHyprspaceWidget::getOwner() {
     return g_pCompositor->getMonitorFromID(ownerID);
 }
 

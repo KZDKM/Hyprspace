@@ -43,7 +43,7 @@ public:
     CHyprspaceWidget(uint64_t);
     ~CHyprspaceWidget();
 
-    CMonitor* getOwner();
+    PHLMONITOR getOwner();
     bool isActive();
 
     void show();
