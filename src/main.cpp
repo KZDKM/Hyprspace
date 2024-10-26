@@ -253,12 +253,14 @@ void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
     //const auto k = std::any_cast<SKeyboard*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["keyboard"]);
 
     if (e.keycode == KEY_ESC) {
-        const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
-        if (widget != nullptr)
-            if (widget->isActive()) {
-                widget->hide();
-                info.cancelled = true;
-            }
+        // close all panels
+        for (auto& widget : g_overviewWidgets) {
+            if (widget != nullptr)
+                if (widget->isActive()) {
+                    widget->hide();
+                    info.cancelled = true;
+                }
+        }
     }
 }
 
