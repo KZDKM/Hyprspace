@@ -270,7 +270,7 @@ void onTouchDown(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto widget = getWidgetForMonitor(targetMonitor);
     if (widget != nullptr && targetMonitor != nullptr)
         if (widget->isActive())
-            info.cancelled = !widget->buttonEvent(true, { targetMonitor->vecPosition.x + e->pos.x * targetMonitor->vecSize.x, targetMonitor->vecPosition.y + e->pos.y * targetMonitor->vecSize.y });
+            info.cancelled = !widget->buttonEvent(true, { targetMonitor->vecPosition.x + e.pos.x * targetMonitor->vecSize.x, targetMonitor->vecPosition.y + e.pos.y * targetMonitor->vecSize.y });
 }
 
 void onTouchUp(void* thisptr, SCallbackInfo& info, std::any args) {
