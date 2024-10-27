@@ -5,7 +5,7 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     if (!pWindow || !pMonitor || !pWorkspaceOverride || !time) return;
 
     const auto oWorkspace = pWindow->m_pWorkspace;
-    const auto oFullscreen = pWindow->m_sFullscreenState = {.internal = FSMODE_NONE};
+    const auto oFullscreen = pWindow->m_sFullscreenState;
     const auto oRealPosition = pWindow->m_vRealPosition.value();
     const auto oSize = pWindow->m_vRealSize.value();
     const auto oUseNearestNeighbor = pWindow->m_sWindowData.nearestNeighbor;
