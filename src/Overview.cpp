@@ -33,7 +33,7 @@ void CHyprspaceWidget::show() {
     if (prevFullscreen.empty()) {
         // unfullscreen all windows
         for (auto& ws : g_pCompositor->m_vWorkspaces) {
-            if (ws->m_pMonitor == ownerID) {
+            if (ws->m_pMonitor->ID == ownerID) {
                 const auto w = g_pCompositor->getFullscreenWindowOnWorkspace(ws->m_iID);
                 if (w != nullptr && ws->m_efFullscreenMode != FSMODE_NONE) {
                     // use fakefullscreenstate to preserve client's internal state
