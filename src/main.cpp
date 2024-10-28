@@ -158,7 +158,7 @@ void onWorkspaceChange(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto pWorkspace = std::any_cast<PHLWORKSPACE>(args);
     if (!pWorkspace) return;
 
-    auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromID(pWorkspace->m_iMonitorID));
+    auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromID(pWorkspace->m_pMonitor->ID));
     if (widget != nullptr)
         if (widget->isActive())
             widget->show();

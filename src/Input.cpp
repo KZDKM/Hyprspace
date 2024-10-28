@@ -55,7 +55,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
             targetWindow->m_vRealPosition = targetPos;
         }
         if (Config::switchOnDrop) {
-            g_pCompositor->getMonitorFromID(targetWorkspace->m_iMonitorID)->changeWorkspace(targetWorkspace->m_iID);
+            g_pCompositor->getMonitorFromID(targetWorkspace->m_pMonitor->ID)->changeWorkspace(targetWorkspace->m_iID);
             if (Config::exitOnSwitch && active) hide();
         }
         updateLayout();
@@ -65,7 +65,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
         if (targetWorkspace->m_bIsSpecialWorkspace)
             getOwner()->activeSpecialWorkspaceID() == targetWorkspaceID ? getOwner()->setSpecialWorkspace(nullptr) : getOwner()->setSpecialWorkspace(targetWorkspaceID);
         else {
-            g_pCompositor->getMonitorFromID(targetWorkspace->m_iMonitorID)->changeWorkspace(targetWorkspace->m_iID);
+            g_pCompositor->getMonitorFromID(targetWorkspace->m_pMonitor->ID)->changeWorkspace(targetWorkspace->m_iID);
         }
         if (Config::exitOnSwitch && active) hide();
     }

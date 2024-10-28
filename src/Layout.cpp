@@ -26,7 +26,7 @@ void CHyprspaceWidget::updateLayout() {
         const auto oActiveWorkspace = pMonitor->activeWorkspace;
 
         for (auto& ws : g_pCompositor->m_vWorkspaces) { // HACK: recalculate other workspaces without reserved area
-            if (ws->m_iMonitorID == ownerID && ws->m_iID != oActiveWorkspace->m_iID) {
+            if (ws->m_pMonitor->ID == ownerID && ws->m_iID != oActiveWorkspace->m_iID) {
                 pMonitor->activeWorkspace = ws;
                 const auto curRules = std::to_string(pMonitor->activeWorkspaceID()) + ", gapsin:" + PGAPSIN->toString() + ", gapsout:" + PGAPSOUT->toString();
                 if (Config::overrideGaps) g_pConfigManager->handleWorkspaceRules("", curRules);
@@ -45,7 +45,7 @@ void CHyprspaceWidget::updateLayout() {
     }
     else {
         for (auto& ws : g_pCompositor->m_vWorkspaces) {
-            if (ws->m_iMonitorID == ownerID) {
+            if (ws->m_pMonitor->ID == ownerID) {
                 const auto curRules = std::to_string(ws->m_iID) + ", gapsin:" + PGAPSIN->toString() + ", gapsout:" + PGAPSOUT->toString();
                 if (Config::overrideGaps) g_pConfigManager->handleWorkspaceRules("", curRules);
                 g_pLayoutManager->getCurrentLayout()->recalculateMonitor(ownerID);

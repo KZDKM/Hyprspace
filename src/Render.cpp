@@ -24,7 +24,7 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
     pWindow->m_pWorkspace = pWorkspaceOverride;
-    pWindow->m_sFullscreenState = sFullscreenState(FSMODE_NONE); // FIXME: still do nothing, fullscreen requests not reject when overview active
+    pWindow->m_sFullscreenState = sFullscreenState{FSMODE_NONE}; // FIXME: still do nothing, fullscreen requests not reject when overview active
     pWindow->m_sWindowData.nearestNeighbor = false; // FIX: this wont do, need to scale surface texture down properly so that windows arent shown as pixelated mess
     pWindow->m_bIsFloating = false; // weird shit happened so hack fix
     pWindow->m_bPinned = true;
@@ -138,7 +138,7 @@ void CHyprspaceWidget::draw() {
         if (!ws) continue;
         // normal workspaces start from 1, special workspaces ends on -2
         if (ws->m_iID < 1) continue;
-        if (ws->m_iMonitorID == ownerID) {
+        if (ws->m_pMonitor->ID == ownerID) {
             workspaces.push_back(ws->m_iID);
             if (highestID < ws->m_iID) highestID = ws->m_iID;
             if (lowestID > ws->m_iID) lowestID = ws->m_iID;
