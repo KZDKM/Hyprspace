@@ -14,7 +14,6 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     const auto oDragMode = g_pInputManager->dragMode;
     const auto oRenderModifEnable = g_pHyprOpenGL->m_RenderData.renderModif.enabled;
     const auto oFloating = pWindow->m_bIsFloating;
-    const auto oSpecialRounding = pWindow->m_sWindowData.rounding;
 
     const float curScaling = rectOverride.w / (oSize.x * pMonitor->scale);
 
@@ -42,7 +41,7 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     pWindow->m_sWindowData.nearestNeighbor = oUseNearestNeighbor;
     pWindow->m_bIsFloating = oFloating;
     pWindow->m_bPinned = oPinned;
-    pWindow->m_sWindowData.rounding = oSpecialRounding;
+    pWindow->m_sWindowData.rounding.unset(eOverridePriority::PRIORITY_SET_PROP);
     g_pInputManager->currentlyDraggedWindow = oDraggedWindow;
     g_pInputManager->dragMode = oDragMode;
     g_pHyprOpenGL->m_RenderData.renderModif.enabled = oRenderModifEnable;
