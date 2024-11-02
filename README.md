@@ -4,7 +4,7 @@ A plugin for Hyprland that implements a workspace overview feature similar to th
 
 - Supports Hyprland release `>= 0.39`. All supported release versions will be pinned. New features and fixes will NOT be backported. Please report build issues on any supported release version.
 
-> Alco checkout [hyprexpo](https://github.com/hyprwm/hyprland-plugins/tree/main/hyprexpo) from the official plugin repo that provides a grid style overview!
+> Also checkout [hyprexpo](https://github.com/hyprwm/hyprland-plugins/tree/main/hyprexpo) from the official plugin repo that provides a grid style overview!
 
 
 https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc0713828f9
@@ -14,7 +14,7 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
 ## Plugin Compatibility
 - [x] [hyprsplit](https://github.com/shezdy/hyprsplit) (tested, explicit support)
 - [x] [hyprexpo](https://github.com/hyprwm/hyprland-plugins/tree/main/hyprexpo) (tested, minor bugs)
-- [x] Any layout & layout plugin (e.g. [hyprRiver](https://github.com/zakk4223/hyprRiver))
+- [x] Any layout plugin (except ones that override Hyprland's workspace management)
 
 ## Roadmap
 - [x] Overview interface
