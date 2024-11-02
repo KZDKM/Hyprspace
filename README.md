@@ -2,10 +2,9 @@
 
 A plugin for Hyprland that implements a workspace overview feature similar to that of KDE Plasma, GNOME and macOS, aimed to provide a efficient way of workspace and window management.
 
-- Supports Hyprland release `>= 0.39`. All supported release versions will be pinned. New features might not be backported. Please report build issues on any supported release version.
-  - Currently does not build on `hyprland-git`
+- Supports Hyprland release `>= 0.39`. All supported release versions will be pinned. New features and fixes will NOT be backported. Please report build issues on any supported release version.
 
-> Dont like this? Checkout [hyprexpo](https://github.com/hyprwm/hyprland-plugins/tree/main/hyprexpo) from the official plugin repo that provides a grid style overview!
+> Alco checkout [hyprexpo](https://github.com/hyprwm/hyprland-plugins/tree/main/hyprexpo) from the official plugin repo that provides a grid style overview!
 
 
 https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc0713828f9
