@@ -34,7 +34,7 @@ void CHyprspaceWidget::show() {
         // unfullscreen all windows
         for (auto& ws : g_pCompositor->m_vWorkspaces) {
             if (ws->m_pMonitor->ID == ownerID) {
-                const auto w = g_pCompositor->getFullscreenWindowOnWorkspace(ws->m_iID);
+                const auto w = ws->getFullscreenWindow();
                 if (w != nullptr && ws->m_efFullscreenMode != FSMODE_NONE) {
                     // use fakefullscreenstate to preserve client's internal state
                     // fixes youtube fullscreen not restoring properly
