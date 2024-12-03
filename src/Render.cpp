@@ -120,9 +120,10 @@ void CHyprspaceWidget::draw() {
     }
 
 
-    g_pHyprRenderer->damageBox(&widgetBox);
+    // unscaled and relative to owner
+    CBox damageBox = {0, (Config::onBottom * (owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea)))) - (bottomInvert * curYOffset.value()), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
 
-    g_pHyprOpenGL->m_RenderData.clipBox = CBox();
+    owner->addDamage(&damageBox);
 
     std::vector<int> workspaces;
 
