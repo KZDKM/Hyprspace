@@ -11,12 +11,12 @@ void* pRenderLayer;
 std::vector<std::shared_ptr<CHyprspaceWidget>> g_overviewWidgets;
 
 
-CColor Config::panelBaseColor = CColor(0, 0, 0, 0);
-CColor Config::panelBorderColor = CColor(0, 0, 0, 0);
-CColor Config::workspaceActiveBackground = CColor(0, 0, 0, 0.25);
-CColor Config::workspaceInactiveBackground = CColor(0, 0, 0, 0.5);
-CColor Config::workspaceActiveBorder = CColor(1, 1, 1, 0.3);
-CColor Config::workspaceInactiveBorder = CColor(1, 1, 1, 0);
+CHyprColor Config::panelBaseColor = CHyprColor(0, 0, 0, 0);
+CHyprColor Config::panelBorderColor = CHyprColor(0, 0, 0, 0);
+CHyprColor Config::workspaceActiveBackground = CHyprColor(0, 0, 0, 0.25);
+CHyprColor Config::workspaceInactiveBackground = CHyprColor(0, 0, 0, 0.5);
+CHyprColor Config::workspaceActiveBorder = CHyprColor(1, 1, 1, 0.3);
+CHyprColor Config::workspaceInactiveBorder = CHyprColor(1, 1, 1, 0);
 
 int Config::panelHeight = 250;
 int Config::panelBorderWidth = 2;
@@ -253,12 +253,13 @@ void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
     //const auto k = std::any_cast<SKeyboard*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["keyboard"]);
 
     if (e.keycode == KEY_ESC) {
-        const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
-        if (widget != nullptr)
-            if (widget->isActive()) {
-                widget->hide();
-                info.cancelled = true;
-            }
+        for (auto& widget : g_overviewWidgets) {
+            if (widget != nullptr)
+                if (widget->isActive()) {
+                    widget->hide();
+                    info.cancelled = true;
+                }
+        }
     }
 }
 
@@ -344,12 +345,12 @@ void* findFunctionBySymbol(HANDLE inHandle, const std::string func, const std::s
 }
 
 void reloadConfig() {
-    Config::panelBaseColor = CColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:panelColor")->getValue()));
-    Config::panelBorderColor = CColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:panelBorderColor")->getValue()));
-    Config::workspaceActiveBackground = CColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceActiveBackground")->getValue()));
-    Config::workspaceInactiveBackground = CColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceInactiveBackground")->getValue()));
-    Config::workspaceActiveBorder = CColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceActiveBorder")->getValue()));
-    Config::workspaceInactiveBorder = CColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceInactiveBorder")->getValue()));
+    Config::panelBaseColor = CHyprColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:panelColor")->getValue()));
+    Config::panelBorderColor = CHyprColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:panelBorderColor")->getValue()));
+    Config::workspaceActiveBackground = CHyprColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceActiveBackground")->getValue()));
+    Config::workspaceInactiveBackground = CHyprColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceInactiveBackground")->getValue()));
+    Config::workspaceActiveBorder = CHyprColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceActiveBorder")->getValue()));
+    Config::workspaceInactiveBorder = CHyprColor(std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:workspaceInactiveBorder")->getValue()));
 
     Config::panelHeight = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:panelHeight")->getValue());
     Config::panelBorderWidth = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:panelBorderWidth")->getValue());
@@ -416,12 +417,12 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
 
     Debug::log(LOG, "Loading overview plugin");
 
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelColor", Hyprlang::INT{CColor(0, 0, 0, 0).getAsHex()});
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelBorderColor", Hyprlang::INT{CColor(0, 0, 0, 0).getAsHex()});
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceActiveBackground", Hyprlang::INT{CColor(0, 0, 0, 0.25).getAsHex()});
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceInactiveBackground", Hyprlang::INT{CColor(0, 0, 0, 0.5).getAsHex()});
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceActiveBorder", Hyprlang::INT{CColor(1, 1, 1, 0.25).getAsHex()});
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceInactiveBorder", Hyprlang::INT{CColor(1, 1, 1, 0).getAsHex()});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelColor", Hyprlang::INT{CHyprColor(0, 0, 0, 0).getAsHex()});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelBorderColor", Hyprlang::INT{CHyprColor(0, 0, 0, 0).getAsHex()});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceActiveBackground", Hyprlang::INT{CHyprColor(0, 0, 0, 0.25).getAsHex()});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceInactiveBackground", Hyprlang::INT{CHyprColor(0, 0, 0, 0.5).getAsHex()});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceActiveBorder", Hyprlang::INT{CHyprColor(1, 1, 1, 0.25).getAsHex()});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceInactiveBorder", Hyprlang::INT{CHyprColor(1, 1, 1, 0).getAsHex()});
 
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelHeight", Hyprlang::INT{250});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelBorderWidth", Hyprlang::INT{2});
