@@ -127,6 +127,7 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - `plugin:overview:workspaceActiveBorder`
 - `plugin:overview:workspaceInactiveBorder`
 - `plugin:overview:dragAlpha` overrides the alpha of window when dragged in overview (0 - 1, 0 = transparent, 1 = opaque)
+- `plugin:overview:disableBlur`
 #### Layout
 - `plugin:overview:panelHeight`
 - `plugin:overview:panelBorderWidth`
