@@ -227,7 +227,7 @@ void CHyprspaceWidget::draw() {
         if (owner->activeWorkspace == ws && Config::affectStrut) {
             CBox miniPanelBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY, widgetBox.w * monitorSizeScaleFactor, widgetBox.h * monitorSizeScaleFactor};
             if (Config::onBottom) miniPanelBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY + workspaceBoxH - widgetBox.h * monitorSizeScaleFactor, widgetBox.w * monitorSizeScaleFactor, widgetBox.h * monitorSizeScaleFactor};
-            g_pHyprOpenGL->renderRectWithBlur(&miniPanelBox, CColor(0, 0, 0, 0), 0, 1.f, false);
+            g_pHyprOpenGL->renderRectWithBlur(&miniPanelBox, CHyprColor(0, 0, 0, 0), 0, 1.f, false);
         }
 
         if (ws != nullptr) {
@@ -242,7 +242,7 @@ void CHyprspaceWidget::draw() {
                     if (!(wW > 0 && wH > 0)) continue;
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                    //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
+                    //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CHyprColor(0, 0, 0, 0));
                     renderWindowStub(w, owner, owner->activeWorkspace, curWindowBox, &time);
                     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
                 }
@@ -258,7 +258,7 @@ void CHyprspaceWidget::draw() {
                     if (!(wW > 0 && wH > 0)) continue;
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                    //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
+                    //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CHyprColor(0, 0, 0, 0));
                     renderWindowStub(w, owner, owner->activeWorkspace, curWindowBox, &time);
                     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
                 }
@@ -274,7 +274,7 @@ void CHyprspaceWidget::draw() {
                     if (!(wW > 0 && wH > 0)) continue;
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_RenderData.clipBox = curWorkspaceBox;
-                    //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CColor(0, 0, 0, 0));
+                    //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CHyprColor(0, 0, 0, 0));
                     renderWindowStub(w, owner, owner->activeWorkspace, curWindowBox, &time);
                     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
                 }

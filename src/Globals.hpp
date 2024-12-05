@@ -15,12 +15,12 @@ typedef void (*tRenderLayer)(void*, Hyprutils::Memory::CWeakPointer<CLayerSurfac
 extern void* pRenderLayer;
 
 namespace Config {
-    extern CColor panelBaseColor;
-    extern CColor panelBorderColor;
-    extern CColor workspaceActiveBackground;
-    extern CColor workspaceInactiveBackground;
-    extern CColor workspaceActiveBorder;
-    extern CColor workspaceInactiveBorder;
+    extern CHyprColor panelBaseColor;
+    extern CHyprColor panelBorderColor;
+    extern CHyprColor workspaceActiveBackground;
+    extern CHyprColor workspaceInactiveBackground;
+    extern CHyprColor workspaceActiveBorder;
+    extern CHyprColor workspaceInactiveBorder;
 
     extern int panelHeight;
     extern int panelBorderWidth;
