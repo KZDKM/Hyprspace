@@ -53,6 +53,7 @@ namespace Config {
     extern bool disableGestures;
     extern bool reverseSwipe;
 
+    extern bool disableBlur;
     extern float overrideAnimSpeed;
     extern float dragAlpha;
 }
