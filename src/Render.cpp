@@ -244,10 +244,10 @@ void CHyprspaceWidget::draw() {
             CBox miniPanelBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY, widgetBox.w * monitorSizeScaleFactor, widgetBox.h * monitorSizeScaleFactor};
             if (Config::onBottom) miniPanelBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY + workspaceBoxH - widgetBox.h * monitorSizeScaleFactor, widgetBox.w * monitorSizeScaleFactor, widgetBox.h * monitorSizeScaleFactor};
             if (!Config::disableBlur) {
-                g_pHyprOpenGL->renderRectWithBlur(&miniPanelBox, CColor(0, 0, 0, 0), 0, 1.f, false);
+                g_pHyprOpenGL->renderRectWithBlur(&miniPanelBox, CHyprColor(0, 0, 0, 0), 0, 1.f, false);
             }
             else {
-                g_pHyprOpenGL->renderRect(&miniPanelBox, CColor(0, 0, 0, 0), 0);
+                g_pHyprOpenGL->renderRect(&miniPanelBox, CHyprColor(0, 0, 0, 0), 0);
             }
         }
 
