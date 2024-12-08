@@ -3,7 +3,6 @@
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/config/ConfigValue.hpp>
-#include <hyprgraphics/color/Color.hpp>
 
 inline HANDLE pHandle = NULL;
 
@@ -16,12 +15,12 @@ typedef void (*tRenderLayer)(void*, Hyprutils::Memory::CWeakPointer<CLayerSurfac
 extern void* pRenderLayer;
 
 namespace Config {
-    extern CHyprColor panelBaseColor;
-    extern CHyprColor panelBorderColor;
-    extern CHyprColor workspaceActiveBackground;
-    extern CHyprColor workspaceInactiveBackground;
-    extern CHyprColor workspaceActiveBorder;
-    extern CHyprColor workspaceInactiveBorder;
+    extern CColor panelBaseColor;
+    extern CColor panelBorderColor;
+    extern CColor workspaceActiveBackground;
+    extern CColor workspaceInactiveBackground;
+    extern CColor workspaceActiveBorder;
+    extern CColor workspaceInactiveBorder;
 
     extern int panelHeight;
     extern int panelBorderWidth;
