@@ -470,9 +470,9 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     g_pConfigReloadHook = HyprlandAPI::registerCallbackDynamic(pHandle, "configReloaded", [&] (void* thisptr, SCallbackInfo& info, std::any data) { reloadConfig(); });
     HyprlandAPI::reloadConfig();
 
-    HyprlandAPI::addDispatcherV2(pHandle, "overview:toggle", ::dispatchToggleOverview);
-    HyprlandAPI::addDispatcherV2(pHandle, "overview:open", ::dispatchOpenOverview);
-    HyprlandAPI::addDispatcherV2(pHandle, "overview:close", ::dispatchCloseOverview);
+    HyprlandAPI::addDispatcher(pHandle, "overview:toggle", ::dispatchToggleOverview);
+    HyprlandAPI::addDispatcher(pHandle, "overview:open", ::dispatchOpenOverview);
+    HyprlandAPI::addDispatcher(pHandle, "overview:close", ::dispatchCloseOverview);
 
     g_pRenderHook = HyprlandAPI::registerCallbackDynamic(pHandle, "render", onRender);
 
