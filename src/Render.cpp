@@ -18,7 +18,7 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     const auto oPinned = pWindow->m_bPinned;
     const auto oDraggedWindow = g_pInputManager->currentlyDraggedWindow;
     const auto oDragMode = g_pInputManager->dragMode;
-    const auto oRenderModifEnable = g_pHyprOpenGL->m_RenderData.renderModif.enabled;
+    // const auto oRenderModifEnable = g_pHyprOpenGL->m_RenderData.renderModif.enabled;
     const auto oFloating = pWindow->m_bIsFloating;
 
     const float curScaling = rectOverride.w / (oSize.x * pMonitor->scale);
@@ -53,7 +53,7 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     // modifData.enabled = oRenderModifEnable;
     // modifData.modifs.pop_back();
     // modifData.modifs.pop_back();
-    g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderModif>(CRenderModif::SModifData {SRenderModifData {}}));
+    g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderModif>(CRenderModif::SModifData{SRenderModifData {}}));
 }
 
 void renderLayerStub(Hyprutils::Memory::CWeakPointer<CLayerSurface> pLayer, PHLMONITOR pMonitor, CBox rectOverride, timespec* time) {
@@ -66,7 +66,7 @@ void renderLayerStub(Hyprutils::Memory::CWeakPointer<CLayerSurface> pLayer, PHLM
     Vector2D oRealPosition = pLayer->realPosition.value();
     Vector2D oSize = pLayer->realSize.value();
     float oAlpha = pLayer->alpha.value(); // set to 1 to show hidden top layer
-    const auto oRenderModifEnable = modifData.enabled;
+    // const auto oRenderModifEnable = modifData.enabled;
     const auto oFadingOut = pLayer->fadingOut;
 
     const float curScaling = rectOverride.w / (oSize.x);
@@ -85,7 +85,7 @@ void renderLayerStub(Hyprutils::Memory::CWeakPointer<CLayerSurface> pLayer, PHLM
     // modifData.enabled = oRenderModifEnable;
     // modifData.modifs.pop_back();
     // modifData.modifs.pop_back();
-    g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderModif>(CRenderModif::SModifData {SRenderModifData {}}));
+    g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderModif>(CRenderModif::SModifData{SRenderModifData {}}));
 }
 
 // NOTE: rects and clipbox positions are relative to the monitor, while damagebox and layers are not, what the fuck? xd
@@ -219,8 +219,8 @@ void CHyprspaceWidget::draw() {
         if (ws == owner->activeWorkspace) {
             if (Config::workspaceBorderSize >= 1 && Config::workspaceActiveBorder.a > 0) {
                 borderData.box = curWorkspaceBox;
-                borderData.hasGrad = true;
                 borderData.grad1 = Config::workspaceInactiveBorder;
+                borderData.hasGrad = true;
                 borderData.a = 0;
                 borderData.borderSize = Config::workspaceBorderSize;
             }
@@ -246,8 +246,9 @@ void CHyprspaceWidget::draw() {
         else {
             if (Config::workspaceBorderSize >= 1 && Config::workspaceInactiveBorder.a > 0) {
                 borderData.box = curWorkspaceBox;
+                borderData.grad1 = Config::workspaceInactiveBorder;
                 borderData.hasGrad = true;
-                borderData.grad1 = CGradientValueData(Config::workspaceInactiveBorder);
+                borderData.hasGrad2 = true;
                 borderData.a = 0;
                 borderData.borderSize = Config::workspaceBorderSize;
             }

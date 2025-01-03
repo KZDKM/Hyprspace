@@ -73,7 +73,6 @@ void CHyprspaceWidget::show() {
     }
 
     updateLayout();
-    g_pHyprRenderer->damageMonitor(owner);
     g_pCompositor->scheduleFrameForMonitor(owner);
 }
 
