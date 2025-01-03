@@ -1,8 +1,14 @@
 #include "Overview.hpp"
 #include "Globals.hpp"
+#include "OverviewPassElement.hpp"
+#include <hyprland/src/config/ConfigDataValues.hpp>
+#include <hyprland/src/render/Renderer.hpp>
+#include <hyprutils/memory/SharedPtr.hpp>
 
 void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWorkspaceOverride, CBox rectOverride, timespec* time) {
     if (!pWindow || !pMonitor || !pWorkspaceOverride || !time) return;
+
+    SRenderModifData modifData {};
 
     const auto oWorkspace = pWindow->m_pWorkspace;
     const auto oFullscreen = pWindow->m_sFullscreenState;
@@ -16,12 +22,11 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     const auto oFloating = pWindow->m_bIsFloating;
 
     const float curScaling = rectOverride.w / (oSize.x * pMonitor->scale);
-
     // using renderModif struct to override the position and scale of windows
     // this will be replaced by matrix transformations in hyprland
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, (pMonitor->vecPosition * pMonitor->scale) + (rectOverride.pos() / curScaling) - (oRealPosition * pMonitor->scale)});
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
-    g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
+    modifData.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, (pMonitor->vecPosition * pMonitor->scale) + (rectOverride.pos() / curScaling) - (oRealPosition * pMonitor->scale)});
+    modifData.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
+    modifData.enabled = true;
     pWindow->m_pWorkspace = pWorkspaceOverride;
     pWindow->m_sFullscreenState = SFullscreenState{FSMODE_NONE}; // FIXME: still do nothing, fullscreen requests not reject when overview active
     pWindow->m_sWindowData.nearestNeighbor = false; // FIX: this wont do, need to scale surface texture down properly so that windows arent shown as pixelated mess
@@ -32,7 +37,8 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     g_pInputManager->dragMode = MBIND_RESIZE;
 
     g_pHyprRenderer->damageWindow(pWindow);
-
+    
+    g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderModif>(CRenderModif::SModifData{modifData}));
     (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), pWindow, pMonitor, time, true, RENDER_PASS_MAIN, false, false);
 
     // restore values for normal window render
@@ -44,41 +50,49 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     pWindow->m_sWindowData.rounding.unset(eOverridePriority::PRIORITY_SET_PROP);
     g_pInputManager->currentlyDraggedWindow = oDraggedWindow;
     g_pInputManager->dragMode = oDragMode;
-    g_pHyprOpenGL->m_RenderData.renderModif.enabled = oRenderModifEnable;
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
+    // modifData.enabled = oRenderModifEnable;
+    // modifData.modifs.pop_back();
+    // modifData.modifs.pop_back();
+    g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderModif>(CRenderModif::SModifData {SRenderModifData {}}));
 }
 
 void renderLayerStub(Hyprutils::Memory::CWeakPointer<CLayerSurface> pLayer, PHLMONITOR pMonitor, CBox rectOverride, timespec* time) {
     if (!pLayer || !pMonitor || !time) return;
 
     if (!pLayer->mapped || pLayer->readyToDelete || !pLayer->layerSurface) return;
+    
+    SRenderModifData modifData {};
 
     Vector2D oRealPosition = pLayer->realPosition.value();
     Vector2D oSize = pLayer->realSize.value();
     float oAlpha = pLayer->alpha.value(); // set to 1 to show hidden top layer
-    const auto oRenderModifEnable = g_pHyprOpenGL->m_RenderData.renderModif.enabled;
+    const auto oRenderModifEnable = modifData.enabled;
     const auto oFadingOut = pLayer->fadingOut;
 
     const float curScaling = rectOverride.w / (oSize.x);
 
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, pMonitor->vecPosition + (rectOverride.pos() / curScaling) - oRealPosition});
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
-    g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
+    modifData.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, pMonitor->vecPosition + (rectOverride.pos() / curScaling) - oRealPosition});
+    modifData.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
+    modifData.enabled = true;
     pLayer->alpha.setValue(1);
     pLayer->fadingOut = false;
-
+    
+    g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderModif>(CRenderModif::SModifData{modifData}));
     (*(tRenderLayer)pRenderLayer)(g_pHyprRenderer.get(), pLayer, pMonitor, time, false);
 
     pLayer->fadingOut = oFadingOut;
     pLayer->alpha.setValue(oAlpha);
-    g_pHyprOpenGL->m_RenderData.renderModif.enabled = oRenderModifEnable;
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
+    // modifData.enabled = oRenderModifEnable;
+    // modifData.modifs.pop_back();
+    // modifData.modifs.pop_back();
+    g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderModif>(CRenderModif::SModifData {SRenderModifData {}}));
 }
 
 // NOTE: rects and clipbox positions are relative to the monitor, while damagebox and layers are not, what the fuck? xd
 void CHyprspaceWidget::draw() {
+    
+    CRenderRect::SRectData rectData;
+    CRenderBorder::SBorderData borderData;
 
     workspaceBoxes.clear();
 
@@ -110,11 +124,15 @@ void CHyprspaceWidget::draw() {
     g_pHyprOpenGL->m_RenderData.clipBox = CBox({0, 0}, owner->vecTransformedSize);
 
     if (!Config::disableBlur) {
-        g_pHyprOpenGL->renderRectWithBlur(&widgetBox, Config::panelBaseColor);
+        rectData.box = widgetBox;
+        rectData.color = Config::panelBaseColor;
+        rectData.blur = true;
+        rectData.blurA = 3.F;    
+    } else {
+        rectData.box = widgetBox;
+        rectData.color = Config::panelBaseColor;
     }
-    else {
-        g_pHyprOpenGL->renderRect(&widgetBox, Config::panelBaseColor);
-    }
+    g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderRect>(CRenderRect::SRectData{rectData}));
 
     // Panel Border
     if (Config::panelBorderWidth > 0) {
@@ -122,7 +140,9 @@ void CHyprspaceWidget::draw() {
         CBox borderBox = {widgetBox.x, owner->vecPosition.y + (Config::onBottom * owner->vecTransformedSize.y) + (Config::panelHeight + Config::reservedArea - curYOffset.value() * owner->scale) * bottomInvert, owner->vecTransformedSize.x, Config::panelBorderWidth};
         borderBox.y -= owner->vecPosition.y;
 
-        g_pHyprOpenGL->renderRect(&borderBox, Config::panelBorderColor);
+        rectData.box = borderBox;
+        rectData.color = Config::panelBaseColor;
+        g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderRect>(CRenderRect::SRectData{rectData}));
     }
 
 
@@ -198,14 +218,26 @@ void CHyprspaceWidget::draw() {
         // workspace background rect (NOT background layer) and border
         if (ws == owner->activeWorkspace) {
             if (Config::workspaceBorderSize >= 1 && Config::workspaceActiveBorder.a > 0) {
-                g_pHyprOpenGL->renderBorder(&curWorkspaceBox, CGradientValueData(Config::workspaceActiveBorder), 0, Config::workspaceBorderSize);
+                borderData.box = curWorkspaceBox;
+                borderData.hasGrad = true;
+                borderData.grad1 = Config::workspaceInactiveBorder;
+                borderData.a = 0;
+                borderData.borderSize = Config::workspaceBorderSize;
             }
+            g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderBorder>(CRenderBorder::SBorderData{borderData}));
             if (!Config::disableBlur) {
-                g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, Config::workspaceActiveBackground); // cant really round it until I find a proper way to clip windows to a rounded rect
+                rectData.box = curWorkspaceBox;
+                rectData.color = Config::workspaceActiveBackground;
+                rectData.round = 0;
+                rectData.blur = true;
+                rectData.blurA = 3.F;
             }
             else {
-                g_pHyprOpenGL->renderRect(&curWorkspaceBox, Config::workspaceActiveBackground);
+                rectData.box = curWorkspaceBox;
+                rectData.color = Config::workspaceActiveBackground;
+                rectData.round = 0;
             }
+            g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderRect>(CRenderRect::SRectData{rectData}));
             if (!Config::drawActiveWorkspace) {
                 curWorkspaceRectOffsetX += workspaceBoxW + (Config::workspaceMargin * owner->scale);
                 continue;
@@ -213,14 +245,26 @@ void CHyprspaceWidget::draw() {
         }
         else {
             if (Config::workspaceBorderSize >= 1 && Config::workspaceInactiveBorder.a > 0) {
-                g_pHyprOpenGL->renderBorder(&curWorkspaceBox, CGradientValueData(Config::workspaceInactiveBorder), 0, Config::workspaceBorderSize);
+                borderData.box = curWorkspaceBox;
+                borderData.hasGrad = true;
+                borderData.grad1 = CGradientValueData(Config::workspaceInactiveBorder);
+                borderData.a = 0;
+                borderData.borderSize = Config::workspaceBorderSize;
             }
+            g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderBorder>(CRenderBorder::SBorderData{borderData}));
             if (!Config::disableBlur) {
-                g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, Config::workspaceInactiveBackground);
+                rectData.box   = curWorkspaceBox;
+                rectData.color = Config::workspaceActiveBackground;
+                rectData.round = 0;
+                rectData.blur  = true;
+                rectData.blurA = 3.F;
             }
             else {
-                g_pHyprOpenGL->renderRect(&curWorkspaceBox, Config::workspaceInactiveBackground);
+                rectData.box   = curWorkspaceBox;
+                rectData.color = Config::workspaceActiveBackground;
+                rectData.round = 0;
             }
+            g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderRect>(CRenderRect::SRectData{rectData}));
         }
 
         // background and bottom layers
@@ -245,12 +289,18 @@ void CHyprspaceWidget::draw() {
             if (Config::onBottom) miniPanelBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY + workspaceBoxH - widgetBox.h * monitorSizeScaleFactor, widgetBox.w * monitorSizeScaleFactor, widgetBox.h * monitorSizeScaleFactor};
 
             if (!Config::disableBlur) {
-                g_pHyprOpenGL->renderRectWithBlur(&miniPanelBox, CHyprColor(0, 0, 0, 0), 0, 1.f, false);
+                rectData.box   = miniPanelBox;
+                rectData.color = CHyprColor(0, 0, 0, 0);
+                rectData.round = 0;
+                rectData.blur  = true;
+                rectData.blurA = 3.F;
             }
             else {
-                g_pHyprOpenGL->renderRect(&miniPanelBox, CHyprColor(0, 0, 0, 0), 0);
+                rectData.box   = miniPanelBox;
+                rectData.color = CHyprColor(0, 0, 0, 0);
+                rectData.round = 0;
             }
-
+            g_pHyprRenderer->m_sRenderPass.add(makeShared<CRenderRect>(CRenderRect::SRectData{rectData}));
         }
 
         if (ws != nullptr) {
