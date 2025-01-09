@@ -7,16 +7,16 @@ CHyprspaceWidget::CHyprspaceWidget(uint64_t inOwnerID) {
     curAnimationConfig = *g_pConfigManager->getAnimationPropertyConfig("windows");
 
     // the fuck is pValues???
-    curAnimation = *curAnimationConfig.pValues;
-    curAnimationConfig.pValues = &curAnimation;
+    curAnimation = *curAnimationConfig.pValues.lock();
+    *curAnimationConfig.pValues.lock() = curAnimation;
 
     if (Config::overrideAnimSpeed > 0)
         curAnimation.internalSpeed = Config::overrideAnimSpeed;
 
-    curYOffset.create(&curAnimationConfig, AVARDAMAGE_ENTIRE);
-    workspaceScrollOffset.create(&curAnimationConfig, AVARDAMAGE_ENTIRE);
-    curYOffset.setValueAndWarp(Config::panelHeight);
-    workspaceScrollOffset.setValueAndWarp(0);
+    g_pAnimationManager->createAnimation(0.F, curYOffset, curAnimationConfig.pValues.lock(), AVARDAMAGE_ENTIRE);
+    g_pAnimationManager->createAnimation(0.F, workspaceScrollOffset, curAnimationConfig.pValues.lock(), AVARDAMAGE_ENTIRE);
+    curYOffset->setValueAndWarp(Config::panelHeight);
+    workspaceScrollOffset->setValueAndWarp(0);
 }
 
 // TODO: implement deconstructor and delete widget on monitor unplug
@@ -52,14 +52,14 @@ void CHyprspaceWidget::show() {
     if (oLayerAlpha.empty() && Config::hideRealLayers) {
         for (auto& ls : owner->m_aLayerSurfaceLayers[2]) {
             //ls->startAnimation(false);
-            oLayerAlpha.emplace_back(std::make_tuple(ls, ls->alpha.goal()));
-            ls->alpha = 0.f;
+            oLayerAlpha.emplace_back(std::make_tuple(ls, ls->alpha->goal()));
+            *ls->alpha = 0.f;
             ls->fadingOut = true;
         }
         for (auto& ls : owner->m_aLayerSurfaceLayers[3]) {
             //ls->startAnimation(false);
-            oLayerAlpha.emplace_back(std::make_tuple(ls, ls->alpha.goal()));
-            ls->alpha = 0.f;
+            oLayerAlpha.emplace_back(std::make_tuple(ls, ls->alpha->goal()));
+            *ls->alpha = 0.f;
             ls->fadingOut = true;
         }
     }
@@ -68,7 +68,7 @@ void CHyprspaceWidget::show() {
 
     // panel offset should be handled by swipe event when swiping
     if (!swiping) {
-        curYOffset = 0;
+        *curYOffset = 0;
         curSwipeOffset = (Config::panelHeight + Config::reservedArea) * owner->scale;
     }
 
@@ -87,7 +87,7 @@ void CHyprspaceWidget::hide() {
             auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls;});
             if (oAlpha != oLayerAlpha.end()) {
                 ls->fadingOut = false;
-                ls->alpha = std::get<1>(*oAlpha);
+                *ls->alpha = std::get<1>(*oAlpha);
             }
             //ls->startAnimation(true);
         }
@@ -97,7 +97,7 @@ void CHyprspaceWidget::hide() {
             auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls;});
             if (oAlpha != oLayerAlpha.end()) {
                 ls->fadingOut = false;
-                ls->alpha = std::get<1>(*oAlpha);
+                *ls->alpha = std::get<1>(*oAlpha);
             }
             //ls->startAnimation(true);
         }
@@ -117,7 +117,7 @@ void CHyprspaceWidget::hide() {
 
     // panel offset should be handled by swipe event when swiping
     if (!swiping) {
-        curYOffset = (Config::panelHeight + Config::reservedArea) * owner->scale;
+        *curYOffset = (Config::panelHeight + Config::reservedArea) * owner->scale;
         curSwipeOffset = -10.;
     }
 
@@ -128,14 +128,17 @@ void CHyprspaceWidget::hide() {
 void CHyprspaceWidget::updateConfig() {
     curAnimationConfig = *g_pConfigManager->getAnimationPropertyConfig("windows");
 
-    curAnimation = *curAnimationConfig.pValues;
-    curAnimationConfig.pValues = &curAnimation;
+    // the fuck is pValues???
+    curAnimation = *curAnimationConfig.pValues.lock();
+    *curAnimationConfig.pValues.lock() = curAnimation;
 
     if (Config::overrideAnimSpeed > 0)
         curAnimation.internalSpeed = Config::overrideAnimSpeed;
 
-    curYOffset.create(&curAnimationConfig, AVARDAMAGE_ENTIRE);
-    workspaceScrollOffset.create(&curAnimationConfig, AVARDAMAGE_ENTIRE);
+    g_pAnimationManager->createAnimation(0.F, curYOffset, curAnimationConfig.pValues.lock(), AVARDAMAGE_ENTIRE);
+    g_pAnimationManager->createAnimation(0.F, workspaceScrollOffset, curAnimationConfig.pValues.lock(), AVARDAMAGE_ENTIRE);
+    curYOffset->setValueAndWarp(Config::panelHeight);
+    workspaceScrollOffset->setValueAndWarp(0);
 }
 
 bool CHyprspaceWidget::isActive() {
