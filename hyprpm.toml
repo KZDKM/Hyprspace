@@ -20,9 +20,9 @@ commit_pins = [
     ["0bd541f2fd902dbfa04c3ea2ccf679395e316887", "49ef4c37c6f84dcbf7fb641bad3d60703a2bb068"]  # 0.46.2
 
 [Hyprspace]
-description = "Workspace overview"
-authors = ["KZdkm"]
-output = "Hyprspace.so"
+description = "Workspace overview",
+authors = ["KZdkm"],
+output = "Hyprspace.so",
 build = [
     "make all"
 ]
