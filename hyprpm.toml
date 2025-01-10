@@ -18,6 +18,7 @@ commit_pins = [
     ["788ae588979c2a1ff8a660f16e3c502ef5796755", "49ef4c37c6f84dcbf7fb641bad3d60703a2bb068"], # 0.46.0
     ["254fc2bc6000075f660b4b8ed818a6af544d1d64", "49ef4c37c6f84dcbf7fb641bad3d60703a2bb068"], # 0.46.1
     ["0bd541f2fd902dbfa04c3ea2ccf679395e316887", "49ef4c37c6f84dcbf7fb641bad3d60703a2bb068"]  # 0.46.2
+]
 
 [Hyprspace]
 description = "Workspace overview"
