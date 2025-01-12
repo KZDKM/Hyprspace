@@ -52,13 +52,13 @@ void CHyprspaceWidget::show() {
     if (oLayerAlpha.empty() && Config::hideRealLayers) {
         for (auto& ls : owner->m_aLayerSurfaceLayers[2]) {
             //ls->startAnimation(false);
-            oLayerAlpha.emplace_back(std::make_tuple(ls, ls->alpha->goal()));
+            oLayerAlpha.emplace_back(std::make_tuple(ls.lock(), ls->alpha->goal()));
             *ls->alpha = 0.f;
             ls->fadingOut = true;
         }
         for (auto& ls : owner->m_aLayerSurfaceLayers[3]) {
             //ls->startAnimation(false);
-            oLayerAlpha.emplace_back(std::make_tuple(ls, ls->alpha->goal()));
+            oLayerAlpha.emplace_back(std::make_tuple(ls.lock(), ls->alpha->goal()));
             *ls->alpha = 0.f;
             ls->fadingOut = true;
         }
