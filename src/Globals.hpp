@@ -2,6 +2,10 @@
 
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/Compositor.hpp>
+#include <hyprland/src/render/Renderer.hpp>
+#include <hyprland/src/managers/input/InputManager.hpp>
+#include <hyprland/src/managers/LayoutManager.hpp>
+#include <hyprland/src/managers/AnimationManager.hpp>
 #include <hyprland/src/config/ConfigValue.hpp>
 
 inline HANDLE pHandle = NULL;
