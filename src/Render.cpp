@@ -5,6 +5,37 @@
 #include <hyprland/src/render/pass/RendererHintsPassElement.hpp>
 #include <hyprutils/utils/ScopeGuard.hpp>
 
+class CFakeDamageElement : public IPassElement {
+public:
+    CBox       box;
+
+    CFakeDamageElement(const CBox& box) {
+        this->box = box;
+    }
+    virtual ~CFakeDamageElement() = default;
+
+    virtual void                draw(const CRegion& damage) {
+        return;
+    }
+    virtual bool                needsLiveBlur() {
+        return true; // hack
+    }
+    virtual bool                needsPrecomputeBlur() {
+        return false;
+    }
+    virtual std::optional<CBox> boundingBox() {
+        return box.copy().scale(1.f / g_pHyprOpenGL->m_RenderData.pMonitor->scale).round();
+    }
+    virtual CRegion             opaqueRegion() {
+        return CRegion{};
+    }
+    virtual const char*         passName() {
+        return "CFakeDamageElement";
+    }
+
+};
+
+
 void renderRect(CBox box, CHyprColor color) {
     CRectPassElement::SRectData rectdata;
     rectdata.color = color;
@@ -70,7 +101,7 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
 
     g_pHyprRenderer->damageWindow(pWindow);
 
-    (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), pWindow, pMonitor, time, true, RENDER_PASS_MAIN, false, false);
+    (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), pWindow, pMonitor, time, true, RENDER_PASS_ALL, false, false);
 
     // restore values for normal window render
     pWindow->m_pWorkspace = oWorkspace;
@@ -165,6 +196,9 @@ void CHyprspaceWidget::draw() {
     CBox damageBox = {0, (Config::onBottom * (owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea)))) - (bottomInvert * curYOffset->value()), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
 
     owner->addDamage(damageBox);
+    g_pHyprRenderer->damageMonitor(owner);
+    CFakeDamageElement fakeDamage = CFakeDamageElement(CBox({0,0}, owner->vecTransformedSize));
+    g_pHyprRenderer->m_sRenderPass.add(makeShared<CFakeDamageElement>(fakeDamage));
 
     std::vector<int> workspaces;
 
@@ -357,6 +391,7 @@ void CHyprspaceWidget::draw() {
                     g_pHyprOpenGL->m_RenderData.clipBox = CBox();
                 }
         }
+
 
         // Resets workspaceBox to scaled absolute coordinates for input detection.
         // While rendering is done in pixel coordinates, input detection is done in

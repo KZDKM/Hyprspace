@@ -7,6 +7,10 @@
 void* pMouseKeybind;
 void* pRenderWindow;
 void* pRenderLayer;
+void* pRenderSnapshotWindow;
+void* pRenderSnapshotLayer;
+void* pMakeWindowSnapshot;
+void* pMakeLayerSnapshot;
 
 std::vector<std::shared_ptr<CHyprspaceWidget>> g_overviewWidgets;
 
@@ -141,9 +145,11 @@ void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
                 if (g_oAlpha != -1) {
                     if (const auto curWindow = g_pInputManager->currentlyDraggedWindow.lock()) {
                         curWindow->m_fActiveInactiveAlpha->setValueAndWarp(Config::dragAlpha);
+                        curWindow->m_sWindowData.noBlur = CWindowOverridableVar<bool>(true, eOverridePriority::PRIORITY_SET_PROP);
                         timespec time;
                         clock_gettime(CLOCK_MONOTONIC, &time);
                         (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), curWindow, widget->getOwner(), &time, true, RENDER_PASS_MAIN, false, false);
+                        curWindow->m_sWindowData.noBlur.unset(eOverridePriority::PRIORITY_SET_PROP);
                         curWindow->m_fActiveInactiveAlpha->setValueAndWarp(g_oAlpha);
                     }
                 }
@@ -501,6 +507,11 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     // CHyprRenderer::renderWindow
     auto funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWindow");
     pRenderWindow = funcSearch[0].address;
+
+    //pRenderSnapshotWindow = findFunctionBySymbol(pHandle, "renderSnapshot", "renderSnapshot(Hyprutils::Memory::CSharedPointer<CWindow>");
+    //pRenderSnapshotLayer = findFunctionBySymbol(pHandle, "renderSnapshot", "renderSnapshot(Hyprutils::Memory::CSharedPointer<CLayerSurface>");
+    //pMakeWindowSnapshot = findFunctionBySymbol(pHandle, "makeWindowSnapshot", "makeWindowSnapshot");
+    //pMakeLayerSnapshot = findFunctionBySymbol(pHandle, "makeLayerSnapshot", "makeLayerSnapshot");
 
     // CHyprRenderer::renderLayer
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderLayer");
