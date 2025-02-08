@@ -5,6 +5,7 @@
 #include <hyprland/src/render/pass/RendererHintsPassElement.hpp>
 #include <hyprutils/utils/ScopeGuard.hpp>
 
+// What are we even doing...
 class CFakeDamageElement : public IPassElement {
 public:
     CBox       box;
@@ -29,7 +30,7 @@ public:
     virtual CRegion             opaqueRegion() {
         return CRegion{};
     }
-    virtual const char*         passName() {
+    virtual const char* passName() {
         return "CFakeDamageElement";
     }
 
@@ -53,10 +54,10 @@ void renderRectWithBlur(CBox box, CHyprColor color) {
 
 void renderBorder(CBox box, CGradientValueData gradient, int size) {
     CBorderPassElement::SBorderData data;
-    data.box        = box;
-    data.grad1      = gradient;
-    data.round      = 0;
-    data.a          = 1.f;
+    data.box = box;
+    data.grad1 = gradient;
+    data.round = 0;
+    data.a = 1.f;
     data.borderSize = size;
     g_pHyprRenderer->m_sRenderPass.add(makeShared<CBorderPassElement>(data));
 }
@@ -96,7 +97,7 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{renderModif}));
     // remove modif as it goes out of scope (wtf is this blackmagic i need to relearn c++)
     Hyprutils::Utils::CScopeGuard x([&renderModif] {
-            g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{SRenderModifData{}}));
+        g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{SRenderModifData{}}));
         });
 
     g_pHyprRenderer->damageWindow(pWindow);
@@ -138,7 +139,7 @@ void renderLayerStub(PHLLS pLayer, PHLMONITOR pMonitor, CBox rectOverride, times
     g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{renderModif}));
     // remove modif as it goes out of scope (wtf is this blackmagic i need to relearn c++)
     Hyprutils::Utils::CScopeGuard x([&renderModif] {
-            g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{SRenderModifData{}}));
+        g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{SRenderModifData{}}));
         });
 
     (*(tRenderLayer)pRenderLayer)(g_pHyprRenderer.get(), pLayer, pMonitor, time, false);
@@ -193,13 +194,17 @@ void CHyprspaceWidget::draw() {
 
 
     // unscaled and relative to owner
-    CBox damageBox = {0, (Config::onBottom * (owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea)))) - (bottomInvert * curYOffset->value()), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
+    //CBox damageBox = {0, (Config::onBottom * (owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea)))) - (bottomInvert * curYOffset->value()), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
 
-    owner->addDamage(damageBox);
+    //owner->addDamage(damageBox);
     g_pHyprRenderer->damageMonitor(owner);
-    CFakeDamageElement fakeDamage = CFakeDamageElement(CBox({0,0}, owner->vecTransformedSize));
+
+    // add a fake element with needsliveblur = true and covers the entire monitor to ensure damage applies to the entire monitor
+    // unoptimized atm but hey its working
+    CFakeDamageElement fakeDamage = CFakeDamageElement(CBox({0, 0}, owner->vecTransformedSize));
     g_pHyprRenderer->m_sRenderPass.add(makeShared<CFakeDamageElement>(fakeDamage));
 
+    // the list of workspaces to show
     std::vector<int> workspaces;
 
     if (Config::showSpecialWorkspace) {
@@ -220,6 +225,7 @@ void CHyprspaceWidget::draw() {
         }
     }
 
+    // include empty workspaces that are between non-empty ones
     if (Config::showEmptyWorkspace) {
         int wsIDStart = 1;
         int wsIDEnd = highestID;
@@ -238,7 +244,7 @@ void CHyprspaceWidget::draw() {
         }
     }
 
-    // add new empty workspace
+    // add a new empty workspace at last
     if (Config::showNewWorkspace) {
         // get the lowest empty workspce id after the highest id of current workspace
         while (g_pCompositor->getWorkspaceByID(highestID) != nullptr) highestID++;

@@ -17,14 +17,6 @@ typedef void (*tRenderWindow)(void*, PHLWINDOW, PHLMONITOR, timespec*, bool, eRe
 extern void* pRenderWindow;
 typedef void (*tRenderLayer)(void*, PHLLSREF, PHLMONITOR, timespec*, bool);
 extern void* pRenderLayer;
-
-typedef void (*tWindowSnapshot)(void*, PHLWINDOW);
-extern void* pRenderSnapshotWindow;
-extern void* pMakeWindowSnapshot;
-typedef void (*tLayerSnapshot)(void*, PHLLS);
-extern void* pRenderSnapshotLayer;
-extern void* pMakeLayerSnapshot;
-
 namespace Config {
     extern CHyprColor panelBaseColor;
     extern CHyprColor panelBorderColor;

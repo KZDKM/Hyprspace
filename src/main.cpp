@@ -7,10 +7,6 @@
 void* pMouseKeybind;
 void* pRenderWindow;
 void* pRenderLayer;
-void* pRenderSnapshotWindow;
-void* pRenderSnapshotLayer;
-void* pMakeWindowSnapshot;
-void* pMakeLayerSnapshot;
 
 std::vector<std::shared_ptr<CHyprspaceWidget>> g_overviewWidgets;
 
@@ -507,11 +503,6 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     // CHyprRenderer::renderWindow
     auto funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWindow");
     pRenderWindow = funcSearch[0].address;
-
-    //pRenderSnapshotWindow = findFunctionBySymbol(pHandle, "renderSnapshot", "renderSnapshot(Hyprutils::Memory::CSharedPointer<CWindow>");
-    //pRenderSnapshotLayer = findFunctionBySymbol(pHandle, "renderSnapshot", "renderSnapshot(Hyprutils::Memory::CSharedPointer<CLayerSurface>");
-    //pMakeWindowSnapshot = findFunctionBySymbol(pHandle, "makeWindowSnapshot", "makeWindowSnapshot");
-    //pMakeLayerSnapshot = findFunctionBySymbol(pHandle, "makeLayerSnapshot", "makeLayerSnapshot");
 
     // CHyprRenderer::renderLayer
     funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderLayer");
