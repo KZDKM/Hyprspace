@@ -1,8 +1,39 @@
 #include "Overview.hpp"
 #include "Globals.hpp"
+#include <hyprland/src/render/pass/RectPassElement.hpp>
+#include <hyprland/src/render/pass/BorderPassElement.hpp>
+#include <hyprland/src/render/pass/RendererHintsPassElement.hpp>
+#include <hyprutils/utils/ScopeGuard.hpp>
+
+void renderRect(CBox box, CHyprColor color) {
+    CRectPassElement::SRectData rectdata;
+    rectdata.color = color;
+    rectdata.box = box;
+    g_pHyprRenderer->m_sRenderPass.add(makeShared<CRectPassElement>(rectdata));
+}
+
+void renderRectWithBlur(CBox box, CHyprColor color) {
+    CRectPassElement::SRectData rectdata;
+    rectdata.color = color;
+    rectdata.box = box;
+    rectdata.blur = true;
+    g_pHyprRenderer->m_sRenderPass.add(makeShared<CRectPassElement>(rectdata));
+}
+
+void renderBorder(CBox box, CGradientValueData gradient, int size) {
+    CBorderPassElement::SBorderData data;
+    data.box        = box;
+    data.grad1      = gradient;
+    data.round      = 0;
+    data.a          = 1.f;
+    data.borderSize = size;
+    g_pHyprRenderer->m_sRenderPass.add(makeShared<CBorderPassElement>(data));
+}
 
 void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWorkspaceOverride, CBox rectOverride, timespec* time) {
     if (!pWindow || !pMonitor || !pWorkspaceOverride || !time) return;
+
+    SRenderModifData renderModif;
 
     const auto oWorkspace = pWindow->m_pWorkspace;
     const auto oFullscreen = pWindow->m_sFullscreenState;
@@ -19,9 +50,9 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
 
     // using renderModif struct to override the position and scale of windows
     // this will be replaced by matrix transformations in hyprland
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, (pMonitor->vecPosition * pMonitor->scale) + (rectOverride.pos() / curScaling) - (oRealPosition * pMonitor->scale)});
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
-    g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
+    renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, (pMonitor->vecPosition * pMonitor->scale) + (rectOverride.pos() / curScaling) - (oRealPosition * pMonitor->scale)});
+    renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
+    renderModif.enabled = true;
     pWindow->m_pWorkspace = pWorkspaceOverride;
     pWindow->m_sFullscreenState = SFullscreenState{FSMODE_NONE};
     pWindow->m_sWindowData.nearestNeighbor = false;
@@ -30,6 +61,12 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     pWindow->m_sWindowData.rounding = CWindowOverridableVar<int>(pWindow->rounding() * curScaling * pMonitor->scale, eOverridePriority::PRIORITY_SET_PROP);
     g_pInputManager->currentlyDraggedWindow = pWindow; // override these and force INTERACTIVERESIZEINPROGRESS = true to trick the renderer
     g_pInputManager->dragMode = MBIND_RESIZE;
+
+    g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{renderModif}));
+    // remove modif as it goes out of scope (wtf is this blackmagic i need to relearn c++)
+    Hyprutils::Utils::CScopeGuard x([&renderModif] {
+            g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{SRenderModifData{}}));
+        });
 
     g_pHyprRenderer->damageWindow(pWindow);
 
@@ -44,9 +81,6 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     pWindow->m_sWindowData.rounding.unset(eOverridePriority::PRIORITY_SET_PROP);
     g_pInputManager->currentlyDraggedWindow = oDraggedWindow;
     g_pInputManager->dragMode = oDragMode;
-    g_pHyprOpenGL->m_RenderData.renderModif.enabled = oRenderModifEnable;
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
 }
 
 void renderLayerStub(PHLLS pLayer, PHLMONITOR pMonitor, CBox rectOverride, timespec* time) {
@@ -62,19 +96,24 @@ void renderLayerStub(PHLLS pLayer, PHLMONITOR pMonitor, CBox rectOverride, times
 
     const float curScaling = rectOverride.w / (oSize.x);
 
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, pMonitor->vecPosition + (rectOverride.pos() / curScaling) - oRealPosition});
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
-    g_pHyprOpenGL->m_RenderData.renderModif.enabled = true;
+    SRenderModifData renderModif;
+
+    renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, pMonitor->vecPosition + (rectOverride.pos() / curScaling) - oRealPosition});
+    renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
+    renderModif.enabled = true;
     pLayer->alpha->setValue(1);
     pLayer->fadingOut = false;
+
+    g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{renderModif}));
+    // remove modif as it goes out of scope (wtf is this blackmagic i need to relearn c++)
+    Hyprutils::Utils::CScopeGuard x([&renderModif] {
+            g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{SRenderModifData{}}));
+        });
 
     (*(tRenderLayer)pRenderLayer)(g_pHyprRenderer.get(), pLayer, pMonitor, time, false);
 
     pLayer->fadingOut = oFadingOut;
     pLayer->alpha->setValue(oAlpha);
-    g_pHyprOpenGL->m_RenderData.renderModif.enabled = oRenderModifEnable;
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
-    g_pHyprOpenGL->m_RenderData.renderModif.modifs.pop_back();
 }
 
 // NOTE: rects and clipbox positions are relative to the monitor, while damagebox and layers are not, what the fuck? xd
@@ -91,11 +130,7 @@ void CHyprspaceWidget::draw() {
     timespec time;
     clock_gettime(CLOCK_MONOTONIC, &time);
 
-    g_pCompositor->scheduleFrameForMonitor(owner);
-
     g_pHyprOpenGL->m_RenderData.pCurrentMonData->blurFBShouldRender = true;
-    //g_pHyprOpenGL->markBlurDirtyForMonitor(owner);
-    //g_pHyprOpenGL->preRender(owner);
 
     int bottomInvert = 1;
     if (Config::onBottom) bottomInvert = -1;
@@ -110,10 +145,10 @@ void CHyprspaceWidget::draw() {
     g_pHyprOpenGL->m_RenderData.clipBox = CBox({0, 0}, owner->vecTransformedSize);
 
     if (!Config::disableBlur) {
-        g_pHyprOpenGL->renderRectWithBlur(&widgetBox, Config::panelBaseColor);
+        renderRectWithBlur(widgetBox, Config::panelBaseColor);
     }
     else {
-        g_pHyprOpenGL->renderRect(&widgetBox, Config::panelBaseColor);
+        renderRect(widgetBox, Config::panelBaseColor);
     }
 
     // Panel Border
@@ -122,14 +157,14 @@ void CHyprspaceWidget::draw() {
         CBox borderBox = {widgetBox.x, owner->vecPosition.y + (Config::onBottom * owner->vecTransformedSize.y) + (Config::panelHeight + Config::reservedArea - curYOffset->value() * owner->scale) * bottomInvert, owner->vecTransformedSize.x, Config::panelBorderWidth};
         borderBox.y -= owner->vecPosition.y;
 
-        g_pHyprOpenGL->renderRect(&borderBox, Config::panelBorderColor);
+        renderRect(borderBox, Config::panelBorderColor);
     }
 
 
     // unscaled and relative to owner
     CBox damageBox = {0, (Config::onBottom * (owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea)))) - (bottomInvert * curYOffset->value()), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
 
-    owner->addDamage(&damageBox);
+    owner->addDamage(damageBox);
 
     std::vector<int> workspaces;
 
@@ -198,13 +233,13 @@ void CHyprspaceWidget::draw() {
         // workspace background rect (NOT background layer) and border
         if (ws == owner->activeWorkspace) {
             if (Config::workspaceBorderSize >= 1 && Config::workspaceActiveBorder.a > 0) {
-                g_pHyprOpenGL->renderBorder(&curWorkspaceBox, CGradientValueData(Config::workspaceActiveBorder), 0, Config::workspaceBorderSize);
+                renderBorder(curWorkspaceBox, CGradientValueData(Config::workspaceActiveBorder), Config::workspaceBorderSize);
             }
             if (!Config::disableBlur) {
-                g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, Config::workspaceActiveBackground); // cant really round it until I find a proper way to clip windows to a rounded rect
+                renderRectWithBlur(curWorkspaceBox, Config::workspaceActiveBackground); // cant really round it until I find a proper way to clip windows to a rounded rect
             }
             else {
-                g_pHyprOpenGL->renderRect(&curWorkspaceBox, Config::workspaceActiveBackground);
+                renderRect(curWorkspaceBox, Config::workspaceActiveBackground);
             }
             if (!Config::drawActiveWorkspace) {
                 curWorkspaceRectOffsetX += workspaceBoxW + (Config::workspaceMargin * owner->scale);
@@ -213,13 +248,13 @@ void CHyprspaceWidget::draw() {
         }
         else {
             if (Config::workspaceBorderSize >= 1 && Config::workspaceInactiveBorder.a > 0) {
-                g_pHyprOpenGL->renderBorder(&curWorkspaceBox, CGradientValueData(Config::workspaceInactiveBorder), 0, Config::workspaceBorderSize);
+                renderBorder(curWorkspaceBox, CGradientValueData(Config::workspaceInactiveBorder), Config::workspaceBorderSize);
             }
             if (!Config::disableBlur) {
-                g_pHyprOpenGL->renderRectWithBlur(&curWorkspaceBox, Config::workspaceInactiveBackground);
+                renderRectWithBlur(curWorkspaceBox, Config::workspaceInactiveBackground);
             }
             else {
-                g_pHyprOpenGL->renderRect(&curWorkspaceBox, Config::workspaceInactiveBackground);
+                renderRect(curWorkspaceBox, Config::workspaceInactiveBackground);
             }
         }
 
@@ -245,10 +280,11 @@ void CHyprspaceWidget::draw() {
             if (Config::onBottom) miniPanelBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY + workspaceBoxH - widgetBox.h * monitorSizeScaleFactor, widgetBox.w * monitorSizeScaleFactor, widgetBox.h * monitorSizeScaleFactor};
 
             if (!Config::disableBlur) {
-                g_pHyprOpenGL->renderRectWithBlur(&miniPanelBox, CHyprColor(0, 0, 0, 0), 0, 1.f, false);
+                renderRectWithBlur(miniPanelBox, CHyprColor(0, 0, 0, 0));
             }
             else {
-                g_pHyprOpenGL->renderRect(&miniPanelBox, CHyprColor(0, 0, 0, 0), 0);
+                // what
+                renderRect(miniPanelBox, CHyprColor(0, 0, 0, 0));
             }
 
         }
