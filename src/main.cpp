@@ -268,22 +268,30 @@ void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
     }
 }
 
+PHLMONITOR g_pTouchedMonitor;
+
 void onTouchDown(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<ITouch::SDownEvent>(args);
-    const auto targetMonitor = g_pCompositor->getMonitorFromName(e.device ? e.device->deviceName : "");
+    auto targetMonitor = g_pCompositor->getMonitorFromName(!e.device->boundOutput.empty() ? e.device->boundOutput : "");
+    targetMonitor = targetMonitor ? targetMonitor : g_pCompositor->m_pLastMonitor.lock();
+
     const auto widget = getWidgetForMonitor(targetMonitor);
     if (widget != nullptr && targetMonitor != nullptr)
-        if (widget->isActive())
+        if (widget->isActive()) {
             info.cancelled = !widget->buttonEvent(true, { targetMonitor->vecPosition.x + e.pos.x * targetMonitor->vecSize.x, targetMonitor->vecPosition.y + e.pos.y * targetMonitor->vecSize.y });
+            if (info.cancelled) {
+                g_pTouchedMonitor = targetMonitor;
+            }
+        }
 }
 
 void onTouchUp(void* thisptr, SCallbackInfo& info, std::any args) {
-    const auto e = std::any_cast<ITouch::SUpEvent>(args);
-    const auto targetMonitor = g_pCompositor->getMonitorFromID(e.touchID);
-    const auto widget = getWidgetForMonitor(targetMonitor);
-    if (widget != nullptr && targetMonitor != nullptr)
+    const auto widget = getWidgetForMonitor(g_pTouchedMonitor);
+    if (widget != nullptr && g_pTouchedMonitor != nullptr)
         if (widget->isActive())
             info.cancelled = !widget->buttonEvent(false, g_pInputManager->getMouseCoordsInternal());
+
+    g_pTouchedMonitor = nullptr;
 }
 
 static SDispatchResult dispatchToggleOverview(std::string arg) {
