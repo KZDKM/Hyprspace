@@ -64,6 +64,7 @@ Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pCloseLayerHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pMouseButtonHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pMouseAxisHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pTouchDownHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pTouchMoveHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pTouchUpHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pSwipeBeginHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pSwipeUpdateHook;
@@ -268,22 +269,42 @@ void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
     }
 }
 
+PHLMONITOR g_pTouchedMonitor;
+
 void onTouchDown(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<ITouch::SDownEvent>(args);
-    const auto targetMonitor = g_pCompositor->getMonitorFromName(e.device ? e.device->deviceName : "");
+    auto targetMonitor = g_pCompositor->getMonitorFromName(!e.device->boundOutput.empty() ? e.device->boundOutput : "");
+    targetMonitor = targetMonitor ? targetMonitor : g_pCompositor->m_pLastMonitor.lock();
+
     const auto widget = getWidgetForMonitor(targetMonitor);
-    if (widget != nullptr && targetMonitor != nullptr)
-        if (widget->isActive())
-            info.cancelled = !widget->buttonEvent(true, { targetMonitor->vecPosition.x + e.pos.x * targetMonitor->vecSize.x, targetMonitor->vecPosition.y + e.pos.y * targetMonitor->vecSize.y });
+    if (widget != nullptr && targetMonitor != nullptr) {
+        if (widget->isActive()) {
+            Vector2D pos = targetMonitor->vecPosition + e.pos * targetMonitor->vecSize;
+            info.cancelled = !widget->buttonEvent(true, pos);
+            if (info.cancelled) {
+                g_pTouchedMonitor = targetMonitor;
+                g_pCompositor->warpCursorTo(pos);
+                g_pInputManager->refocus();
+            }
+        }
+    }
+}
+
+void onTouchMove(void* thisptr, SCallbackInfo& info, std::any args) {
+    if (g_pTouchedMonitor == nullptr) return;
+
+    const auto e = std::any_cast<ITouch::SMotionEvent>(args);
+    g_pCompositor->warpCursorTo(g_pTouchedMonitor->vecPosition + g_pTouchedMonitor->vecSize * e.pos);
+    g_pInputManager->simulateMouseMovement();
 }
 
 void onTouchUp(void* thisptr, SCallbackInfo& info, std::any args) {
-    const auto e = std::any_cast<ITouch::SUpEvent>(args);
-    const auto targetMonitor = g_pCompositor->getMonitorFromID(e.touchID);
-    const auto widget = getWidgetForMonitor(targetMonitor);
-    if (widget != nullptr && targetMonitor != nullptr)
+    const auto widget = getWidgetForMonitor(g_pTouchedMonitor);
+    if (widget != nullptr && g_pTouchedMonitor != nullptr)
         if (widget->isActive())
             info.cancelled = !widget->buttonEvent(false, g_pInputManager->getMouseCoordsInternal());
+
+    g_pTouchedMonitor = nullptr;
 }
 
 static SDispatchResult dispatchToggleOverview(std::string arg) {
@@ -490,6 +511,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     g_pMouseAxisHook = HyprlandAPI::registerCallbackDynamic(pHandle, "mouseAxis", onMouseAxis);
 
     g_pTouchDownHook = HyprlandAPI::registerCallbackDynamic(pHandle, "touchDown", onTouchDown);
+    g_pTouchMoveHook = HyprlandAPI::registerCallbackDynamic(pHandle, "touchMove", onTouchMove);
     g_pTouchUpHook = HyprlandAPI::registerCallbackDynamic(pHandle, "touchUp", onTouchUp);
 
     g_pSwipeBeginHook = HyprlandAPI::registerCallbackDynamic(pHandle, "swipeBegin", onSwipeBegin);
