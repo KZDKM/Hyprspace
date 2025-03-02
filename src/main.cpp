@@ -1,8 +1,11 @@
 #include <hyprland/src/plugins/PluginSystem.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/devices/IKeyboard.hpp>
+#include <hyprlang.hpp>
 #include "Overview.hpp"
 #include "Globals.hpp"
+#include "src/SharedDefs.hpp"
+#include "src/debug/Log.hpp"
 
 void* pMouseKeybind;
 void* pRenderWindow;
@@ -49,6 +52,9 @@ bool Config::showSpecialWorkspace = false;
 bool Config::disableGestures = false;
 bool Config::reverseSwipe = false;
 
+bool Config::disableHyprgrassIntegration = false;
+std::string Config::hyprgrassSwipeEdge = "r";
+
 bool Config::disableBlur = false;
 
 float Config::overrideAnimSpeed = 0;
@@ -64,6 +70,7 @@ Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pCloseLayerHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pMouseButtonHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pMouseAxisHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pTouchDownHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pTouchMoveHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pTouchUpHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pSwipeBeginHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pSwipeUpdateHook;
@@ -71,6 +78,9 @@ Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pSwipeEndHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pKeyPressHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pSwitchWorkspaceHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pAddMonitorHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pHyprgrassEdgeBeginHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pHyprgrassEdgeMoveHook;
+Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pHyprgrassEdgeEndHook;
 
 APICALL EXPORT std::string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;
@@ -251,6 +261,69 @@ void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
         widget->endSwipe(e);
 }
 
+Vector2D g_hyprgrassEdgePrevCoord;
+
+// event hook for hyprgrass edge gestures
+void onHyprgrassEdgeBegin(void* thisptr, SCallbackInfo& info, std::any args) {
+    if (Config::disableHyprgrassIntegration) return;
+
+    const auto e = std::any_cast<std::pair<std::string, Vector2D>>(args);
+    const auto swipe = IPointer::SSwipeBeginEvent{};
+
+    // event name is "edge:x:y" 
+    // where x is the origin edge and y is the swipe direction
+    size_t a = e.first.find(':');
+    size_t b = e.first.find(':', a+1);
+    if (e.first.compare(a+1, b-a-1, Config::hyprgrassSwipeEdge) != 0) {
+        return;
+    }
+
+    info.cancelled = true;
+    g_hyprgrassEdgePrevCoord = e.second;
+    const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
+    if (widget != nullptr && !widget->isActive())
+        widget->beginSwipe(swipe);
+
+    // end other widget swipe
+    for (auto& w : g_overviewWidgets) {
+        if (w != widget && w->isSwiping()) {
+            IPointer::SSwipeEndEvent dummy;
+            dummy.cancelled = true;
+            w->endSwipe(dummy);
+        }
+    }
+}
+
+void onHyprgrassEdgeMove(void *thisptr, SCallbackInfo& info, std::any args) {
+    if (Config::disableHyprgrassIntegration) return;
+
+    int fingers = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_fingers")->getValue());
+    int distance = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_distance")->getValue());
+
+    const auto e = std::any_cast<Vector2D>(args);
+    const IPointer::SSwipeUpdateEvent swipe = {
+        .fingers = static_cast<uint32_t>(fingers),
+        // this means I need to swipe 1/4 of the screen to trigger I think?
+        // I don't understand what "unit" distance is in
+        .delta = (e - g_hyprgrassEdgePrevCoord) * distance * 4, 
+    };
+    g_hyprgrassEdgePrevCoord = e;
+
+    const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
+    if (widget != nullptr)
+        info.cancelled = !widget->updateSwipe(swipe);
+}
+
+void onHyprgrassEdgeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
+    if (Config::disableHyprgrassIntegration) return;
+
+    const IPointer::SSwipeEndEvent e = {.cancelled = false};
+
+    const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
+    if (widget != nullptr)
+        widget->endSwipe(e);
+}
+
 // atm this is only for ESC to exit
 void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<IKeyboard::SKeyEvent>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["event"]);
@@ -268,22 +341,42 @@ void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
     }
 }
 
+PHLMONITOR g_pTouchedMonitor;
+
 void onTouchDown(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<ITouch::SDownEvent>(args);
-    const auto targetMonitor = g_pCompositor->getMonitorFromName(e.device ? e.device->deviceName : "");
+    auto targetMonitor = g_pCompositor->getMonitorFromName(!e.device->boundOutput.empty() ? e.device->boundOutput : "");
+    targetMonitor = targetMonitor ? targetMonitor : g_pCompositor->m_pLastMonitor.lock();
+
     const auto widget = getWidgetForMonitor(targetMonitor);
-    if (widget != nullptr && targetMonitor != nullptr)
-        if (widget->isActive())
-            info.cancelled = !widget->buttonEvent(true, { targetMonitor->vecPosition.x + e.pos.x * targetMonitor->vecSize.x, targetMonitor->vecPosition.y + e.pos.y * targetMonitor->vecSize.y });
+    if (widget != nullptr && targetMonitor != nullptr) {
+        if (widget->isActive()) {
+            Vector2D pos = targetMonitor->vecPosition + e.pos * targetMonitor->vecSize;
+            info.cancelled = !widget->buttonEvent(true, pos);
+            if (info.cancelled) {
+                g_pTouchedMonitor = targetMonitor;
+                g_pCompositor->warpCursorTo(pos);
+                g_pInputManager->refocus();
+            }
+        }
+    }
+}
+
+void onTouchMove(void* thisptr, SCallbackInfo& info, std::any args) {
+    if (g_pTouchedMonitor == nullptr) return;
+
+    const auto e = std::any_cast<ITouch::SMotionEvent>(args);
+    g_pCompositor->warpCursorTo(g_pTouchedMonitor->vecPosition + g_pTouchedMonitor->vecSize * e.pos);
+    g_pInputManager->simulateMouseMovement();
 }
 
 void onTouchUp(void* thisptr, SCallbackInfo& info, std::any args) {
-    const auto e = std::any_cast<ITouch::SUpEvent>(args);
-    const auto targetMonitor = g_pCompositor->getMonitorFromID(e.touchID);
-    const auto widget = getWidgetForMonitor(targetMonitor);
-    if (widget != nullptr && targetMonitor != nullptr)
+    const auto widget = getWidgetForMonitor(g_pTouchedMonitor);
+    if (widget != nullptr && g_pTouchedMonitor != nullptr)
         if (widget->isActive())
             info.cancelled = !widget->buttonEvent(false, g_pInputManager->getMouseCoordsInternal());
+
+    g_pTouchedMonitor = nullptr;
 }
 
 static SDispatchResult dispatchToggleOverview(std::string arg) {
@@ -465,6 +558,9 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:disableGestures", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:reverseSwipe", Hyprlang::INT{0});
 
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:disableHyprgrassIntegration", Hyprlang::INT{0});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:hyprgrassSwipeEdge", Hyprlang::STRING{"r"});
+
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:disableBlur", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:overrideAnimSpeed", Hyprlang::FLOAT{0.0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:dragAlpha", Hyprlang::FLOAT{0.2});
@@ -490,6 +586,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     g_pMouseAxisHook = HyprlandAPI::registerCallbackDynamic(pHandle, "mouseAxis", onMouseAxis);
 
     g_pTouchDownHook = HyprlandAPI::registerCallbackDynamic(pHandle, "touchDown", onTouchDown);
+    g_pTouchMoveHook = HyprlandAPI::registerCallbackDynamic(pHandle, "touchMove", onTouchMove);
     g_pTouchUpHook = HyprlandAPI::registerCallbackDynamic(pHandle, "touchUp", onTouchUp);
 
     g_pSwipeBeginHook = HyprlandAPI::registerCallbackDynamic(pHandle, "swipeBegin", onSwipeBegin);
@@ -499,6 +596,10 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     g_pKeyPressHook = HyprlandAPI::registerCallbackDynamic(pHandle, "keyPress", onKeyPress);
 
     g_pSwitchWorkspaceHook = HyprlandAPI::registerCallbackDynamic(pHandle, "workspace", onWorkspaceChange);
+
+    g_pHyprgrassEdgeBeginHook = HyprlandAPI::registerCallbackDynamic(pHandle, "hyprgrass:edgeBegin", onHyprgrassEdgeBegin);
+    g_pHyprgrassEdgeMoveHook = HyprlandAPI::registerCallbackDynamic(pHandle, "hyprgrass:edgeUpdate", onHyprgrassEdgeMove);
+    g_pHyprgrassEdgeEndHook = HyprlandAPI::registerCallbackDynamic(pHandle, "hyprgrass:edgeEnd", onHyprgrassEdgeEnd);
 
     // CHyprRenderer::renderWindow
     auto funcSearch = HyprlandAPI::findFunctionsByName(pHandle, "renderWindow");
