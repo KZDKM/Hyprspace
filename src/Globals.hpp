@@ -56,6 +56,9 @@ namespace Config {
     extern bool disableGestures;
     extern bool reverseSwipe;
 
+    extern bool disableHyprgrassIntegration;
+    extern std::string hyprgrassSwipeEdge;
+
     extern bool disableBlur;
     extern float overrideAnimSpeed;
     extern float dragAlpha;
