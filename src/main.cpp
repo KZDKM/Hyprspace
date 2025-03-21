@@ -252,20 +252,30 @@ void onSwipeEnd(void* thisptr, SCallbackInfo& info, std::any args) {
         widget->endSwipe(e);
 }
 
-// atm this is only for ESC to exit
+// Close overview with configurable key
 void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<IKeyboard::SKeyEvent>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["event"]);
     //const auto k = std::any_cast<SKeyboard*>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["keyboard"]);
 
-    if (e.keycode == KEY_ESC) {
+    // Get configured exit key (default to ESC if not configured)
+    const auto exitKey = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:exitKey")->getValue());
+    
+    // If exit key is 0, disable keyboard exit
+    if (exitKey == 0)
+        return;
+        
+    if (e.keycode == exitKey) {
         // close all panels
+        bool overviewActive = false;
         for (auto& widget : g_overviewWidgets) {
-            if (widget != nullptr)
-                if (widget->isActive()) {
-                    widget->hide();
-                    info.cancelled = true;
-                }
+            if (widget != nullptr && widget->isActive()) {
+                widget->hide();
+                overviewActive = true;
+            }
         }
+        // Only cancel event if overview was active and closed
+        if (overviewActive)
+            info.cancelled = true;
     }
 }
 
@@ -415,6 +425,8 @@ void reloadConfig() {
     Config::disableBlur = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:disableBlur")->getValue());
 
     Config::overrideAnimSpeed = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:overrideAnimSpeed")->getValue());
+    
+    // We don't need to store exitKey in Config namespace as it's only used in onKeyPress
 
     for (auto& widget : g_overviewWidgets) {
         widget->updateConfig();
@@ -489,6 +501,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:disableBlur", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:overrideAnimSpeed", Hyprlang::FLOAT{0.0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:dragAlpha", Hyprlang::FLOAT{0.2});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:exitKey", Hyprlang::INT{KEY_ESC});
 
     g_pConfigReloadHook = HyprlandAPI::registerCallbackDynamic(pHandle, "configReloaded", [&] (void* thisptr, SCallbackInfo& info, std::any data) { reloadConfig(); });
     HyprlandAPI::reloadConfig();
