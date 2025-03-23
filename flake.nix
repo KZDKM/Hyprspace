@@ -71,7 +71,7 @@
     devShells = perSystem (system: pkgs: {
       default = pkgs.mkShell {
         name = "Hyprspace-shell";
-        nativeBuildInputs = with pkgs; [gcc14];
+        nativeBuildInputs = with pkgs; [gcc14 clang-tools bear];
         buildInputs = [hyprland.packages.${system}.hyprland];
         inputsFrom = [
           hyprland.packages.${system}.hyprland
