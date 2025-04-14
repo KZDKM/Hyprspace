@@ -161,7 +161,7 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - `plugin:overview:showSpecialWorkspace` defaults to false
 - `plugin:overview:disableGestures`
 - `plugin:overview:reverseSwipe` reverses the direction of swipe gesture, for macOS peeps?
-- `plugin:overview:exitKey` key code used to exit overview mode (default: KEY_ESC/1). Set to 0 to disable keyboard exit.
+- `plugin:overview:exitKey` key used to exit overview mode (default: Escape). Leave empty to disable keyboard exit.
 - Touchpad gesture behavior follows Hyprland workspace swipe behavior
   - `gestures:workspace_swipe_fingers`
   - `gestures:workspace_swipe_cancel_ratio`
