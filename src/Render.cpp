@@ -3,6 +3,7 @@
 #include <hyprland/src/render/pass/RectPassElement.hpp>
 #include <hyprland/src/render/pass/BorderPassElement.hpp>
 #include <hyprland/src/render/pass/RendererHintsPassElement.hpp>
+#include <hyprlang.hpp>
 #include <hyprutils/utils/ScopeGuard.hpp>
 
 // What are we even doing...
@@ -90,13 +91,13 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     pWindow->m_sWindowData.nearestNeighbor = false;
     pWindow->m_bIsFloating = false;
     pWindow->m_bPinned = true;
-    pWindow->m_sWindowData.rounding = CWindowOverridableVar<int>(pWindow->rounding() * curScaling * pMonitor->scale, eOverridePriority::PRIORITY_SET_PROP);
+    pWindow->m_sWindowData.rounding = CWindowOverridableVar<Hyprlang::INT>(pWindow->rounding() * curScaling * pMonitor->scale, eOverridePriority::PRIORITY_SET_PROP);
     g_pInputManager->currentlyDraggedWindow = pWindow; // override these and force INTERACTIVERESIZEINPROGRESS = true to trick the renderer
     g_pInputManager->dragMode = MBIND_RESIZE;
 
     g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{renderModif}));
     // remove modif as it goes out of scope (wtf is this blackmagic i need to relearn c++)
-    Hyprutils::Utils::CScopeGuard x([&renderModif] {
+    Hyprutils::Utils::CScopeGuard x([] {
         g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{SRenderModifData{}}));
         });
 
@@ -138,7 +139,7 @@ void renderLayerStub(PHLLS pLayer, PHLMONITOR pMonitor, CBox rectOverride, times
 
     g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{renderModif}));
     // remove modif as it goes out of scope (wtf is this blackmagic i need to relearn c++)
-    Hyprutils::Utils::CScopeGuard x([&renderModif] {
+    Hyprutils::Utils::CScopeGuard x([] {
         g_pHyprRenderer->m_sRenderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{SRenderModifData{}}));
         });
 
