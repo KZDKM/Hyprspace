@@ -4,7 +4,7 @@
 bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
     bool Return;
 
-    const auto targetWindow = g_pInputManager->currentlyDraggedWindow.lock();
+    const auto targetWindow = g_pInputManager->m_currentlyDraggedWindow.lock();
 
     // this is for click to exit, we set a timeout for button release
     bool couldExit = false;
@@ -30,16 +30,16 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
 
     // create new workspace
     if (targetWorkspace == nullptr && targetWorkspaceID >= SPECIAL_WORKSPACE_START) {
-        targetWorkspace = g_pCompositor->createNewWorkspace(targetWorkspaceID, getOwner()->ID);
+        targetWorkspace = g_pCompositor->createNewWorkspace(targetWorkspaceID, getOwner()->m_id);
     }
 
     // if the cursor is hovering over workspace, clicking should switch workspace instead of starting window drag
     if (Config::autoDrag && (targetWorkspace == nullptr || !pressed)) {
         // when overview is active, always drag windows on mouse click
-        if (const auto curWindow = g_pInputManager->currentlyDraggedWindow.lock()) {
+        if (const auto curWindow = g_pInputManager->m_currentlyDraggedWindow.lock()) {
             g_pLayoutManager->getCurrentLayout()->onEndDragWindow();
-            g_pInputManager->currentlyDraggedWindow.reset();
-            g_pInputManager->dragMode = MBIND_INVALID;
+            g_pInputManager->m_currentlyDraggedWindow.reset();
+            g_pInputManager->m_dragMode = MBIND_INVALID;
         }
         std::string keybind = (pressed ? "1" : "0") + std::string("movewindow");
         (*(tMouseKeybind)pMouseKeybind)(keybind);
@@ -49,23 +49,23 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
     // release window on workspace to drop it in
     if (targetWindow && targetWorkspace != nullptr && !pressed) {
         g_pCompositor->moveWindowToWorkspaceSafe(targetWindow, targetWorkspace);
-        if (targetWindow->m_bIsFloating) {
-            auto targetPos = getOwner()->vecPosition + (getOwner()->vecSize / 2.) - (targetWindow->m_vReportedSize / 2.);
-            targetWindow->m_vPosition = targetPos;
-            *targetWindow->m_vRealPosition = targetPos;
+        if (targetWindow->m_isFloating) {
+            auto targetPos = getOwner()->m_position + (getOwner()->m_size / 2.) - (targetWindow->m_reportedSize / 2.);
+            targetWindow->m_position = targetPos;
+            *targetWindow->m_realPosition = targetPos;
         }
         if (Config::switchOnDrop) {
-            g_pCompositor->getMonitorFromID(targetWorkspace->m_pMonitor->ID)->changeWorkspace(targetWorkspace->m_iID);
+            g_pCompositor->getMonitorFromID(targetWorkspace->m_monitor->m_id)->changeWorkspace(targetWorkspace->m_id);
             if (Config::exitOnSwitch && active) hide();
         }
         updateLayout();
     }
     // click workspace to change to workspace and exit overview
     else if (targetWorkspace && !pressed) {
-        if (targetWorkspace->m_bIsSpecialWorkspace)
+        if (targetWorkspace->m_isSpecialWorkspace)
             getOwner()->activeSpecialWorkspaceID() == targetWorkspaceID ? getOwner()->setSpecialWorkspace(nullptr) : getOwner()->setSpecialWorkspace(targetWorkspaceID);
         else {
-            g_pCompositor->getMonitorFromID(targetWorkspace->m_pMonitor->ID)->changeWorkspace(targetWorkspace->m_iID);
+            g_pCompositor->getMonitorFromID(targetWorkspace->m_monitor->m_id)->changeWorkspace(targetWorkspace->m_id);
         }
         if (Config::exitOnSwitch && active) hide();
     }
@@ -78,11 +78,11 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
 bool CHyprspaceWidget::axisEvent(double delta, Vector2D coords) {
 
     const auto owner = getOwner();
-    CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset->value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
-    if (Config::onBottom) widgetBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset->value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
+    CBox widgetBox = {owner->m_position.x, owner->m_position.y - curYOffset->value(), owner->m_transformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->m_scale};
+    if (Config::onBottom) widgetBox = {owner->m_position.x, owner->m_position.y + owner->m_transformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->m_scale) + curYOffset->value(), owner->m_transformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->m_scale};
 
     // scroll through panel if cursor is on it
-    if (widgetBox.containsPoint(coords * getOwner()->scale)) {
+    if (widgetBox.containsPoint(coords * getOwner()->m_scale)) {
         *workspaceScrollOffset = workspaceScrollOffset->goal() - delta * 2;
     }
     // otherwise, scroll to switch active workspace
@@ -123,16 +123,16 @@ bool CHyprspaceWidget::updateSwipe(IPointer::SSwipeUpdateEvent e) {
     if (abs(e.delta.x) / abs(e.delta.y) < 1) {
         if (swiping && e.fingers == (uint32_t)fingers) {
 
-            float currentScaling = g_pCompositor->getMonitorFromCursor()->vecSize.x / distance;
+            float currentScaling = g_pCompositor->getMonitorFromCursor()->m_size.x / distance;
 
             double scrollDifferential = e.delta.y * (Config::reverseSwipe ? -1 : 1) * (Config::onBottom ? -1 : 1) * currentScaling;
 
             curSwipeOffset += scrollDifferential;
-            curSwipeOffset = std::clamp<double>(curSwipeOffset, -10, ((Config::panelHeight + Config::reservedArea) * getOwner()->scale));
+            curSwipeOffset = std::clamp<double>(curSwipeOffset, -10, ((Config::panelHeight + Config::reservedArea) * getOwner()->m_scale));
 
             avgSwipeSpeed = (avgSwipeSpeed * swipePoints + scrollDifferential) / (swipePoints + 1);
 
-            curYOffset->setValueAndWarp(((Config::panelHeight + Config::reservedArea) * getOwner()->scale) - curSwipeOffset);
+            curYOffset->setValueAndWarp(((Config::panelHeight + Config::reservedArea) * getOwner()->m_scale) - curSwipeOffset);
 
             if (curSwipeOffset < 10 && active) hide();
             else if (curSwipeOffset > 10 && !active) show();
@@ -144,9 +144,9 @@ bool CHyprspaceWidget::updateSwipe(IPointer::SSwipeUpdateEvent e) {
         // scroll through panel
         if (e.fingers == (uint32_t)fingers && active) {
             const auto owner = getOwner();
-            CBox widgetBox = {owner->vecPosition.x, owner->vecPosition.y - curYOffset->value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
-            if (Config::onBottom) widgetBox = {owner->vecPosition.x, owner->vecPosition.y + owner->vecTransformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->scale) + curYOffset->value(), owner->vecTransformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->scale};
-            if (widgetBox.containsPoint(g_pInputManager->getMouseCoordsInternal() * getOwner()->scale)) {
+            CBox widgetBox = {owner->m_position.x, owner->m_position.y - curYOffset->value(), owner->m_transformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->m_scale};
+            if (Config::onBottom) widgetBox = {owner->m_position.x, owner->m_position.y + owner->m_transformedSize.y - ((Config::panelHeight + Config::reservedArea) * owner->m_scale) + curYOffset->value(), owner->m_transformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->m_scale};
+            if (widgetBox.containsPoint(g_pInputManager->getMouseCoordsInternal() * getOwner()->m_scale)) {
                 workspaceScrollOffset->setValueAndWarp(workspaceScrollOffset->goal() + e.delta.x * 2);
                 return false;
             }
@@ -167,12 +167,12 @@ bool CHyprspaceWidget::endSwipe(IPointer::SSwipeEndEvent e) {
     else {
         int swipeForceSpeed = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_min_speed_to_force")->getValue());
         float cancelRatio = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_cancel_ratio")->getValue());
-        double swipeTravel = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
+        double swipeTravel = (Config::panelHeight + Config::reservedArea) * getOwner()->m_scale;
         if (activeBeforeSwipe) {
             if ((curSwipeOffset < swipeTravel * cancelRatio) || avgSwipeSpeed < -swipeForceSpeed) {
                 if (active) hide();
                 else {
-                    *curYOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
+                    *curYOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->m_scale;
                     curSwipeOffset = -10.;
                 }
             }
@@ -181,7 +181,7 @@ bool CHyprspaceWidget::endSwipe(IPointer::SSwipeEndEvent e) {
                 if (!active) show();
                 else {
                     *curYOffset = 0;
-                    curSwipeOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
+                    curSwipeOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->m_scale;
                 }
             }
         }
@@ -190,14 +190,14 @@ bool CHyprspaceWidget::endSwipe(IPointer::SSwipeEndEvent e) {
                 if (!active) show();
                 else {
                     *curYOffset = 0;
-                    curSwipeOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
+                    curSwipeOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->m_scale;
                 }
             }
             else {
                 // cancel
                 if (active) hide();
                 else {
-                    *curYOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->scale;
+                    *curYOffset = (Config::panelHeight + Config::reservedArea) * getOwner()->m_scale;
                     curSwipeOffset = -10.;
                 }
             }

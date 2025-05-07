@@ -32,15 +32,15 @@ void CHyprspaceWidget::show() {
 
     if (prevFullscreen.empty()) {
         // unfullscreen all windows
-        for (auto& ws : g_pCompositor->m_vWorkspaces) {
-            if (ws->m_pMonitor->ID == ownerID) {
+        for (auto& ws : g_pCompositor->m_workspaces) {
+            if (ws->m_monitor->m_id == ownerID) {
                 const auto w = ws->getFullscreenWindow();
-                if (w != nullptr && ws->m_efFullscreenMode != FSMODE_NONE) {
+                if (w != nullptr && ws->m_fullscreenMode != FSMODE_NONE) {
                     // use fakefullscreenstate to preserve client's internal state
                     // fixes youtube fullscreen not restoring properly
-                    if (ws->m_efFullscreenMode == FSMODE_FULLSCREEN) w->m_bWantsInitialFullscreen = true;
+                    if (ws->m_fullscreenMode == FSMODE_FULLSCREEN) w->m_wantsInitialFullscreen = true;
                     // we use the getWindowFromHandle function to prevent dangling pointers
-                    prevFullscreen.emplace_back(std::make_tuple((uint32_t)(((uint64_t)w.get()) & 0xFFFFFFFF), ws->m_efFullscreenMode));
+                    prevFullscreen.emplace_back(std::make_tuple((uint32_t)(((uint64_t)w.get()) & 0xFFFFFFFF), ws->m_fullscreenMode));
                     g_pCompositor->setWindowFullscreenState(w, SFullscreenState{.internal = FSMODE_NONE, .client = FSMODE_NONE});
                 }
             }
@@ -50,17 +50,17 @@ void CHyprspaceWidget::show() {
     // hide top and overlay layers
     // FIXME: ensure input is disabled for hidden layers
     if (oLayerAlpha.empty() && Config::hideRealLayers) {
-        for (auto& ls : owner->m_aLayerSurfaceLayers[2]) {
+        for (auto& ls : owner->m_layerSurfaceLayers[2]) {
             //ls->startAnimation(false);
-            oLayerAlpha.emplace_back(std::make_tuple(ls.lock(), ls->alpha->goal()));
-            *ls->alpha = 0.f;
-            ls->fadingOut = true;
+            oLayerAlpha.emplace_back(std::make_tuple(ls.lock(), ls->m_alpha->goal()));
+            *ls->m_alpha = 0.f;
+            ls->m_fadingOut = true;
         }
-        for (auto& ls : owner->m_aLayerSurfaceLayers[3]) {
+        for (auto& ls : owner->m_layerSurfaceLayers[3]) {
             //ls->startAnimation(false);
-            oLayerAlpha.emplace_back(std::make_tuple(ls.lock(), ls->alpha->goal()));
-            *ls->alpha = 0.f;
-            ls->fadingOut = true;
+            oLayerAlpha.emplace_back(std::make_tuple(ls.lock(), ls->m_alpha->goal()));
+            *ls->m_alpha = 0.f;
+            ls->m_fadingOut = true;
         }
     }
 
@@ -69,7 +69,7 @@ void CHyprspaceWidget::show() {
     // panel offset should be handled by swipe event when swiping
     if (!swiping) {
         *curYOffset = 0;
-        curSwipeOffset = (Config::panelHeight + Config::reservedArea) * owner->scale;
+        curSwipeOffset = (Config::panelHeight + Config::reservedArea) * owner->m_scale;
     }
 
     updateLayout();
@@ -82,22 +82,22 @@ void CHyprspaceWidget::hide() {
     if (!owner) return;
 
     // restore layer state
-    for (auto& ls : owner->m_aLayerSurfaceLayers[2]) {
-        if (!ls->readyToDelete && ls->mapped && ls->fadingOut) {
+    for (auto& ls : owner->m_layerSurfaceLayers[2]) {
+        if (!ls->m_readyToDelete && ls->m_mapped && ls->m_fadingOut) {
             auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls;});
             if (oAlpha != oLayerAlpha.end()) {
-                ls->fadingOut = false;
-                *ls->alpha = std::get<1>(*oAlpha);
+                ls->m_fadingOut = false;
+                *ls->m_alpha = std::get<1>(*oAlpha);
             }
             //ls->startAnimation(true);
         }
     }
-    for (auto& ls : owner->m_aLayerSurfaceLayers[3]) {
-        if (!ls->readyToDelete && ls->mapped && ls->fadingOut) {
+    for (auto& ls : owner->m_layerSurfaceLayers[3]) {
+        if (!ls->m_readyToDelete && ls->m_mapped && ls->m_fadingOut) {
             auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls;});
             if (oAlpha != oLayerAlpha.end()) {
-                ls->fadingOut = false;
-                *ls->alpha = std::get<1>(*oAlpha);
+                ls->m_fadingOut = false;
+                *ls->m_alpha = std::get<1>(*oAlpha);
             }
             //ls->startAnimation(true);
         }
@@ -109,7 +109,7 @@ void CHyprspaceWidget::hide() {
         const auto w = g_pCompositor->getWindowFromHandle(std::get<0>(fs));
         const auto oFullscreenMode = std::get<1>(fs);
         g_pCompositor->setWindowFullscreenState(w, SFullscreenState(oFullscreenMode)); 
-        if (oFullscreenMode == FSMODE_FULLSCREEN) w->m_bWantsInitialFullscreen = false;
+        if (oFullscreenMode == FSMODE_FULLSCREEN) w->m_wantsInitialFullscreen = false;
     }
     prevFullscreen.clear();
 
@@ -117,7 +117,7 @@ void CHyprspaceWidget::hide() {
 
     // panel offset should be handled by swipe event when swiping
     if (!swiping) {
-        *curYOffset = (Config::panelHeight + Config::reservedArea) * owner->scale;
+        *curYOffset = (Config::panelHeight + Config::reservedArea) * owner->m_scale;
         curSwipeOffset = -10.;
     }
 
