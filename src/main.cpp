@@ -116,14 +116,14 @@ void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
     else if (renderStage == eRenderStage::RENDER_PRE_WINDOWS) {
 
 
-        const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_RenderData.pMonitor);
+        const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_renderData.pMonitor);
         if (widget != nullptr)
             if (widget->getOwner()) {
                 //widget->draw();
-                if (const auto curWindow = g_pInputManager->currentlyDraggedWindow.lock()) {
+                if (const auto curWindow = g_pInputManager->m_currentlyDraggedWindow.lock()) {
                     if (widget->isActive()) {
-                        g_oAlpha = curWindow->m_fActiveInactiveAlpha->goal();
-                        curWindow->m_fActiveInactiveAlpha->setValueAndWarp(0); // HACK: hide dragged window for the actual pass
+                        g_oAlpha = curWindow->m_activeInactiveAlpha->goal();
+                        curWindow->m_activeInactiveAlpha->setValueAndWarp(0); // HACK: hide dragged window for the actual pass
                     }
                 }
                 else g_oAlpha = -1;
@@ -134,20 +134,20 @@ void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
     }
     else if (renderStage == eRenderStage::RENDER_POST_WINDOWS) {
 
-        const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_RenderData.pMonitor);
+        const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_renderData.pMonitor);
 
         if (widget != nullptr)
             if (widget->getOwner()) {
                 widget->draw();
                 if (g_oAlpha != -1) {
-                    if (const auto curWindow = g_pInputManager->currentlyDraggedWindow.lock()) {
-                        curWindow->m_fActiveInactiveAlpha->setValueAndWarp(Config::dragAlpha);
-                        curWindow->m_sWindowData.noBlur = CWindowOverridableVar<bool>(true, eOverridePriority::PRIORITY_SET_PROP);
+                    if (const auto curWindow = g_pInputManager->m_currentlyDraggedWindow.lock()) {
+                        curWindow->m_activeInactiveAlpha->setValueAndWarp(Config::dragAlpha);
+                        curWindow->m_windowData.noBlur = CWindowOverridableVar<bool>(true, eOverridePriority::PRIORITY_SET_PROP);
                         timespec time;
                         clock_gettime(CLOCK_MONOTONIC, &time);
                         (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), curWindow, widget->getOwner(), &time, true, RENDER_PASS_MAIN, false, false);
-                        curWindow->m_sWindowData.noBlur.unset(eOverridePriority::PRIORITY_SET_PROP);
-                        curWindow->m_fActiveInactiveAlpha->setValueAndWarp(g_oAlpha);
+                        curWindow->m_windowData.noBlur.unset(eOverridePriority::PRIORITY_SET_PROP);
+                        curWindow->m_activeInactiveAlpha->setValueAndWarp(g_oAlpha);
                     }
                 }
                 g_oAlpha = -1;
@@ -163,7 +163,7 @@ void onWorkspaceChange(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto pWorkspace = std::any_cast<PHLWORKSPACE>(args);
     if (!pWorkspace) return;
 
-    auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromID(pWorkspace->m_pMonitor->ID));
+    auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromID(pWorkspace->m_monitor->m_id));
     if (widget != nullptr)
         if (widget->isActive())
             widget->show();
@@ -283,13 +283,13 @@ PHLMONITOR g_pTouchedMonitor;
 
 void onTouchDown(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<ITouch::SDownEvent>(args);
-    auto targetMonitor = g_pCompositor->getMonitorFromName(!e.device->boundOutput.empty() ? e.device->boundOutput : "");
-    targetMonitor = targetMonitor ? targetMonitor : g_pCompositor->m_pLastMonitor.lock();
+    auto targetMonitor = g_pCompositor->getMonitorFromName(!e.device->m_boundOutput.empty() ? e.device->m_boundOutput : "");
+    targetMonitor = targetMonitor ? targetMonitor : g_pCompositor->m_lastMonitor.lock();
 
     const auto widget = getWidgetForMonitor(targetMonitor);
     if (widget != nullptr && targetMonitor != nullptr) {
         if (widget->isActive()) {
-            Vector2D pos = targetMonitor->vecPosition + e.pos * targetMonitor->vecSize;
+            Vector2D pos = targetMonitor->m_position + e.pos * targetMonitor->m_size;
             info.cancelled = !widget->buttonEvent(true, pos);
             if (info.cancelled) {
                 g_pTouchedMonitor = targetMonitor;
@@ -304,7 +304,7 @@ void onTouchMove(void* thisptr, SCallbackInfo& info, std::any args) {
     if (g_pTouchedMonitor == nullptr) return;
 
     const auto e = std::any_cast<ITouch::SMotionEvent>(args);
-    g_pCompositor->warpCursorTo(g_pTouchedMonitor->vecPosition + g_pTouchedMonitor->vecSize * e.pos);
+    g_pCompositor->warpCursorTo(g_pTouchedMonitor->m_position + g_pTouchedMonitor->m_size * e.pos);
     g_pInputManager->simulateMouseMovement();
 }
 
@@ -448,9 +448,9 @@ void reloadConfig() {
 
 void registerMonitors() {
     // create a widget for each monitor
-    for (auto& m : g_pCompositor->m_vMonitors) {
+    for (auto& m : g_pCompositor->m_monitors) {
         if (getWidgetForMonitor(m) != nullptr) continue;
-        CHyprspaceWidget* widget = new CHyprspaceWidget(m->ID);
+        CHyprspaceWidget* widget = new CHyprspaceWidget(m->m_id);
         g_overviewWidgets.emplace_back(widget);
     }
 }
