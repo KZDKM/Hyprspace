@@ -37,7 +37,7 @@ bool Config::overrideGaps = true;
 int Config::gapsIn = 20;
 int Config::gapsOut = 60;
 
-bool Config::autoDrag = true;
+bool Config::autoDrag = false;
 bool Config::autoScroll = true;
 bool Config::exitOnClick = true;
 bool Config::switchOnDrop = false;
@@ -259,11 +259,11 @@ void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
 
     // Get configured exit key (default to ESC if not configured)
     const auto exitKey = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:exitKey")->getValue());
-    
+
     // If exit key is 0, disable keyboard exit
     if (exitKey == 0)
         return;
-        
+
     if (e.keycode == exitKey) {
         // close all panels
         bool overviewActive = false;
@@ -425,7 +425,7 @@ void reloadConfig() {
     Config::disableBlur = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:disableBlur")->getValue());
 
     Config::overrideAnimSpeed = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:overrideAnimSpeed")->getValue());
-    
+
     // We don't need to store exitKey in Config namespace as it's only used in onKeyPress
 
     for (auto& widget : g_overviewWidgets) {
@@ -486,7 +486,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:gapsIn", Hyprlang::INT{20});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:gapsOut", Hyprlang::INT{60});
 
-    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:autoDrag", Hyprlang::INT{1});
+    HyprlandAPI::addConfigValue(pHandle, "plugin:overview:autoDrag", Hyprlang::INT{0});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:autoScroll", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:exitOnClick", Hyprlang::INT{1});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:switchOnDrop", Hyprlang::INT{0});

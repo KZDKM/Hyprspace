@@ -34,17 +34,40 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
     }
 
     // if the cursor is hovering over workspace, clicking should switch workspace instead of starting window drag
-    if (Config::autoDrag && (targetWorkspace == nullptr || !pressed)) {
-        // when overview is active, always drag windows on mouse click
-        if (const auto curWindow = g_pInputManager->currentlyDraggedWindow.lock()) {
-            g_pLayoutManager->getCurrentLayout()->onEndDragWindow();
-            g_pInputManager->currentlyDraggedWindow.reset();
-            g_pInputManager->dragMode = MBIND_INVALID;
+    if (targetWorkspace == nullptr || !pressed) {
+        bool canDrag = Config::autoDrag;
+
+        // if auto drag is disabled, check if super is pressed
+        if (!canDrag) {
+            uint32_t currentModifiers = 0;
+
+            if (g_pInputManager && g_pSeatManager->keyboard) {
+                currentModifiers = g_pSeatManager->keyboard->modifiersState.depressed;
+            }
+
+            const uint32_t HYPRLAND_SUPER_MOD = HL_MODIFIER_META;
+            const uint32_t HYPRLAND_OTHER_SIGNIFICANT_MODS = HL_MODIFIER_SHIFT | HL_MODIFIER_CTRL | HL_MODIFIER_ALT;
+
+            bool isOnlySuperPressed = (currentModifiers & HYPRLAND_SUPER_MOD) &&
+                                     !(currentModifiers & HYPRLAND_OTHER_SIGNIFICANT_MODS);
+
+            canDrag = isOnlySuperPressed;
         }
-        std::string keybind = (pressed ? "1" : "0") + std::string("movewindow");
-        (*(tMouseKeybind)pMouseKeybind)(keybind);
+
+        if (canDrag) {
+            // when overview is active, always drag windows on mouse click/super + mouse click
+            if (const auto curWindow = g_pInputManager->currentlyDraggedWindow.lock()) {
+                g_pLayoutManager->getCurrentLayout()->onEndDragWindow();
+                g_pInputManager->currentlyDraggedWindow.reset();
+                g_pInputManager->dragMode = MBIND_INVALID;
+            }
+
+            std::string keybind = (pressed ? "1" : "0") + std::string("movewindow");
+            (*(tMouseKeybind)pMouseKeybind)(keybind);
+        }
+
+        Return = false;
     }
-    Return = false;
 
     // release window on workspace to drop it in
     if (targetWindow && targetWorkspace != nullptr && !pressed) {
