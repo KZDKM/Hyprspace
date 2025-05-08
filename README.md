@@ -37,7 +37,7 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
     - [x] Autodrag windows
     - [x] Autoscroll workspaces
     - [x] Responsive workspace switching
-    - [x] Responsive exiting 
+    - [x] Responsive exiting
       - [x] Exit on click / switch
       - [x] Exit with escape key
     - [x] Blacklisting workspaces
@@ -151,7 +151,7 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - Use `plugin:overview:overrideAnimSpeed` to override the animation speed
 
 ### Behaviors
-- `plugin:overview:autoDrag` mouse click always drags window when overview is open
+- `plugin:overview:autoDrag` mouse click always drags window when overview is open; otherwise, it requires holding Super + mouse click
 - `plugin:overview:autoScroll` mouse scroll on active workspace area always switch workspace
 - `plugin:overview:exitOnClick` mouse click without dragging exits overview
 - `plugin:overview:switchOnDrop` switch to the workspace when a window is droppped into it
@@ -166,5 +166,3 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
   - `gestures:workspace_swipe_fingers`
   - `gestures:workspace_swipe_cancel_ratio`
   - `gestures:workspace_swipe_min_speed_to_force`
-
-
