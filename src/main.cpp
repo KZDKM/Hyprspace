@@ -258,7 +258,7 @@ void onKeyPress(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto k = std::any_cast<SP<IKeyboard>>(std::any_cast<std::unordered_map<std::string, std::any>>(args)["keyboard"]);
 
     const auto keycode = e.keycode + 8; // Because to xkbcommon it's +8 from libinput
-    const xkb_keysym_t keysym = xkb_state_key_get_one_sym(k->xkbSymState, keycode);
+    const xkb_keysym_t keysym = xkb_state_key_get_one_sym(k->m_xkbSymState, keycode);
 
     // Get configured exit key (default to Escape if not configured)
     const auto cfgExitKey = std::any_cast<Hyprlang::STRING>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:exitKey")->getValue());
