@@ -55,7 +55,7 @@ float Config::overrideAnimSpeed = 0;
 
 float Config::dragAlpha = 0.2;
 
-int hyprsplitNumWorkspaces = -1;
+int numWorkspaces = -1; //hyprsplit/split-monitor-workspaces support
 
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pRenderHook;
 Hyprutils::Memory::CSharedPointer<HOOK_CALLBACK_FN> g_pConfigReloadHook;
@@ -442,10 +442,12 @@ void reloadConfig() {
 
     Config::dragAlpha = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:dragAlpha")->getValue());
 
+    // get number of workspaces from hyprsplit or split-monitor-workspaces plugin config
     Hyprlang::CConfigValue* numWorkspacesConfig = HyprlandAPI::getConfigValue(pHandle, "plugin:hyprsplit:num_workspaces");
-
+    if (!numWorkspacesConfig)
+        numWorkspacesConfig = HyprlandAPI::getConfigValue(pHandle, "plugin:split-monitor-workspaces:count");
     if (numWorkspacesConfig)
-        hyprsplitNumWorkspaces = std::any_cast<Hyprlang::INT>(numWorkspacesConfig->getValue());
+        numWorkspaces = std::any_cast<Hyprlang::INT>(numWorkspacesConfig->getValue());
 
     // TODO: schedule frame for monitor?
 }
