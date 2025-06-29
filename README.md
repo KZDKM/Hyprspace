@@ -113,58 +113,84 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
     - When there are many workspaces open, scroll / swipe on the panel to pan through opened workspaces
 
 ## Configuration
+
 ### Dispatchers
-- Use `overview:toggle` dispatcher to toggle workspace overview on current monitor
-- Use `overview:close` to close the overview on current monitor if opened
-- Use `overview:open` to open the overview on current monitor if closed
-- Adding the `all` argument to these dispatchers would toggle / open / close overview on all monitors
-### Styling
+
+| Dispatcher | Description |
+|------------|-------------|
+| `overview:toggle` | Toggle workspace overview on current monitor |
+| `overview:close` | Close the overview on current monitor if opened |
+| `overview:open` | Open the overview on current monitor if closed |
+
+Adding the `all` argument to these dispatchers will toggle/open/close overview on all monitors.
+
+### Variables
+
+Set any of these in your hyprland configuration under `plugin:overview`.
+
 #### Colors
-- `plugin:overview:panelColor`
-- `plugin:overview:panelBorderColor`
-- `plugin:overview:workspaceActiveBackground`
-- `plugin:overview:workspaceInactiveBackground`
-- `plugin:overview:workspaceActiveBorder`
-- `plugin:overview:workspaceInactiveBorder`
-- `plugin:overview:dragAlpha` overrides the alpha of window when dragged in overview (0 - 1, 0 = transparent, 1 = opaque)
-- `plugin:overview:disableBlur`
+
+| Variable | Description | Type | Default |
+|----------|-------------|------|---------|
+| `panelColor` | Background color of the overview panel | color | `rgba(0, 0, 0, 0.8)` |
+| `panelBorderColor` | Border color of the overview panel | color | `rgba(255, 255, 255, 0.2)` |
+| `workspaceActiveBackground` | Background color of the active workspace | color | `rgba(255, 255, 255, 0.1)` |
+| `workspaceInactiveBackground` | Background color of inactive workspaces | color | `rgba(0, 0, 0, 0.1)` |
+| `workspaceActiveBorder` | Border color of the active workspace | color | `rgba(255, 255, 255, 0.8)` |
+| `workspaceInactiveBorder` | Border color of inactive workspaces | color | `rgba(255, 255, 255, 0.3)` |
+| `dragAlpha` | Alpha of window when dragged in overview | float | `0.5` |
+
 #### Layout
-- `plugin:overview:panelHeight`
-- `plugin:overview:panelBorderWidth`
-- `plugin:overview:onBottom` whether if panel should be on bottom instead of top
-- `plugin:overview:workspaceMargin` spacing of workspaces with eachother and the edge of the panel
-- `plugin:overview:reservedArea` padding on top of the panel, for Macbook camera notch
-- `plugin:overview:workspaceBorderSize`
-- `plugin:overview:centerAligned` whether if workspaces should be aligned at the center (KDE / macOS style) or at the left (Windows style)
-- `plugin:overview:hideBackgroundLayers` do not draw background and bottom layers in overview
-- `plugin:overview:hideTopLayers` do not draw top layers in overview
-- `plugin:overview:hideOverlayLayers` do not draw overlay layers in overview
-- `plugin:overview:hideRealLayers` whether to hide layers in actual workspace
-- `plugin:overview:drawActiveWorkspace` draw the active workspace in overview as-is
-- `plugin:overview:overrideGaps` whether if overview should override the layout gaps in the current workspace using the following values
-- `plugin:overview:gapsIn`
-- `plugin:overview:gapsOut`
-- `plugin:overview:affectStrut` whether the panel should push window aside, disabling this option also disables `overrideGaps`
 
-### Animation
-- The panel uses the `windows` curve for a slide-in animation
-- Use `plugin:overview:overrideAnimSpeed` to override the animation speed
+| Variable | Description | Type | Default |
+|----------|-------------|------|---------|
+| `panelHeight` | Height of the overview panel | int | `200` |
+| `panelBorderWidth` | Border width of the overview panel | int | `2` |
+| `onBottom` | Position panel at bottom instead of top | bool | `false` |
+| `workspaceMargin` | Spacing between workspaces and panel edges | int | `10` |
+| `reservedArea` | Top padding for bars/notches | int | `0` |
+| `workspaceBorderSize` | Border width of workspace views | int | `2` |
+| `centerAligned` | Center-align workspaces (KDE/macOS style) vs left-align (Windows style) | bool | `true` |
+| `overrideGaps` | Override layout gaps in current workspace | bool | `false` |
+| `gapsIn` | Inner gaps when `overrideGaps` is enabled | int | `5` |
+| `gapsOut` | Outer gaps when `overrideGaps` is enabled | int | `10` |
+| `affectStrut` | Panel pushes windows aside (disabling this also disables `overrideGaps`) | bool | `true` |
 
-### Behaviors
-- `plugin:overview:autoDrag` mouse click always drags window when overview is open
-- `plugin:overview:autoScroll` mouse scroll on active workspace area always switch workspace
-- `plugin:overview:exitOnClick` mouse click without dragging exits overview
-- `plugin:overview:switchOnDrop` switch to the workspace when a window is droppped into it
-- `plugin:overview:exitOnSwitch` overview exits when overview is switched by clicking on workspace view or by `switchOnDrop`
-- `plugin:overview:showNewWorkspace` add a new empty workspace at the end of workspaces view
-- `plugin:overview:showEmptyWorkspace` show empty workspaces that are inbetween non-empty workspaces
-- `plugin:overview:showSpecialWorkspace` defaults to false
-- `plugin:overview:disableGestures`
-- `plugin:overview:reverseSwipe` reverses the direction of swipe gesture, for macOS peeps?
-- `plugin:overview:exitKey` key used to exit overview mode (default: Escape). Leave empty to disable keyboard exit.
-- Touchpad gesture behavior follows Hyprland workspace swipe behavior
-  - `gestures:workspace_swipe_fingers`
-  - `gestures:workspace_swipe_cancel_ratio`
-  - `gestures:workspace_swipe_min_speed_to_force`
+#### Visibility
+
+| Variable | Description | Type | Default |
+|----------|-------------|------|---------|
+| `hideBackgroundLayers` | Hide background and bottom layers in overview | bool | `false` |
+| `hideTopLayers` | Hide top layers in overview | bool | `false` |
+| `hideOverlayLayers` | Hide overlay layers in overview | bool | `false` |
+| `hideRealLayers` | Hide layers in actual workspace | bool | `false` |
+| `drawActiveWorkspace` | Draw the active workspace in overview as-is | bool | `true` |
+| `disableBlur` | Disable blur effects | bool | `false` |
+
+#### Animation
+
+| Variable | Description | Type | Default |
+|----------|-------------|------|---------|
+| `overrideAnimSpeed` | Override animation speed | float | `1.0` |
+
+*Note: The panel uses the `windows` curve for slide-in animation.*
+
+#### Behavior
+
+| Variable | Description | Type | Default |
+|----------|-------------|------|---------|
+| `autoDrag` | Mouse click always drags window when overview is open | bool | `false` |
+| `autoScroll` | Mouse scroll on active workspace area switches workspace | bool | `true` |
+| `exitOnClick` | Mouse click without dragging exits overview | bool | `true` |
+| `switchOnDrop` | Switch to workspace when window is dropped into it | bool | `true` |
+| `exitOnSwitch` | Exit overview when switching workspace by clicking or dropping | bool | `false` |
+| `showNewWorkspace` | Show empty workspace at end for creating new ones | bool | `true` |
+| `showEmptyWorkspace` | Show empty workspaces between non-empty ones | bool | `false` |
+| `showSpecialWorkspace` | Show special workspaces in overview | bool | `false` |
+| `disableGestures` | Disable touchpad gestures | bool | `false` |
+| `reverseSwipe` | Reverse swipe gesture direction (macOS style) | bool | `false` |
+| `exitKey` | Key to exit overview mode (empty to disable) | string | `Escape` |
+
+*Note: Touchpad gesture behavior follows Hyprland workspace swipe settings (`gestures:workspace_swipe_*`).*
 
 
