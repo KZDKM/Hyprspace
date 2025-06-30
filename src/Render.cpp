@@ -231,10 +231,10 @@ void CHyprspaceWidget::draw() {
         int wsIDStart = 1;
         int wsIDEnd = highestID;
 
-        // hyprsplit compatibility
-        if (hyprsplitNumWorkspaces > 0) {
-            wsIDStart = std::min<int>(hyprsplitNumWorkspaces * ownerID + 1, lowestID);
-            wsIDEnd = std::max<int>(hyprsplitNumWorkspaces * ownerID + 1, highestID); // always show the initial workspace for current monitor
+        // hyprsplit/split-monitor-workspaces compatibility
+        if (numWorkspaces > 0) {
+            wsIDStart = std::min<int>(numWorkspaces * ownerID + 1, lowestID);
+            wsIDEnd = std::max<int>(numWorkspaces * ownerID + 1, highestID); // always show the initial workspace for current monitor
         }
 
         for (int i = wsIDStart; i <= wsIDEnd; i++) {
@@ -313,7 +313,7 @@ void CHyprspaceWidget::draw() {
                 renderLayerStub(ls.lock(), owner, layerBox, &time);
                 g_pHyprOpenGL->m_renderData.clipBox = CBox();
             }
-        } 
+        }
 
         // the mini panel to cover the awkward empty space reserved by the panel
         if (owner->m_activeWorkspace == ws && Config::affectStrut) {

@@ -13,6 +13,7 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
 
 ## Plugin Compatibility
 - [x] [hyprsplit](https://github.com/shezdy/hyprsplit) (tested, explicit support)
+- [x] [split-monitor-workspaces](https://github.com/Duckonaut/split-monitor-workspaces) (tested, explicit support)
 - [x] [hyprexpo](https://github.com/hyprwm/hyprland-plugins/tree/main/hyprexpo) (tested, minor bugs)
 - [x] Any layout plugin (except ones that override Hyprland's workspace management)
 
@@ -37,7 +38,7 @@ https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc07
     - [x] Autodrag windows
     - [x] Autoscroll workspaces
     - [x] Responsive workspace switching
-    - [x] Responsive exiting 
+    - [x] Responsive exiting
       - [x] Exit on click / switch
       - [x] Exit with escape key
     - [x] Blacklisting workspaces
@@ -166,5 +167,3 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
   - `gestures:workspace_swipe_fingers`
   - `gestures:workspace_swipe_cancel_ratio`
   - `gestures:workspace_swipe_min_speed_to_force`
-
-
