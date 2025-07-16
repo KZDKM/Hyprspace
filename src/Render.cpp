@@ -1,5 +1,6 @@
 #include "Overview.hpp"
 #include "Globals.hpp"
+#include "src/helpers/memory/Memory.hpp"
 #include <hyprland/src/render/pass/RectPassElement.hpp>
 #include <hyprland/src/render/pass/BorderPassElement.hpp>
 #include <hyprland/src/render/pass/RendererHintsPassElement.hpp>
@@ -42,7 +43,7 @@ void renderRect(CBox box, CHyprColor color) {
     CRectPassElement::SRectData rectdata;
     rectdata.color = color;
     rectdata.box = box;
-    g_pHyprRenderer->m_renderPass.add(makeShared<CRectPassElement>(rectdata));
+    g_pHyprRenderer->m_renderPass.add(makeUnique<CRectPassElement>(rectdata));
 }
 
 void renderRectWithBlur(CBox box, CHyprColor color) {
@@ -50,7 +51,7 @@ void renderRectWithBlur(CBox box, CHyprColor color) {
     rectdata.color = color;
     rectdata.box = box;
     rectdata.blur = true;
-    g_pHyprRenderer->m_renderPass.add(makeShared<CRectPassElement>(rectdata));
+    g_pHyprRenderer->m_renderPass.add(makeUnique<CRectPassElement>(rectdata));
 }
 
 void renderBorder(CBox box, CGradientValueData gradient, int size) {
@@ -60,7 +61,7 @@ void renderBorder(CBox box, CGradientValueData gradient, int size) {
     data.round = 0;
     data.a = 1.f;
     data.borderSize = size;
-    g_pHyprRenderer->m_renderPass.add(makeShared<CBorderPassElement>(data));
+    g_pHyprRenderer->m_renderPass.add(makeUnique<CBorderPassElement>(data));
 }
 
 void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWorkspaceOverride, CBox rectOverride, timespec* time) {
@@ -95,10 +96,10 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     g_pInputManager->m_currentlyDraggedWindow = pWindow; // override these and force INTERACTIVERESIZEINPROGRESS = true to trick the renderer
     g_pInputManager->m_dragMode = MBIND_RESIZE;
 
-    g_pHyprRenderer->m_renderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{renderModif}));
+    g_pHyprRenderer->m_renderPass.add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{renderModif}));
     // remove modif as it goes out of scope (wtf is this blackmagic i need to relearn c++)
     Hyprutils::Utils::CScopeGuard x([] {
-        g_pHyprRenderer->m_renderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{SRenderModifData{}}));
+        g_pHyprRenderer->m_renderPass.add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{SRenderModifData{}}));
         });
 
     g_pHyprRenderer->damageWindow(pWindow);
@@ -137,10 +138,10 @@ void renderLayerStub(PHLLS pLayer, PHLMONITOR pMonitor, CBox rectOverride, times
     pLayer->m_alpha->setValue(1);
     pLayer->m_fadingOut = false;
 
-    g_pHyprRenderer->m_renderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{renderModif}));
+    g_pHyprRenderer->m_renderPass.add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{renderModif}));
     // remove modif as it goes out of scope (wtf is this blackmagic i need to relearn c++)
     Hyprutils::Utils::CScopeGuard x([] {
-        g_pHyprRenderer->m_renderPass.add(makeShared<CRendererHintsPassElement>(CRendererHintsPassElement::SData{SRenderModifData{}}));
+        g_pHyprRenderer->m_renderPass.add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{SRenderModifData{}}));
         });
 
     (*(tRenderLayer)pRenderLayer)(g_pHyprRenderer.get(), pLayer, pMonitor, time, false);
@@ -203,7 +204,7 @@ void CHyprspaceWidget::draw() {
     // add a fake element with needsliveblur = true and covers the entire monitor to ensure damage applies to the entire monitor
     // unoptimized atm but hey its working
     CFakeDamageElement fakeDamage = CFakeDamageElement(CBox({0, 0}, owner->m_transformedSize));
-    g_pHyprRenderer->m_renderPass.add(makeShared<CFakeDamageElement>(fakeDamage));
+    g_pHyprRenderer->m_renderPass.add(makeUnique<CFakeDamageElement>(fakeDamage));
 
     // the list of workspaces to show
     std::vector<int> workspaces;
