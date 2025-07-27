@@ -32,7 +32,7 @@ void CHyprspaceWidget::show() {
 
     if (prevFullscreen.empty()) {
         // unfullscreen all windows
-        for (auto& ws : g_pCompositor->m_workspaces) {
+        for (auto& ws : g_pCompositor->getWorkspaces()) {
             if (ws->m_monitor->m_id == ownerID) {
                 const auto w = ws->getFullscreenWindow();
                 if (w != nullptr && ws->m_fullscreenMode != FSMODE_NONE) {
