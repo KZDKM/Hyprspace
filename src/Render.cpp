@@ -77,7 +77,7 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     const auto oPinned = pWindow->m_pinned;
     const auto oDraggedWindow = g_pInputManager->m_currentlyDraggedWindow;
     const auto oDragMode = g_pInputManager->m_dragMode;
-    const auto oRenderModifEnable = g_pHyprOpenGL->m_renderData.renderModif.enabled;
+    //const auto oRenderModifEnable = g_pHyprOpenGL->m_renderData.renderModif.enabled;
     const auto oFloating = pWindow->m_isFloating;
 
     const float curScaling = rectOverride.w / (oSize.x * pMonitor->m_scale);
@@ -125,7 +125,7 @@ void renderLayerStub(PHLLS pLayer, PHLMONITOR pMonitor, CBox rectOverride, times
     Vector2D oRealPosition = pLayer->m_realPosition->value();
     Vector2D oSize = pLayer->m_realSize->value();
     float oAlpha = pLayer->m_alpha->value(); // set to 1 to show hidden top layer
-    const auto oRenderModifEnable = g_pHyprOpenGL->m_renderData.renderModif.enabled;
+    //const auto oRenderModifEnable = g_pHyprOpenGL->m_renderData.renderModif.enabled;
     const auto oFadingOut = pLayer->m_fadingOut;
 
     const float curScaling = rectOverride.w / (oSize.x);
@@ -188,7 +188,7 @@ void CHyprspaceWidget::draw() {
     // Panel Border
     if (Config::panelBorderWidth > 0) {
         // Border box
-        CBox borderBox = {widgetBox.x, owner->m_position.y + (Config::onBottom * owner->m_transformedSize.y) + (Config::panelHeight + Config::reservedArea - curYOffset->value() * owner->m_scale) * bottomInvert, owner->m_transformedSize.x, Config::panelBorderWidth};
+        CBox borderBox = {widgetBox.x, owner->m_position.y + (Config::onBottom * owner->m_transformedSize.y) + (Config::panelHeight + Config::reservedArea - curYOffset->value() * owner->m_scale) * bottomInvert, owner->m_transformedSize.x, static_cast<double>(Config::panelBorderWidth)};
         borderBox.y -= owner->m_position.y;
 
         renderRect(borderBox, Config::panelBorderColor);
@@ -216,7 +216,7 @@ void CHyprspaceWidget::draw() {
     // find the lowest and highest workspace id to determine which empty workspaces to insert
     int lowestID = INT_MAX;
     int highestID = 1;
-    for (auto& ws : g_pCompositor->getWorkspaces()) {
+    for (auto& ws : g_pCompositor->m_workspaces) {
         if (!ws) continue;
         // normal workspaces start from 1, special workspaces ends on -2
         if (ws->m_id < 1) continue;
