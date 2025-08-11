@@ -2,10 +2,10 @@
 
 A plugin for Hyprland that implements a workspace overview feature similar to that of KDE Plasma, GNOME and macOS, aimed to provide a efficient way of workspace and window management.
 
-- Supports Hyprland release `>= 0.39`. All supported release versions will be pinned. New features and fixes will NOT be backported. Please report build issues on any supported release version.
-
-> Also checkout [hyprexpo](https://github.com/hyprwm/hyprland-plugins/tree/main/hyprexpo) from the official plugin repo that provides a grid style overview!
-
+> [!NOTE]
+> This plugin is still maintained, by combined efforts of me and all the awesome contributors. However, I do not have as much time that I could spend on this plugin as before, and Hyprland is a rapidly changing codebase. Therefore, at this time, I could not guarantee that new issues could be resolved promptly. I appreciate your acknowledgement and support for this project!
+> 
+> P.S.: I could recommend giving [niri](https://github.com/YaLTeR/niri) a try for anyone who is considering an alternative to Hyprland. It is a scrolling window manager that offers a great built-in overview feature that allows dragging windows in-between workspaces just like this plugin does. It also has better workspace management as it cleans up empty workspaces like GNOME does.
 
 https://github.com/KZDKM/Hyprspace/assets/41317840/ed1a585a-30d5-4a79-a6da-8cc0713828f9
 
