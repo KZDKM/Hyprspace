@@ -1,5 +1,6 @@
 #include "Overview.hpp"
 #include "Globals.hpp"
+#include <cstdlib>
 
 CHyprspaceWidget::CHyprspaceWidget(uint64_t inOwnerID) {
     ownerID = inOwnerID;
@@ -71,7 +72,6 @@ void CHyprspaceWidget::show() {
         *curYOffset = 0;
         curSwipeOffset = (Config::panelHeight + Config::reservedArea) * owner->m_scale;
     }
-
     updateLayout();
     g_pHyprRenderer->damageMonitor(owner);
     g_pCompositor->scheduleFrameForMonitor(owner);
