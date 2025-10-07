@@ -294,7 +294,7 @@ void onTouchDown(void* thisptr, SCallbackInfo& info, std::any args) {
     if (widget != nullptr && targetMonitor != nullptr) {
         if (widget->isActive()) {
             Vector2D pos = targetMonitor->m_position + e.pos * targetMonitor->m_size;
-            info.cancelled = !widget->buttonEvent(true, pos);
+            info.cancelled = !widget->onTouchDownbuttonEvent(true, pos);
             if (info.cancelled) {
                 g_pTouchedMonitor = targetMonitor;
                 g_pCompositor->warpCursorTo(pos);
@@ -306,8 +306,10 @@ void onTouchDown(void* thisptr, SCallbackInfo& info, std::any args) {
 
 void onTouchMove(void* thisptr, SCallbackInfo& info, std::any args) {
     if (g_pTouchedMonitor == nullptr) return;
-
+    const auto widget = getWidgetForMonitor(g_pTouchedMonitor);
     const auto e = std::any_cast<ITouch::SMotionEvent>(args);
+    if (widget != nullptr)
+        info.cancelled = !widget->updateTouch(e);
     g_pCompositor->warpCursorTo(g_pTouchedMonitor->m_position + g_pTouchedMonitor->m_size * e.pos);
     g_pInputManager->simulateMouseMovement();
 }
@@ -316,7 +318,7 @@ void onTouchUp(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto widget = getWidgetForMonitor(g_pTouchedMonitor);
     if (widget != nullptr && g_pTouchedMonitor != nullptr)
         if (widget->isActive())
-            info.cancelled = !widget->buttonEvent(false, g_pInputManager->getMouseCoordsInternal());
+            info.cancelled = !widget->onTouchUpbuttonEvent(false, g_pInputManager->getMouseCoordsInternal());
 
     g_pTouchedMonitor = nullptr;
 }
@@ -512,9 +514,9 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     g_pConfigReloadHook = HyprlandAPI::registerCallbackDynamic(pHandle, "configReloaded", [&] (void* thisptr, SCallbackInfo& info, std::any data) { reloadConfig(); });
     HyprlandAPI::reloadConfig();
 
-    HyprlandAPI::addDispatcher(pHandle, "overview:toggle", ::dispatchToggleOverview);
-    HyprlandAPI::addDispatcher(pHandle, "overview:open", ::dispatchOpenOverview);
-    HyprlandAPI::addDispatcher(pHandle, "overview:close", ::dispatchCloseOverview);
+    HyprlandAPI::addDispatcherV2(pHandle, "overview:toggle", ::dispatchToggleOverview);
+    HyprlandAPI::addDispatcherV2(pHandle, "overview:open", ::dispatchOpenOverview);
+    HyprlandAPI::addDispatcherV2(pHandle, "overview:close", ::dispatchCloseOverview);
 
     g_pRenderHook = HyprlandAPI::registerCallbackDynamic(pHandle, "render", onRender);
 

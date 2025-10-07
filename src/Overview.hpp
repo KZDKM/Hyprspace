@@ -1,5 +1,6 @@
 #pragma once
 #include <hyprland/src/Compositor.hpp>
+#include <hyprland/src/devices/ITouch.hpp>
 #include <hyprutils/animation/AnimationConfig.hpp>
 
 class CHyprspaceWidget {
@@ -34,9 +35,12 @@ class CHyprspaceWidget {
     // on second thought, this seems redundant as we could just write to curYOffset while swiping
     double curSwipeOffset = 10.;
 
+    //double touchxpos = 0;
+
     PHLANIMVAR<float> workspaceScrollOffset;
 
 public:
+    double touchxpos = 0;
 
     // for slide-in animation and swiping
     PHLANIMVAR<float> curYOffset;
@@ -59,6 +63,8 @@ public:
     void updateLayout();
 
     bool buttonEvent(bool, Vector2D coords);
+    bool onTouchDownbuttonEvent(bool, Vector2D coords);
+    bool onTouchUpbuttonEvent(bool, Vector2D coords);
     bool axisEvent(double, Vector2D coords);
 
     bool isSwiping();
@@ -67,4 +73,5 @@ public:
     bool updateSwipe(IPointer::SSwipeUpdateEvent);
     bool endSwipe(IPointer::SSwipeEndEvent);
 
+    bool updateTouch(ITouch::SMotionEvent);
 };
