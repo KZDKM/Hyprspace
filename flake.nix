@@ -8,7 +8,7 @@
       repo = "default-linux";
     };
     hyprland = {
-      owner = "hyprwm";
+      owner = "Boom-Hacker";
       repo = "Hyprland";
       type = "github";
       inputs.systems.follows = "systems";

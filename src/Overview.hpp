@@ -1,6 +1,7 @@
 #pragma once
 #include <hyprland/src/Compositor.hpp>
 #include <hyprutils/animation/AnimationConfig.hpp>
+#include <hyprland/src/devices/ITouch.hpp>
 
 class CHyprspaceWidget {
 
@@ -41,6 +42,8 @@ public:
     // for slide-in animation and swiping
     PHLANIMVAR<float> curYOffset;
 
+    double touchxpos = 0;
+
     CHyprspaceWidget(uint64_t);
     ~CHyprspaceWidget();
 
@@ -67,4 +70,5 @@ public:
     bool updateSwipe(IPointer::SSwipeUpdateEvent);
     bool endSwipe(IPointer::SSwipeEndEvent);
 
+    bool updateTouch(ITouch::SMotionEvent);
 };

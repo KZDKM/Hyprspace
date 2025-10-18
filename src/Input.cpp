@@ -8,12 +8,16 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
 
     // this is for click to exit, we set a timeout for button release
     bool couldExit = false;
-    if (pressed)
+    if (pressed){
         lastPressedTime = std::chrono::high_resolution_clock::now();
+        touchxpos = coords.x;
+    }
+        
     else
+    {
         if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - lastPressedTime).count() < 200)
             couldExit = true;
-
+    }
     int targetWorkspaceID = SPECIAL_WORKSPACE_START - 1;
 
     // find which workspace the mouse hovers over
@@ -206,4 +210,20 @@ bool CHyprspaceWidget::endSwipe(IPointer::SSwipeEndEvent e) {
     avgSwipeSpeed = 0;
     swipePoints = 0;
     return false;
+}
+
+
+bool CHyprspaceWidget::updateTouch(ITouch::SMotionEvent e) {
+    // restrict swipe to a axis with the most significant movement to prevent misinput
+    const auto owner = getOwner();
+    CBox widgetBox = {owner->m_position.x, owner->m_position.y - curYOffset->value(), owner->m_transformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->m_scale};
+    const auto draggedWindow = g_pInputManager->m_currentlyDraggedWindow.lock();
+    if (draggedWindow) {
+        return true;
+    }
+    auto touchxpos_old = touchxpos;
+    touchxpos = e.pos.x * owner->m_transformedSize.x;
+    auto delta = touchxpos - touchxpos_old;
+    *workspaceScrollOffset = workspaceScrollOffset->goal() + delta * 3;
+    return true;
 }

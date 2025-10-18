@@ -293,11 +293,12 @@ void onTouchDown(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto widget = getWidgetForMonitor(targetMonitor);
     if (widget != nullptr && targetMonitor != nullptr) {
         if (widget->isActive()) {
-            Vector2D pos = targetMonitor->m_position + e.pos * targetMonitor->m_size;
-            info.cancelled = !widget->buttonEvent(true, pos);
+            Vector2D nativePos = targetMonitor->m_position + e.pos * targetMonitor->m_transformedSize;
+            Vector2D fakemousePos = targetMonitor->m_position + e.pos * targetMonitor->m_size;
+            info.cancelled = !widget->buttonEvent(true, nativePos);
             if (info.cancelled) {
                 g_pTouchedMonitor = targetMonitor;
-                g_pCompositor->warpCursorTo(pos);
+                g_pCompositor->warpCursorTo(fakemousePos);
                 g_pInputManager->refocus();
             }
         }
@@ -306,9 +307,11 @@ void onTouchDown(void* thisptr, SCallbackInfo& info, std::any args) {
 
 void onTouchMove(void* thisptr, SCallbackInfo& info, std::any args) {
     if (g_pTouchedMonitor == nullptr) return;
-
+    const auto widget = getWidgetForMonitor(g_pTouchedMonitor);
     const auto e = std::any_cast<ITouch::SMotionEvent>(args);
-    g_pCompositor->warpCursorTo(g_pTouchedMonitor->m_position + g_pTouchedMonitor->m_size * e.pos);
+    if (widget != nullptr)
+        info.cancelled = !widget->updateTouch(e);
+    g_pCompositor->warpCursorTo(g_pTouchedMonitor->m_position + g_pTouchedMonitor->m_transformedSize * e.pos);
     g_pInputManager->simulateMouseMovement();
 }
 
