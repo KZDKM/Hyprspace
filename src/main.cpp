@@ -293,7 +293,7 @@ void onTouchDown(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto widget = getWidgetForMonitor(targetMonitor);
     if (widget != nullptr && targetMonitor != nullptr) {
         if (widget->isActive()) {
-            Vector2D pos = targetMonitor->m_position + e.pos * targetMonitor->m_transformedSize;
+            Vector2D pos = targetMonitor->m_position + e.pos * targetMonitor->m_size;
             info.cancelled = !widget->onTouchDownbuttonEvent(true, pos);
             if (info.cancelled) {
                 g_pTouchedMonitor = targetMonitor;
