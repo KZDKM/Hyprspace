@@ -212,7 +212,7 @@ bool CHyprspaceWidget::onTouchDownbuttonEvent(bool pressed, Vector2D coords) {
 
     if (pressed) {
         const auto owner = getOwner();
-        touchxpos = coords.x + owner->m_transformedSize.x * 0.114514;//not funny:by my testing 220 pixels offset in 1920 is perfect and 220/1920 mostly equals to 0.114514
+        touchxpos = coords.x;
     }
     const auto targetWindow = g_pInputManager->m_currentlyDraggedWindow.lock();
 
