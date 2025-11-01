@@ -60,6 +60,27 @@ namespace Config {
     extern bool disableBlur;
     extern float overrideAnimSpeed;
     extern float dragAlpha;
+
+    extern bool enableFocusedWindowPlaceholder;
+    extern CHyprColor focusedWindowPlaceholderColor;
+    extern CHyprColor focusedWindowPlaceholderBorderColor;
+    extern float focusedWindowPlaceholderAlpha;
+
+    extern bool showFocusedWindowContent;
 }
+
+// Texture capture system
+struct CachedWindowTexture {
+    std::shared_ptr<void> texture; // Will be cast to appropriate texture type
+    uint64_t lastUpdateTime;
+    CBox lastBounds;
+    bool isValid;
+};
+
+extern std::unordered_map<PHLWINDOW, CachedWindowTexture> g_windowTextureCache;
+extern bool g_enableTextureCapture;
+
+// Texture capture function prototype
+bool captureWindowTexture(PHLWINDOW pWindow, PHLMONITOR pMonitor, const CBox& targetBox);
 
 extern int numWorkspaces;

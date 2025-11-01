@@ -53,7 +53,19 @@ bool Config::disableBlur = false;
 
 float Config::overrideAnimSpeed = 0;
 
+bool Config::enableFocusedWindowPlaceholder = true;
+CHyprColor Config::focusedWindowPlaceholderColor = CHyprColor(0.3f, 0.3f, 0.3f, 0.5f);
+CHyprColor Config::focusedWindowPlaceholderBorderColor = CHyprColor(0.8f, 0.8f, 0.8f, 0.8f);
+float Config::focusedWindowPlaceholderAlpha = 0.5;
+
+bool Config::showFocusedWindowContent = false;
+
 float Config::dragAlpha = 0.2;
+
+
+// Texture capture system globals
+std::unordered_map<PHLWINDOW, CachedWindowTexture> g_windowTextureCache;
+bool g_enableTextureCapture = false;
 
 int numWorkspaces = -1; //hyprsplit/split-monitor-workspaces support
 
@@ -429,7 +441,7 @@ void reloadConfig() {
     Config::disableBlur = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:disableBlur")->getValue());
 
     Config::overrideAnimSpeed = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:overrideAnimSpeed")->getValue());
-    
+
     // We don't need to store exitKey in Config namespace as it's only used in onKeyPress
 
     for (auto& widget : g_overviewWidgets) {
