@@ -60,6 +60,10 @@
 
           installFlags = ["PREFIX=$(out)"];
 
+          postInstall = ''
+            mv $out/lib/Hyprspace.so $out/lib/libHyprspace.so
+          '';
+
           meta = with pkgs.lib; {
             homepage = "https://github.com/KZDKM/Hyprspace";
             description = "Workspace overview plugin for Hyprland";
