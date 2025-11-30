@@ -24,7 +24,7 @@ commit_pins = [
 [Hyprspace]
 description = "Workspace overview"
 authors = ["KZdkm"]
-output = "Hyprspace.so"
+output = "libHyprspace.so"
 build = [
     "make all"
 ]

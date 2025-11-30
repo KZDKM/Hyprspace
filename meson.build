@@ -24,4 +24,5 @@ shared_module(meson.project_name(), src,
     dependency('libdrm'),
   ],
   install: true,
+  name_prefix: 'lib',
 )
