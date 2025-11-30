@@ -58,6 +58,8 @@
           buildInputs = [hyprlandPkg] ++ hyprlandPkg.buildInputs;
           dontUseCmakeConfigure = true;
 
+          installFlags = ["PREFIX=$(out)"];
+
           meta = with pkgs.lib; {
             homepage = "https://github.com/KZDKM/Hyprspace";
             description = "Workspace overview plugin for Hyprland";
