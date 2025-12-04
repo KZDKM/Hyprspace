@@ -77,7 +77,6 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     const auto oPinned = pWindow->m_pinned;
     const auto oDraggedWindow = g_pInputManager->m_currentlyDraggedWindow;
     const auto oDragMode = g_pInputManager->m_dragMode;
-    const auto oRenderModifEnable = g_pHyprOpenGL->m_renderData.renderModif.enabled;
     const auto oFloating = pWindow->m_isFloating;
 
     const float curScaling = rectOverride.w / (oSize.x * pMonitor->m_scale);
@@ -125,7 +124,6 @@ void renderLayerStub(PHLLS pLayer, PHLMONITOR pMonitor, CBox rectOverride, times
     Vector2D oRealPosition = pLayer->m_realPosition->value();
     Vector2D oSize = pLayer->m_realSize->value();
     float oAlpha = pLayer->m_alpha->value(); // set to 1 to show hidden top layer
-    const auto oRenderModifEnable = g_pHyprOpenGL->m_renderData.renderModif.enabled;
     const auto oFadingOut = pLayer->m_fadingOut;
 
     const float curScaling = rectOverride.w / (oSize.x);
