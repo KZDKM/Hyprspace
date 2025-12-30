@@ -34,10 +34,23 @@ void CHyprspaceWidget::updateLayout() {
             }
         }
         pMonitor->m_activeWorkspace = oActiveWorkspace;
-        if (!Config::onBottom)
-            pMonitor->m_reservedTopLeft.y = currentHeight;
-        else
-            pMonitor->m_reservedBottomRight.y = currentHeight;
+        
+        if (!Config::onBottom) {
+            pMonitor->m_reservedArea = Desktop::CReservedArea(
+                pMonitor->m_reservedArea.top() + currentHeight,
+                pMonitor->m_reservedArea.right(),
+                pMonitor->m_reservedArea.bottom(),
+                pMonitor->m_reservedArea.left()
+            );
+        } else {
+            pMonitor->m_reservedArea = Desktop::CReservedArea(
+                pMonitor->m_reservedArea.top(),
+                pMonitor->m_reservedArea.right(),
+                pMonitor->m_reservedArea.bottom() + currentHeight,
+                pMonitor->m_reservedArea.left()
+            );
+        }
+        
         const auto curRules = std::to_string(pMonitor->activeWorkspaceID()) + ", gapsin:" + std::to_string(Config::gapsIn) + ", gapsout:" + std::to_string(Config::gapsOut);
         if (Config::overrideGaps) g_pConfigManager->handleWorkspaceRules("", curRules);
         g_pLayoutManager->getCurrentLayout()->recalculateMonitor(ownerID);

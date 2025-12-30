@@ -1,6 +1,7 @@
 #include <hyprland/src/plugins/PluginSystem.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/devices/IKeyboard.hpp>
+#include <hyprland/src/debug/log/Logger.hpp>
 #include "Overview.hpp"
 #include "Globals.hpp"
 
@@ -142,11 +143,11 @@ void onRender(void* thisptr, SCallbackInfo& info, std::any args) {
                 if (g_oAlpha != -1) {
                     if (const auto curWindow = g_pInputManager->m_currentlyDraggedWindow.lock()) {
                         curWindow->m_activeInactiveAlpha->setValueAndWarp(Config::dragAlpha);
-                        curWindow->m_windowData.noBlur = CWindowOverridableVar<bool>(true, eOverridePriority::PRIORITY_SET_PROP);
+                        curWindow->m_ruleApplicator->noBlur().unset(Desktop::Types::PRIORITY_SET_PROP);
                         timespec time;
                         clock_gettime(CLOCK_MONOTONIC, &time);
                         (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), curWindow, widget->getOwner(), &time, true, RENDER_PASS_MAIN, false, false);
-                        curWindow->m_windowData.noBlur.unset(eOverridePriority::PRIORITY_SET_PROP);
+                        curWindow->m_ruleApplicator->noBlur().unset(Desktop::Types::PRIORITY_SET_PROP);
                         curWindow->m_activeInactiveAlpha->setValueAndWarp(g_oAlpha);
                     }
                 }
@@ -288,7 +289,7 @@ PHLMONITOR g_pTouchedMonitor;
 void onTouchDown(void* thisptr, SCallbackInfo& info, std::any args) {
     const auto e = std::any_cast<ITouch::SDownEvent>(args);
     auto targetMonitor = g_pCompositor->getMonitorFromName(!e.device->m_boundOutput.empty() ? e.device->m_boundOutput : "");
-    targetMonitor = targetMonitor ? targetMonitor : g_pCompositor->m_lastMonitor.lock();
+    targetMonitor = targetMonitor ? targetMonitor : g_pCompositor->getMonitorFromCursor();
 
     const auto widget = getWidgetForMonitor(targetMonitor);
     if (widget != nullptr && targetMonitor != nullptr) {
@@ -464,7 +465,7 @@ void registerMonitors() {
 APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     pHandle = inHandle;
 
-    Debug::log(LOG, "Loading overview plugin");
+    Log::logger->log(Log::DEBUG, "Loading overview plugin");
 
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelColor", Hyprlang::INT{CHyprColor(0, 0, 0, 0).getAsHex()});
     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelBorderColor", Hyprlang::INT{CHyprColor(0, 0, 0, 0).getAsHex()});

@@ -41,7 +41,7 @@ void CHyprspaceWidget::show() {
                     if (ws->m_fullscreenMode == FSMODE_FULLSCREEN) w->m_wantsInitialFullscreen = true;
                     // we use the getWindowFromHandle function to prevent dangling pointers
                     prevFullscreen.emplace_back(std::make_tuple((uint32_t)(((uint64_t)w.get()) & 0xFFFFFFFF), ws->m_fullscreenMode));
-                    g_pCompositor->setWindowFullscreenState(w, SFullscreenState{.internal = FSMODE_NONE, .client = FSMODE_NONE});
+                    g_pCompositor->setWindowFullscreenState(w, Desktop::View::SFullscreenState{.internal = FSMODE_NONE, .client = FSMODE_NONE});
                 }
             }
         }
@@ -108,7 +108,7 @@ void CHyprspaceWidget::hide() {
     for (auto& fs : prevFullscreen) {
         const auto w = g_pCompositor->getWindowFromHandle(std::get<0>(fs));
         const auto oFullscreenMode = std::get<1>(fs);
-        g_pCompositor->setWindowFullscreenState(w, SFullscreenState(oFullscreenMode)); 
+        g_pCompositor->setWindowFullscreenState(w, Desktop::View::SFullscreenState(oFullscreenMode)); 
         if (oFullscreenMode == FSMODE_FULLSCREEN) w->m_wantsInitialFullscreen = false;
     }
     prevFullscreen.clear();
