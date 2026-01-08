@@ -116,6 +116,50 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     g_pInputManager->m_dragMode = oDragMode;
 }
 
+// Special rendering function for focused windows that minimizes state changes
+void renderFocusedWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWorkspaceOverride, CBox rectOverride, timespec* time) {
+    if (!pWindow || !pMonitor || !pWorkspaceOverride || !time) return;
+
+    // Save minimal state - only what's absolutely necessary
+    const auto oWorkspace = pWindow->m_workspace;
+    const auto oFullscreen = pWindow->m_fullscreenState;
+    const auto oPinned = pWindow->m_pinned;
+    const auto oUseNearestNeighbor = pWindow->m_windowData.nearestNeighbor;
+
+    // Apply minimal state changes for preview rendering
+    pWindow->m_workspace = pWorkspaceOverride;
+    pWindow->m_fullscreenState = SFullscreenState{FSMODE_NONE};
+    pWindow->m_windowData.nearestNeighbor = false;
+    pWindow->m_pinned = true;
+
+    // Use render modification for position and scale without touching window properties
+    SRenderModifData renderModif;
+    const auto oRealPosition = pWindow->m_realPosition->value();
+    const auto oSize = pWindow->m_realSize->value();
+    const float curScaling = rectOverride.w / (oSize.x * pMonitor->m_scale);
+
+    renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_TRANSLATE, 
+                                 (pMonitor->m_position * pMonitor->m_scale) + (rectOverride.pos() / curScaling) - (oRealPosition * pMonitor->m_scale)});
+    renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
+    renderModif.enabled = true;
+
+    g_pHyprRenderer->m_renderPass.add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{renderModif}));
+
+    // Auto-cleanup render modif
+    Hyprutils::Utils::CScopeGuard x([] {
+        g_pHyprRenderer->m_renderPass.add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{SRenderModifData{}}));
+    });
+
+    // Render the window with minimal damage
+    (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), pWindow, pMonitor, time, true, RENDER_PASS_ALL, false, false);
+
+    // Restore only the essential state
+    pWindow->m_workspace = oWorkspace;
+    pWindow->m_fullscreenState = oFullscreen;
+    pWindow->m_windowData.nearestNeighbor = oUseNearestNeighbor;
+    pWindow->m_pinned = oPinned;
+}
+
 void renderLayerStub(PHLLS pLayer, PHLMONITOR pMonitor, CBox rectOverride, timespec* time) {
     if (!pLayer || !pMonitor || !time) return;
 
@@ -341,8 +385,32 @@ void CHyprspaceWidget::draw() {
                     if (!(wW > 0 && wH > 0)) continue;
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_renderData.clipBox = curWorkspaceBox;
-                    //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CHyprColor(0, 0, 0, 0));
-                    renderWindowStub(w, owner, owner->m_activeWorkspace, curWindowBox, &time);
+
+                    // For focused windows, choose rendering method based on config
+                    if (w == g_pCompositor->m_lastWindow.lock()) {
+                        if (Config::showFocusedWindowContent) {
+                            // Try to show actual window content (experimental)
+                            renderFocusedWindowStub(w, owner, owner->m_activeWorkspace, curWindowBox, &time);
+                        } else if (Config::enableFocusedWindowPlaceholder) {
+                            // Use placeholder rendering (safe default)
+                            CHyprColor placeholderColor = Config::focusedWindowPlaceholderColor;
+                            CHyprColor borderColor = Config::focusedWindowPlaceholderBorderColor;
+
+                            if (!Config::disableBlur) {
+                                renderRectWithBlur(curWindowBox, placeholderColor);
+                            } else {
+                                renderRect(curWindowBox, placeholderColor);
+                            }
+
+                            // Add a border to indicate it's the focused window
+                            if (Config::workspaceBorderSize > 0) {
+                                renderBorder(curWindowBox, CGradientValueData(borderColor), Config::workspaceBorderSize);
+                            }
+                        }
+                    } else {
+                        //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CHyprColor(0, 0, 0, 0));
+                        renderWindowStub(w, owner, owner->m_activeWorkspace, curWindowBox, &time);
+                    }
                     g_pHyprOpenGL->m_renderData.clipBox = CBox();
                 }
             }
@@ -357,8 +425,32 @@ void CHyprspaceWidget::draw() {
                     if (!(wW > 0 && wH > 0)) continue;
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_renderData.clipBox = curWorkspaceBox;
-                    //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CHyprColor(0, 0, 0, 0));
-                    renderWindowStub(w, owner, owner->m_activeWorkspace, curWindowBox, &time);
+
+                    // For focused windows, choose rendering method based on config
+                    if (w == g_pCompositor->m_lastWindow.lock()) {
+                        if (Config::showFocusedWindowContent) {
+                            // Try to show actual window content (experimental)
+                            renderFocusedWindowStub(w, owner, owner->m_activeWorkspace, curWindowBox, &time);
+                        } else if (Config::enableFocusedWindowPlaceholder) {
+                            // Use placeholder rendering (safe default)
+                            CHyprColor placeholderColor = Config::focusedWindowPlaceholderColor;
+                            CHyprColor borderColor = Config::focusedWindowPlaceholderBorderColor;
+
+                            if (!Config::disableBlur) {
+                                renderRectWithBlur(curWindowBox, placeholderColor);
+                            } else {
+                                renderRect(curWindowBox, placeholderColor);
+                            }
+
+                            // Add a border to indicate it's the focused window
+                            if (Config::workspaceBorderSize > 0) {
+                                renderBorder(curWindowBox, CGradientValueData(borderColor), Config::workspaceBorderSize);
+                            }
+                        }
+                    } else {
+                        //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CHyprColor(0, 0, 0, 0));
+                        renderWindowStub(w, owner, owner->m_activeWorkspace, curWindowBox, &time);
+                    }
                     g_pHyprOpenGL->m_renderData.clipBox = CBox();
                 }
             }
@@ -373,8 +465,32 @@ void CHyprspaceWidget::draw() {
                     if (!(wW > 0 && wH > 0)) continue;
                     CBox curWindowBox = {wX, wY, wW, wH};
                     g_pHyprOpenGL->m_renderData.clipBox = curWorkspaceBox;
-                    //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CHyprColor(0, 0, 0, 0));
-                    renderWindowStub(w, owner, owner->m_activeWorkspace, curWindowBox, &time);
+
+                    // For focused windows, choose rendering method based on config
+                    if (w == g_pCompositor->m_lastWindow.lock()) {
+                        if (Config::showFocusedWindowContent) {
+                            // Try to show actual window content (experimental)
+                            renderFocusedWindowStub(w, owner, owner->m_activeWorkspace, curWindowBox, &time);
+                        } else if (Config::enableFocusedWindowPlaceholder) {
+                            // Use placeholder rendering (safe default)
+                            CHyprColor placeholderColor = Config::focusedWindowPlaceholderColor;
+                            CHyprColor borderColor = Config::focusedWindowPlaceholderBorderColor;
+
+                            if (!Config::disableBlur) {
+                                renderRectWithBlur(curWindowBox, placeholderColor);
+                            } else {
+                                renderRect(curWindowBox, placeholderColor);
+                            }
+
+                            // Add a border to indicate it's the focused window
+                            if (Config::workspaceBorderSize > 0) {
+                                renderBorder(curWindowBox, CGradientValueData(borderColor), Config::workspaceBorderSize);
+                            }
+                        }
+                    } else {
+                        //g_pHyprOpenGL->renderRectWithBlur(&curWindowBox, CHyprColor(0, 0, 0, 0));
+                        renderWindowStub(w, owner, owner->m_activeWorkspace, curWindowBox, &time);
+                    }
                     g_pHyprOpenGL->m_renderData.clipBox = CBox();
                 }
         }
