@@ -73,7 +73,7 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     const auto oFullscreen = pWindow->m_fullscreenState;
     const auto oRealPosition = pWindow->m_realPosition->value();
     const auto oSize = pWindow->m_realSize->value();
-    const auto oUseNearestNeighbor = pWindow->m_windowData.nearestNeighbor;
+    const auto oUseNearestNeighbor = pWindow->m_ruleApplicator->nearestNeighbor();
     const auto oPinned = pWindow->m_pinned;
     const auto oDraggedWindow = g_pInputManager->m_currentlyDraggedWindow;
     const auto oDragMode = g_pInputManager->m_dragMode;
@@ -87,11 +87,11 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     renderModif.modifs.push_back({SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, curScaling});
     renderModif.enabled = true;
     pWindow->m_workspace = pWorkspaceOverride;
-    pWindow->m_fullscreenState = SFullscreenState{FSMODE_NONE};
-    pWindow->m_windowData.nearestNeighbor = false;
+    pWindow->m_fullscreenState = Desktop::View::SFullscreenState{FSMODE_NONE};
+    pWindow->m_ruleApplicator->nearestNeighbor().set(false, Desktop::Types::PRIORITY_SET_PROP);
     pWindow->m_isFloating = false;
     pWindow->m_pinned = true;
-    pWindow->m_windowData.rounding = CWindowOverridableVar<Hyprlang::INT>(pWindow->rounding() * curScaling * pMonitor->m_scale, eOverridePriority::PRIORITY_SET_PROP);
+    pWindow->m_ruleApplicator->rounding().set(pWindow->rounding() * curScaling * pMonitor->m_scale, Desktop::Types::PRIORITY_SET_PROP);
     g_pInputManager->m_currentlyDraggedWindow = pWindow; // override these and force INTERACTIVERESIZEINPROGRESS = true to trick the renderer
     g_pInputManager->m_dragMode = MBIND_RESIZE;
 
@@ -108,10 +108,10 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     // restore values for normal window render
     pWindow->m_workspace = oWorkspace;
     pWindow->m_fullscreenState = oFullscreen;
-    pWindow->m_windowData.nearestNeighbor = oUseNearestNeighbor;
+    pWindow->m_ruleApplicator->rounding().unset(Desktop::Types::PRIORITY_SET_PROP);
     pWindow->m_isFloating = oFloating;
     pWindow->m_pinned = oPinned;
-    pWindow->m_windowData.rounding.unset(eOverridePriority::PRIORITY_SET_PROP);
+    pWindow->m_ruleApplicator->rounding().unset(Desktop::Types::PRIORITY_SET_PROP);
     g_pInputManager->m_currentlyDraggedWindow = oDraggedWindow;
     g_pInputManager->m_dragMode = oDragMode;
 }
