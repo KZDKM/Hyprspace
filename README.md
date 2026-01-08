@@ -70,6 +70,13 @@ hyprpm enable Hyprspace
 ```
 
 ### Nix
+To build the plugin manually:
+```bash
+git clone https://github.com/zstg/Hyprspace
+nix-shell -p hyprland.dev libinput.dev wayland.dev libGL.dev hyprutils.dev pixman hyprgraphics.dev hyprlang.dev libxkbcommon.dev pkg-config aquamarine.dev pango.dev cairo.dev libdrm.dev
+make
+```
+This produces a `Hyprspace.so` file that can be loaded with `hyprctl plugin load /path/to/Hyprspace.so`.
 Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Manager/#plugins) on plugins, but your flake might look like this:
 ```nix
 {
