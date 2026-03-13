@@ -5,18 +5,31 @@
 #include <hyprland/src/render/Renderer.hpp>
 #include <hyprland/src/config/ConfigManager.hpp>
 #include <hyprland/src/managers/input/InputManager.hpp>
-#include <hyprland/src/managers/LayoutManager.hpp>
+#include <hyprland/src/layout/LayoutManager.hpp>
 #include <hyprland/src/managers/animation/AnimationManager.hpp>
 #include <hyprland/src/config/ConfigValue.hpp>
+#include <hyprland/src/helpers/time/Time.hpp>
+#include <hyprland/src/event/EventBus.hpp>
+
+template <typename EventType, typename Signal>
+CHyprSignalListener listenCancellable(Signal& signal, std::function<void(const EventType&, Event::SCallbackInfo&)> handler) {
+    struct Hack : Hyprutils::Signal::CSignalBase {
+        using CSignalBase::registerListenerInternal;
+    };
+    return reinterpret_cast<Hack&>(signal).registerListenerInternal([handler](void* args) {
+        auto* tup = static_cast<std::tuple<const EventType&, Event::SCallbackInfo&>*>(args);
+        handler(std::get<0>(*tup), std::get<1>(*tup));
+    });
+}
 
 inline HANDLE pHandle = NULL;
 
 typedef SDispatchResult (*tMouseKeybind)(std::string);
 extern void* pMouseKeybind;
 
-typedef void (*tRenderWindow)(void*, PHLWINDOW, PHLMONITOR, timespec*, bool, eRenderPassMode, bool, bool);
+typedef void (*tRenderWindow)(void*, PHLWINDOW, PHLMONITOR, const Time::steady_tp&, bool, eRenderPassMode, bool, bool);
 extern void* pRenderWindow;
-typedef void (*tRenderLayer)(void*, PHLLSREF, PHLMONITOR, timespec*, bool);
+typedef void (*tRenderLayer)(void*, PHLLS, PHLMONITOR, const Time::steady_tp&, bool, bool);
 extern void* pRenderLayer;
 namespace Config {
     extern CHyprColor panelBaseColor;

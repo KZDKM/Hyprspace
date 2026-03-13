@@ -8,14 +8,23 @@ void CHyprspaceWidget::updateLayout() {
 
     const auto currentHeight = Config::panelHeight + Config::reservedArea;
     const auto pMonitor = getOwner();
-
-    // reset reserved areas
-    g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
+    if (!pMonitor) return;
 
     static auto PGAPSINDATA = CConfigValue<Hyprlang::CUSTOMTYPE>("general:gaps_in");
     static auto PGAPSOUTDATA = CConfigValue<Hyprlang::CUSTOMTYPE>("general:gaps_out");
     auto* const PGAPSIN = (CCssGapData*)(PGAPSINDATA.ptr())->getData();
     auto* const PGAPSOUT = (CCssGapData*)(PGAPSOUTDATA.ptr())->getData();
+
+   if (active) {
+        if (!Config::onBottom)
+            pMonitor->m_reservedArea = Desktop::CReservedArea(currentHeight, 0, 0, 0);
+        else
+            pMonitor->m_reservedArea = Desktop::CReservedArea(0, 0, currentHeight, 0);
+    } else {
+        pMonitor->m_reservedArea = Desktop::CReservedArea();
+    }
+
+    g_pHyprRenderer->arrangeLayersForMonitor(ownerID);
 
     // gaps are created via workspace rules
     // there are no way to write to m_dWorkspaceRules directly
@@ -30,30 +39,14 @@ void CHyprspaceWidget::updateLayout() {
                 pMonitor->m_activeWorkspace = ws.lock();
                 const auto curRules = std::to_string(pMonitor->activeWorkspaceID()) + ", gapsin:" + PGAPSIN->toString() + ", gapsout:" + PGAPSOUT->toString();
                 if (Config::overrideGaps) g_pConfigManager->handleWorkspaceRules("", curRules);
-                g_pLayoutManager->getCurrentLayout()->recalculateMonitor(ownerID);
+                g_layoutManager->recalculateMonitor(pMonitor);
             }
         }
         pMonitor->m_activeWorkspace = oActiveWorkspace;
-        
-        if (!Config::onBottom) {
-            pMonitor->m_reservedArea = Desktop::CReservedArea(
-                pMonitor->m_reservedArea.top() + currentHeight,
-                pMonitor->m_reservedArea.right(),
-                pMonitor->m_reservedArea.bottom(),
-                pMonitor->m_reservedArea.left()
-            );
-        } else {
-            pMonitor->m_reservedArea = Desktop::CReservedArea(
-                pMonitor->m_reservedArea.top(),
-                pMonitor->m_reservedArea.right(),
-                pMonitor->m_reservedArea.bottom() + currentHeight,
-                pMonitor->m_reservedArea.left()
-            );
-        }
-        
+
         const auto curRules = std::to_string(pMonitor->activeWorkspaceID()) + ", gapsin:" + std::to_string(Config::gapsIn) + ", gapsout:" + std::to_string(Config::gapsOut);
         if (Config::overrideGaps) g_pConfigManager->handleWorkspaceRules("", curRules);
-        g_pLayoutManager->getCurrentLayout()->recalculateMonitor(ownerID);
+        g_layoutManager->recalculateMonitor(pMonitor);
 
     }
     else {
@@ -61,8 +54,8 @@ void CHyprspaceWidget::updateLayout() {
             if (ws->m_monitor->m_id == ownerID) {
                 const auto curRules = std::to_string(ws->m_id) + ", gapsin:" + PGAPSIN->toString() + ", gapsout:" + PGAPSOUT->toString();
                 if (Config::overrideGaps) g_pConfigManager->handleWorkspaceRules("", curRules);
-                g_pLayoutManager->getCurrentLayout()->recalculateMonitor(ownerID);
             }
         }
+        g_layoutManager->recalculateMonitor(pMonitor);
     }
 }

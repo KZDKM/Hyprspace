@@ -10,6 +10,7 @@
     hyprland = {
       owner = "hyprwm";
       repo = "Hyprland";
+      ref = "v0.54.2";
       type = "github";
       inputs.systems.follows = "systems";
     };

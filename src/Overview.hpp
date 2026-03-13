@@ -17,7 +17,7 @@ class CHyprspaceWidget {
     std::vector<std::tuple<int, CBox>> workspaceBoxes;
 
     // for storing the fullscreen state of windows prior to overview activation (which unfullscreens all windows)
-    std::vector<std::tuple<uint32_t, eFullscreenMode>> prevFullscreen;
+    std::vector<std::tuple<PHLWINDOWREF, eFullscreenMode>> prevFullscreen;
 
     // for storing the layer alpha values prior to overview activation (which sets all panel to transparent when configured)
     std::vector<std::tuple<PHLLS, float>> oLayerAlpha;
@@ -59,7 +59,7 @@ public:
     void updateLayout();
 
     bool buttonEvent(bool, Vector2D coords);
-    bool axisEvent(double, Vector2D coords);
+    bool axisEvent(double, wl_pointer_axis axis, Vector2D coords);
 
     bool isSwiping();
 

@@ -4,7 +4,8 @@
 bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
     bool Return;
 
-    const auto targetWindow = g_pInputManager->m_currentlyDraggedWindow.lock();
+    const auto dragTarget = g_layoutManager->dragController()->target();
+    const auto targetWindow = dragTarget ? dragTarget->window() : nullptr;
 
     // this is for click to exit, we set a timeout for button release
     bool couldExit = false;
@@ -36,10 +37,8 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
     // if the cursor is hovering over workspace, clicking should switch workspace instead of starting window drag
     if (Config::autoDrag && (targetWorkspace == nullptr || !pressed)) {
         // when overview is active, always drag windows on mouse click
-        if (const auto curWindow = g_pInputManager->m_currentlyDraggedWindow.lock()) {
-            g_pLayoutManager->getCurrentLayout()->onEndDragWindow();
-            g_pInputManager->m_currentlyDraggedWindow.reset();
-            g_pInputManager->m_dragMode = MBIND_INVALID;
+        if (g_layoutManager->dragController()->target()) {
+            g_layoutManager->endDragTarget();
         }
         std::string keybind = (pressed ? "1" : "0") + std::string("movewindow");
         (*(tMouseKeybind)pMouseKeybind)(keybind);
@@ -75,7 +74,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
     return Return;
 }
 
-bool CHyprspaceWidget::axisEvent(double delta, Vector2D coords) {
+bool CHyprspaceWidget::axisEvent(double delta, wl_pointer_axis axis, Vector2D coords) {
 
     const auto owner = getOwner();
     CBox widgetBox = {owner->m_position.x, owner->m_position.y - curYOffset->value(), owner->m_transformedSize.x, (Config::panelHeight + Config::reservedArea) * owner->m_scale};
@@ -83,10 +82,12 @@ bool CHyprspaceWidget::axisEvent(double delta, Vector2D coords) {
 
     // scroll through panel if cursor is on it
     if (widgetBox.containsPoint(coords * getOwner()->m_scale)) {
-        *workspaceScrollOffset = workspaceScrollOffset->goal() - delta * 2;
+        // only horizontal scroll pans the panel; ignore vertical scroll here
+        if (axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL)
+            *workspaceScrollOffset = workspaceScrollOffset->goal() - delta * 2;
     }
-    // otherwise, scroll to switch active workspace
-    else {
+    // otherwise, scroll to switch active workspace (vertical scroll only)
+    else if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
         if (delta < 0) {
             SWorkspaceIDName wsIDName = getWorkspaceIDNameFromString("r-1");
             if (g_pCompositor->getWorkspaceByID(wsIDName.id) == nullptr) {
@@ -105,7 +106,6 @@ bool CHyprspaceWidget::axisEvent(double delta, Vector2D coords) {
         }
     }
 
-
     return false;
 }
 
@@ -122,7 +122,7 @@ bool CHyprspaceWidget::beginSwipe(IPointer::SSwipeBeginEvent e) {
 }
 
 bool CHyprspaceWidget::updateSwipe(IPointer::SSwipeUpdateEvent e) {
-    int fingers = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_fingers")->getValue());
+    constexpr int fingers = 3;
     int distance = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_distance")->getValue());
 
     // restrict swipe to a axis with the most significant movement to prevent misinput
