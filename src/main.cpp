@@ -1,8 +1,11 @@
 #include <hyprland/src/plugins/PluginSystem.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
+#include <hyprland/src/devices/IPointer.hpp>
 #include <hyprland/src/devices/IKeyboard.hpp>
+#include <hyprland/src/devices/ITouch.hpp>
 #include <hyprland/src/debug/log/Logger.hpp>
 #include <hyprland/src/managers/SeatManager.hpp>
+#include <hyprutils/memory/SharedPtr.hpp>
 #include "Overview.hpp"
 #include "Globals.hpp"
 
@@ -172,11 +175,14 @@ void onWorkspaceChange(PHLWORKSPACE pWorkspace) {
 }
 
 // event hook for click and drag interaction
-void onMouseButton(const IPointer::SButtonEvent& e, Event::SCallbackInfo& info) {
+void onMouseButton(const IPointer::SButtonEvent& event, SCallbackInfo& info) {
+    const SP<IPointer> pointer = g_pSeatManager->m_mouse.lock();
+    if (!pointer)
+        return;
 
-    if (e.button != BTN_LEFT) return;
+    if (event.button != BTN_LEFT) return;
 
-    const auto pressed = e.state == WL_POINTER_BUTTON_STATE_PRESSED;
+    const auto pressed = event.state == WL_POINTER_BUTTON_STATE_PRESSED;
     const auto pMonitor = g_pCompositor->getMonitorFromCursor();
     if (pMonitor) {
         const auto widget = getWidgetForMonitor(pMonitor);
@@ -190,14 +196,14 @@ void onMouseButton(const IPointer::SButtonEvent& e, Event::SCallbackInfo& info) 
 }
 
 // event hook for scrolling through panel and workspaces
-void onMouseAxis(const IPointer::SAxisEvent& e, Event::SCallbackInfo& info) {
+void onMouseAxis(const IPointer::SAxisEvent& event, SCallbackInfo& info) {
 
     const auto pMonitor = g_pCompositor->getMonitorFromCursor();
     if (pMonitor) {
         const auto widget = getWidgetForMonitor(pMonitor);
         if (widget) {
             if (widget->isActive()) {
-                info.cancelled = !widget->axisEvent(e.delta, e.axis, g_pInputManager->getMouseCoordsInternal());
+                info.cancelled = !widget->axisEvent(event.delta, event.axis, g_pInputManager->getMouseCoordsInternal());
             }
         }
     }
@@ -205,13 +211,13 @@ void onMouseAxis(const IPointer::SAxisEvent& e, Event::SCallbackInfo& info) {
 }
 
 // event hook for swipe
-void onSwipeBegin(const IPointer::SSwipeBeginEvent& e, Event::SCallbackInfo& info) {
+void onSwipeBegin(const IPointer::SSwipeBeginEvent& event, SCallbackInfo& info) {
 
     if (Config::disableGestures) return;
 
     const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
     if (widget != nullptr)
-        widget->beginSwipe(e);
+        widget->beginSwipe(event);
 
     // end other widget swipe
     for (auto& w : g_overviewWidgets) {
@@ -224,40 +230,43 @@ void onSwipeBegin(const IPointer::SSwipeBeginEvent& e, Event::SCallbackInfo& inf
 }
 
 // event hook for update swipe, most of the swiping mechanics are here
-void onSwipeUpdate(const IPointer::SSwipeUpdateEvent& e, Event::SCallbackInfo& info) {
+void onSwipeUpdate(const IPointer::SSwipeUpdateEvent& event, SCallbackInfo& info) {
 
     if (Config::disableGestures) return;
 
     const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
     if (widget != nullptr)
-        info.cancelled = !widget->updateSwipe(e);
+        info.cancelled = !widget->updateSwipe(event);
 }
 
 // event hook for end swipe
-void onSwipeEnd(const IPointer::SSwipeEndEvent& e, Event::SCallbackInfo& info) {
+void onSwipeEnd(const IPointer::SSwipeEndEvent& event, SCallbackInfo& info) {
 
     if (Config::disableGestures) return;
 
     const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
     if (widget != nullptr)
-        widget->endSwipe(e);
+        widget->endSwipe(event);
 }
 
 // Close overview with configurable key
-void onKeyPress(const IKeyboard::SKeyEvent& e, Event::SCallbackInfo& info) {
-    const auto k = g_pSeatManager->m_keyboard.lock();
-    if (!k) return;
-
-    const auto keycode = e.keycode + 8; // Because to xkbcommon it's +8 from libinput
-    const xkb_keysym_t keysym = xkb_state_key_get_one_sym(k->m_xkbSymState, keycode);
-
-    // Get configured exit key (default to Escape if not configured)
-    const auto cfgExitKey = std::any_cast<Hyprlang::STRING>(HyprlandAPI::getConfigValue(pHandle, "plugin:overview:exitKey")->getValue());
-    const xkb_keysym_t cfgExitKeysym = xkb_keysym_from_name(cfgExitKey, XKB_KEYSYM_CASE_INSENSITIVE);
-
-    // If exit key is empty, disable keyboard exit
-    if (cfgExitKey[0] == '\0')
+void onKeyPress(const IKeyboard::SKeyEvent& event, SCallbackInfo& info) {
+    const SP<IKeyboard> keyboard = g_pSeatManager->m_keyboard.lock();
+    if (!keyboard || !keyboard->m_xkbSymState)
         return;
+
+    const auto keycode = event.keycode + 8; // Because to xkbcommon it's +8 from libinput
+    const xkb_keysym_t keysym = xkb_state_key_get_one_sym(keyboard->m_xkbSymState, keycode);
+
+    auto* pExitKeyCfg = HyprlandAPI::getConfigValue(pHandle, "plugin:overview:exitKey");
+    if (!pExitKeyCfg)
+        return;
+
+    const Hyprlang::STRING cfgExitKey = std::any_cast<Hyprlang::STRING>(pExitKeyCfg->getValue());
+    if (!cfgExitKey || cfgExitKey[0] == '\0')
+        return;
+
+    const xkb_keysym_t cfgExitKeysym = xkb_keysym_from_name(cfgExitKey, XKB_KEYSYM_CASE_INSENSITIVE);
 
     if (keysym == cfgExitKeysym) {
         // close all panels
@@ -276,14 +285,17 @@ void onKeyPress(const IKeyboard::SKeyEvent& e, Event::SCallbackInfo& info) {
 
 PHLMONITOR g_pTouchedMonitor;
 
-void onTouchDown(const ITouch::SDownEvent& e, Event::SCallbackInfo& info) {
-    auto targetMonitor = g_pCompositor->getMonitorFromName(!e.device->m_boundOutput.empty() ? e.device->m_boundOutput : "");
+void onTouchDown(const ITouch::SDownEvent& event, SCallbackInfo& info) {
+    if (!event.device)
+        return;
+
+    auto targetMonitor = g_pCompositor->getMonitorFromName(!event.device->m_boundOutput.empty() ? event.device->m_boundOutput : "");
     targetMonitor = targetMonitor ? targetMonitor : g_pCompositor->getMonitorFromCursor();
 
     const auto widget = getWidgetForMonitor(targetMonitor);
     if (widget != nullptr && targetMonitor != nullptr) {
         if (widget->isActive()) {
-            Vector2D pos = targetMonitor->m_position + e.pos * targetMonitor->m_size;
+            Vector2D pos = targetMonitor->m_position + event.pos * targetMonitor->m_size;
             info.cancelled = !widget->buttonEvent(true, pos);
             if (info.cancelled) {
                 g_pTouchedMonitor = targetMonitor;
@@ -294,14 +306,14 @@ void onTouchDown(const ITouch::SDownEvent& e, Event::SCallbackInfo& info) {
     }
 }
 
-void onTouchMove(const ITouch::SMotionEvent& e, Event::SCallbackInfo& info) {
+void onTouchMove(const ITouch::SMotionEvent& event, SCallbackInfo& info) {
     if (g_pTouchedMonitor == nullptr) return;
 
-    g_pCompositor->warpCursorTo(g_pTouchedMonitor->m_position + g_pTouchedMonitor->m_size * e.pos);
+    g_pCompositor->warpCursorTo(g_pTouchedMonitor->m_position + g_pTouchedMonitor->m_size * event.pos);
     g_pInputManager->simulateMouseMovement();
 }
 
-void onTouchUp(const ITouch::SUpEvent& e, Event::SCallbackInfo& info) {
+void onTouchUp(const ITouch::SUpEvent& event, SCallbackInfo& info) {
     const auto widget = getWidgetForMonitor(g_pTouchedMonitor);
     if (widget != nullptr && g_pTouchedMonitor != nullptr)
         if (widget->isActive())

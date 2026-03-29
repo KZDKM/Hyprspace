@@ -1,5 +1,11 @@
 #pragma once
 
+#include <functional>
+#include <tuple>
+#include <type_traits>
+
+#include <hyprutils/memory/SharedPtr.hpp>
+
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/render/Renderer.hpp>
@@ -11,13 +17,22 @@
 #include <hyprland/src/helpers/time/Time.hpp>
 #include <hyprland/src/event/EventBus.hpp>
 
+// Hyprland v0.54+: cancellable input uses Event::SCallbackInfo (not legacy CEvent*).
+using SCallbackInfo = Event::SCallbackInfo;
+
+// Must match Hyprutils::Signal::CSignalT::RefArg (hyprutils/signal/Signal.hpp).
+template <typename T>
+using HyprSignalRefArg = std::conditional_t<std::is_trivially_copyable_v<T>, T, const T&>;
+
+// Unpack Hyprutils::CSignalT::emit() tuple — first event arg is often stored by value (trivial types).
 template <typename EventType, typename Signal>
-CHyprSignalListener listenCancellable(Signal& signal, std::function<void(const EventType&, Event::SCallbackInfo&)> handler) {
+CHyprSignalListener listenCancellable(Signal& signal, std::function<void(const EventType&, SCallbackInfo&)> handler) {
     struct Hack : Hyprutils::Signal::CSignalBase {
         using CSignalBase::registerListenerInternal;
     };
     return reinterpret_cast<Hack&>(signal).registerListenerInternal([handler](void* args) {
-        auto* tup = static_cast<std::tuple<const EventType&, Event::SCallbackInfo&>*>(args);
+        using Tuple = std::tuple<HyprSignalRefArg<EventType>, HyprSignalRefArg<Event::SCallbackInfo&>>;
+        auto* tup = static_cast<Tuple*>(args);
         handler(std::get<0>(*tup), std::get<1>(*tup));
     });
 }
