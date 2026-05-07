@@ -6,6 +6,7 @@
 #include <hyprland/src/render/pass/RendererHintsPassElement.hpp>
 #include <hyprlang.hpp>
 #include <hyprutils/utils/ScopeGuard.hpp>
+#include <climits>
 
 
 void renderRect(CBox box, CHyprColor color) {
@@ -152,7 +153,7 @@ void CHyprspaceWidget::draw() {
     // Panel Border
     if (Config::panelBorderWidth > 0) {
         // Border box
-        CBox borderBox = {widgetBox.x, owner->m_position.y + (Config::onBottom * owner->m_transformedSize.y) + (Config::panelHeight + Config::reservedArea - curYOffset->value() * owner->m_scale) * bottomInvert, owner->m_transformedSize.x, Config::panelBorderWidth};
+        CBox borderBox = {widgetBox.x, owner->m_position.y + (Config::onBottom * owner->m_transformedSize.y) + (Config::panelHeight + Config::reservedArea - curYOffset->value() * owner->m_scale) * bottomInvert, owner->m_transformedSize.x, static_cast<double>(Config::panelBorderWidth)};
         borderBox.y -= owner->m_position.y;
 
         renderRect(borderBox, Config::panelBorderColor);

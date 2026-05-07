@@ -43,3 +43,8 @@ meson-out
 meson-info
 meson-logs
 meson-private
+
+# old builds
+Hyprspace.so.old
+Hyprspace.so.bak
+Hyprspace.conf
