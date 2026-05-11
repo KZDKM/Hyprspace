@@ -5,11 +5,11 @@
 #include <hyprland/src/devices/ITouch.hpp>
 #include <hyprland/src/debug/log/Logger.hpp>
 #include <hyprland/src/managers/SeatManager.hpp>
+#include <hyprland/src/desktop/view/Window.hpp>
 #include <hyprutils/memory/SharedPtr.hpp>
 #include "Overview.hpp"
 #include "Globals.hpp"
 
-void* pMouseKeybind;
 void* pRenderWindow;
 void* pRenderLayer;
 
@@ -120,7 +120,7 @@ void onRender(eRenderStage renderStage) {
     else if (renderStage == eRenderStage::RENDER_PRE_WINDOWS) {
 
 
-        const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_renderData.pMonitor);
+        const auto widget = getWidgetForMonitor(g_pHyprRenderer->m_renderData.pMonitor);
         if (widget != nullptr)
             if (widget->getOwner()) {
                 //widget->draw();
@@ -128,8 +128,8 @@ void onRender(eRenderStage renderStage) {
                 const auto curWindow = dragTarget ? dragTarget->window() : nullptr;
                 if (curWindow) {
                     if (widget->isActive()) {
-                        g_oAlpha = curWindow->m_activeInactiveAlpha->goal();
-                        curWindow->m_activeInactiveAlpha->setValueAndWarp(0); // HACK: hide dragged window for the actual pass
+                        g_oAlpha = curWindow->alpha(Desktop::View::WINDOW_ALPHA_ACTIVE)->goal();
+                        curWindow->alpha(Desktop::View::WINDOW_ALPHA_ACTIVE)->setValueAndWarp(0); // HACK: hide dragged window for the actual pass
                     }
                 }
                 else g_oAlpha = -1;
@@ -140,7 +140,7 @@ void onRender(eRenderStage renderStage) {
     }
     else if (renderStage == eRenderStage::RENDER_POST_WINDOWS) {
 
-        const auto widget = getWidgetForMonitor(g_pHyprOpenGL->m_renderData.pMonitor);
+        const auto widget = getWidgetForMonitor(g_pHyprRenderer->m_renderData.pMonitor);
 
         if (widget != nullptr)
             if (widget->getOwner()) {
@@ -149,12 +149,12 @@ void onRender(eRenderStage renderStage) {
                     const auto dragTarget = g_layoutManager->dragController()->target();
                     const auto curWindow = dragTarget ? dragTarget->window() : nullptr;
                     if (curWindow) {
-                        curWindow->m_activeInactiveAlpha->setValueAndWarp(Config::dragAlpha);
+                        curWindow->alpha(Desktop::View::WINDOW_ALPHA_ACTIVE)->setValueAndWarp(Config::dragAlpha);
                         curWindow->m_ruleApplicator->noBlur().unset(Desktop::Types::PRIORITY_SET_PROP);
                         const auto time = Time::steadyNow();
-                        (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), curWindow, widget->getOwner(), time, true, RENDER_PASS_MAIN, false, false);
+                        (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), curWindow, widget->getOwner(), time, true, Render::RENDER_PASS_MAIN, false, false);
                         curWindow->m_ruleApplicator->noBlur().unset(Desktop::Types::PRIORITY_SET_PROP);
-                        curWindow->m_activeInactiveAlpha->setValueAndWarp(g_oAlpha);
+                        curWindow->alpha(Desktop::View::WINDOW_ALPHA_ACTIVE)->setValueAndWarp(g_oAlpha);
                     }
                 }
                 g_oAlpha = -1;
@@ -524,9 +524,6 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     g_pCloseLayerHook = Event::bus()->m_events.layer.closed.listen([](PHLLS) { g_layoutNeedsRefresh = true; });
 
 
-    // CKeybindManager::mouse (names too generic bruh) (this is a private function btw)
-    pMouseKeybind = findFunctionBySymbol(pHandle, "mouse", "CKeybindManager::mouse");
-
     g_pMouseButtonHook = listenCancellable<IPointer::SButtonEvent>(Event::bus()->m_events.input.mouse.button, onMouseButton);
     g_pMouseAxisHook = listenCancellable<IPointer::SAxisEvent>(Event::bus()->m_events.input.mouse.axis, onMouseAxis);
 
@@ -542,11 +539,12 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
 
     g_pSwitchWorkspaceHook = Event::bus()->m_events.workspace.active.listen(onWorkspaceChange);
 
-    // CHyprRenderer::renderWindow
-    pRenderWindow = findFunctionBySymbol(pHandle, "renderWindow", "CHyprRenderer::renderWindow");
-
-    // CHyprRenderer::renderLayer
-    pRenderLayer = findFunctionBySymbol(pHandle, "renderLayer", "CHyprRenderer::renderLayer");
+    pRenderWindow = findFunctionBySymbol(pHandle, "renderWindow", "IHyprRenderer::renderWindow");
+    if (!pRenderWindow)
+        pRenderWindow = findFunctionBySymbol(pHandle, "renderWindow", "CHyprRenderer::renderWindow");
+    pRenderLayer = findFunctionBySymbol(pHandle, "renderLayer", "IHyprRenderer::renderLayer");
+    if (!pRenderLayer)
+        pRenderLayer = findFunctionBySymbol(pHandle, "renderLayer", "CHyprRenderer::renderLayer");
 
     registerMonitors();
     g_pAddMonitorHook = Event::bus()->m_events.monitor.added.listen([](PHLMONITOR) { registerMonitors(); });
@@ -555,4 +553,25 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
 }
 
 APICALL EXPORT void PLUGIN_EXIT() {
+    g_pRenderHook.reset();
+    g_pConfigReloadHook.reset();
+    g_pOpenLayerHook.reset();
+    g_pCloseLayerHook.reset();
+    g_pMouseButtonHook.reset();
+    g_pMouseAxisHook.reset();
+    g_pTouchDownHook.reset();
+    g_pTouchMoveHook.reset();
+    g_pTouchUpHook.reset();
+    g_pSwipeBeginHook.reset();
+    g_pSwipeUpdateHook.reset();
+    g_pSwipeEndHook.reset();
+    g_pKeyPressHook.reset();
+    g_pSwitchWorkspaceHook.reset();
+    g_pAddMonitorHook.reset();
+
+    g_overviewWidgets.clear();
+
+    pRenderWindow = nullptr;
+    pRenderLayer = nullptr;
+    pHandle = nullptr;
 }

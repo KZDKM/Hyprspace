@@ -1,3 +1,5 @@
+#include <hyprland/src/desktop/view/Window.hpp>
+
 #include "Overview.hpp"
 #include "Globals.hpp"
 
@@ -36,12 +38,17 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
 
     // if the cursor is hovering over workspace, clicking should switch workspace instead of starting window drag
     if (Config::autoDrag && (targetWorkspace == nullptr || !pressed)) {
-        // when overview is active, always drag windows on mouse click
-        if (g_layoutManager->dragController()->target()) {
+        if (g_layoutManager->dragController()->target())
             g_layoutManager->endDragTarget();
+
+        if (pressed) {
+            const auto PWINDOW = g_pCompositor->vectorToWindowUnified(coords, Desktop::View::WINDOW_ONLY, nullptr);
+            if (PWINDOW) {
+                const auto LT = PWINDOW->layoutTarget();
+                if (LT)
+                    g_layoutManager->beginDragTarget(LT, MBIND_MOVE);
+            }
         }
-        std::string keybind = (pressed ? "1" : "0") + std::string("movewindow");
-        (*(tMouseKeybind)pMouseKeybind)(keybind);
     }
     Return = false;
 

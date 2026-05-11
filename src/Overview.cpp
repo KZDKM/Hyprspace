@@ -1,10 +1,11 @@
 #include "Overview.hpp"
 #include "Globals.hpp"
+#include <hyprland/src/config/shared/animation/AnimationTree.hpp>
 
 CHyprspaceWidget::CHyprspaceWidget(uint64_t inOwnerID) {
     ownerID = inOwnerID;
 
-    curAnimationConfig = *g_pConfigManager->getAnimationPropertyConfig("windows");
+    curAnimationConfig = *Config::animationTree()->getAnimationPropertyConfig("windows");
 
     // the fuck is pValues???
     curAnimation = *curAnimationConfig.pValues.lock();
@@ -126,7 +127,7 @@ void CHyprspaceWidget::hide() {
 }
 
 void CHyprspaceWidget::updateConfig() {
-    curAnimationConfig = *g_pConfigManager->getAnimationPropertyConfig("windows");
+    curAnimationConfig = *Config::animationTree()->getAnimationPropertyConfig("windows");
 
     // the fuck is pValues???
     curAnimation = *curAnimationConfig.pValues.lock();

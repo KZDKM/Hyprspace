@@ -9,7 +9,7 @@
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/render/Renderer.hpp>
-#include <hyprland/src/config/ConfigManager.hpp>
+#include <hyprland/src/render/types.hpp>
 #include <hyprland/src/managers/input/InputManager.hpp>
 #include <hyprland/src/layout/LayoutManager.hpp>
 #include <hyprland/src/managers/animation/AnimationManager.hpp>
@@ -39,10 +39,7 @@ CHyprSignalListener listenCancellable(Signal& signal, std::function<void(const E
 
 inline HANDLE pHandle = NULL;
 
-typedef SDispatchResult (*tMouseKeybind)(std::string);
-extern void* pMouseKeybind;
-
-typedef void (*tRenderWindow)(void*, PHLWINDOW, PHLMONITOR, const Time::steady_tp&, bool, eRenderPassMode, bool, bool);
+typedef void (*tRenderWindow)(void*, PHLWINDOW, PHLMONITOR, const Time::steady_tp&, bool, Render::eRenderPassMode, bool, bool);
 extern void* pRenderWindow;
 typedef void (*tRenderLayer)(void*, PHLLS, PHLMONITOR, const Time::steady_tp&, bool, bool);
 extern void* pRenderLayer;
