@@ -15,6 +15,22 @@ CHyprspaceWidget::CHyprspaceWidget(uint64_t inOwnerID) {
         curAnimation.internalSpeed = Config::overrideAnimSpeed;
 
     g_pAnimationManager->createAnimation(0.F, curYOffset, curAnimationConfig.pValues.lock(), AVARDAMAGE_ENTIRE);
+    curYOffset->setCallbackOnEnd([this](auto) {
+        if (!active) {
+            auto owner = getOwner();
+            if (owner) {
+                g_pHyprRenderer->damageMonitor(owner);
+                for (auto& ws : g_pCompositor->getWorkspaces()) {
+                    if (!ws || ws->m_monitor->m_id != ownerID) continue;
+                    for (auto& w : g_pCompositor->m_windows) {
+                        if (!w || w->m_workspace != ws || !w->m_isMapped) continue;
+                        g_pHyprRenderer->damageWindow(w);
+                    }
+                }
+                g_pCompositor->scheduleFrameForMonitor(owner);
+            }
+        }
+    }, false);
     g_pAnimationManager->createAnimation(0.F, workspaceScrollOffset, curAnimationConfig.pValues.lock(), AVARDAMAGE_ENTIRE);
     curYOffset->setValueAndWarp(Config::panelHeight);
     workspaceScrollOffset->setValueAndWarp(0);
@@ -40,6 +56,10 @@ void CHyprspaceWidget::show() {
                     // use fakefullscreenstate to preserve client's internal state
                     // fixes youtube fullscreen not restoring properly
                     if (ws->m_fullscreenMode == FSMODE_FULLSCREEN) w->m_wantsInitialFullscreen = true;
+<<<<<<< HEAD
+=======
+                    // we use the getWindowFromHandle function to prevent dangling pointers
+>>>>>>> upstream/main
                     prevFullscreen.emplace_back(std::make_tuple(PHLWINDOWREF(w), ws->m_fullscreenMode));
                     g_pCompositor->setWindowFullscreenState(w, Desktop::View::SFullscreenState{.internal = FSMODE_NONE, .client = FSMODE_NONE});
                 }
@@ -123,6 +143,14 @@ void CHyprspaceWidget::hide() {
     }
 
     updateLayout();
+    g_pHyprRenderer->damageMonitor(owner);
+    for (auto& ws : g_pCompositor->getWorkspaces()) {
+        if (!ws || ws->m_monitor->m_id != ownerID) continue;
+        for (auto& w : g_pCompositor->m_windows) {
+            if (!w || w->m_workspace != ws || !w->m_isMapped) continue;
+            g_pHyprRenderer->damageWindow(w);
+        }
+    }
     g_pCompositor->scheduleFrameForMonitor(owner);
 }
 
@@ -137,6 +165,22 @@ void CHyprspaceWidget::updateConfig() {
         curAnimation.internalSpeed = Config::overrideAnimSpeed;
 
     g_pAnimationManager->createAnimation(0.F, curYOffset, curAnimationConfig.pValues.lock(), AVARDAMAGE_ENTIRE);
+    curYOffset->setCallbackOnEnd([this](auto) {
+        if (!active) {
+            auto owner = getOwner();
+            if (owner) {
+                g_pHyprRenderer->damageMonitor(owner);
+                for (auto& ws : g_pCompositor->getWorkspaces()) {
+                    if (!ws || ws->m_monitor->m_id != ownerID) continue;
+                    for (auto& w : g_pCompositor->m_windows) {
+                        if (!w || w->m_workspace != ws || !w->m_isMapped) continue;
+                        g_pHyprRenderer->damageWindow(w);
+                    }
+                }
+                g_pCompositor->scheduleFrameForMonitor(owner);
+            }
+        }
+    }, false);
     g_pAnimationManager->createAnimation(0.F, workspaceScrollOffset, curAnimationConfig.pValues.lock(), AVARDAMAGE_ENTIRE);
     curYOffset->setValueAndWarp(Config::panelHeight);
     workspaceScrollOffset->setValueAndWarp(0);

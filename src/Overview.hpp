@@ -16,6 +16,13 @@ class CHyprspaceWidget {
     // modified on draw call, accessed on mouse click and release
     std::vector<std::tuple<int, CBox>> workspaceBoxes;
 
+    // for checking mouse hover over window thumbnails for drag initiation
+    // modified on draw call, accessed on mouse click
+    std::vector<std::tuple<PHLWINDOWREF, CBox>> windowBoxes;
+
+    // self-managed drag state: set on press over a window thumbnail, cleared on release
+    PHLWINDOWREF draggedWindowRef;
+
     // for storing the fullscreen state of windows prior to overview activation (which unfullscreens all windows)
     std::vector<std::tuple<PHLWINDOWREF, eFullscreenMode>> prevFullscreen;
 

@@ -12,6 +12,7 @@
       repo = "Hyprland";
       ref = "v0.54.2";
       type = "github";
+      ref = "v0.54.2";
       inputs.systems.follows = "systems";
     };
   };
