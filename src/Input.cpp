@@ -1,7 +1,56 @@
-#include <hyprland/src/desktop/view/Window.hpp>
+#include <algorithm>
+#include <limits>
+#include <optional>
+#include <vector>
 
 #include "Overview.hpp"
 #include "Globals.hpp"
+
+namespace {
+    int findTargetWorkspaceID(const std::vector<std::tuple<int, CBox>>& workspaceBoxes, Vector2D coords, bool allowFallback) {
+        if (workspaceBoxes.empty())
+            return SPECIAL_WORKSPACE_START - 1;
+
+        double minX = std::numeric_limits<double>::max();
+        double minY = std::numeric_limits<double>::max();
+        double maxX = std::numeric_limits<double>::lowest();
+        double maxY = std::numeric_limits<double>::lowest();
+        double bestDistance = std::numeric_limits<double>::max();
+        int bestWorkspaceID = SPECIAL_WORKSPACE_START - 1;
+
+        for (const auto& w : workspaceBoxes) {
+            const auto workspaceID = std::get<0>(w);
+            const auto& box = std::get<1>(w);
+
+            if (box.containsPoint(coords))
+                return workspaceID;
+
+            minX = std::min(minX, box.x);
+            minY = std::min(minY, box.y);
+            maxX = std::max(maxX, box.x + box.w);
+            maxY = std::max(maxY, box.y + box.h);
+
+            const auto center = box.middle();
+            const auto dx = center.x - coords.x;
+            const auto dy = center.y - coords.y;
+            const auto distance = dx * dx + dy * dy;
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestWorkspaceID = workspaceID;
+            }
+        }
+
+        if (!allowFallback)
+            return SPECIAL_WORKSPACE_START - 1;
+
+        constexpr double padding = 96.0;
+        const bool nearWorkspaceStrip = coords.x >= minX - padding && coords.x <= maxX + padding && coords.y >= minY - padding && coords.y <= maxY + padding;
+        if (!nearWorkspaceStrip || bestWorkspaceID < SPECIAL_WORKSPACE_START)
+            return SPECIAL_WORKSPACE_START - 1;
+
+        return bestWorkspaceID;
+    }
+}
 
 bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
     bool Return;
@@ -17,18 +66,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
         if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - lastPressedTime).count() < 200)
             couldExit = true;
 
-    int targetWorkspaceID = SPECIAL_WORKSPACE_START - 1;
-
-    // find which workspace the mouse hovers over
-    for (auto& w : workspaceBoxes) {
-        auto wi = std::get<0>(w);
-        auto wb = std::get<1>(w);
-        if (wb.containsPoint(coords)) {
-            targetWorkspaceID = wi;
-            break;
-        }
-    }
-
+    const auto targetWorkspaceID = findTargetWorkspaceID(workspaceBoxes, coords, targetWindow != nullptr && !pressed);
     auto targetWorkspace = g_pCompositor->getWorkspaceByID(targetWorkspaceID);
 
     // create new workspace
@@ -76,7 +114,9 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
         if (Config::exitOnSwitch && active) hide();
     }
     // click elsewhere to exit overview
-    else if (Config::exitOnClick && targetWorkspace == nullptr && active && couldExit && !pressed) hide();
+    else if (Config::exitOnClick && targetWorkspace == nullptr && active && couldExit && !pressed) {
+        hide();
+    }
 
     return Return;
 }
