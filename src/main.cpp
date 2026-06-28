@@ -8,6 +8,7 @@
 #include <hyprland/src/desktop/view/Window.hpp>
 #include <hyprutils/memory/SharedPtr.hpp>
 #include <any>
+#include <lua.hpp>
 #include "Overview.hpp"
 #include "Globals.hpp"
 
@@ -380,6 +381,24 @@ static SDispatchResult dispatchCloseOverview(std::string arg) {
     return SDispatchResult{};
 }
 
+static int luaToggleOverview(lua_State* L) {
+    std::string arg;
+    if (lua_gettop(L) >= 1 && lua_isstring(L, 1))
+        arg = lua_tostring(L, 1);
+
+    dispatchToggleOverview(arg);
+    return 0;
+}
+
+static int luaCloseOverview(lua_State* L) {
+    std::string arg;
+    if (lua_gettop(L) >= 1 && lua_isstring(L, 1))
+        arg = lua_tostring(L, 1);
+
+    dispatchCloseOverview(arg);
+    return 0;
+}
+
 void* findFunctionBySymbol(HANDLE inHandle, const std::string func, const std::string sym) {
     // should return all functions
     auto funcSearch = HyprlandAPI::findFunctionsByName(inHandle, func);
@@ -544,6 +563,8 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addDispatcherV2(pHandle, "overview:toggle", ::dispatchToggleOverview);
     HyprlandAPI::addDispatcherV2(pHandle, "overview:open", ::dispatchOpenOverview);
     HyprlandAPI::addDispatcherV2(pHandle, "overview:close", ::dispatchCloseOverview);
+    HyprlandAPI::addLuaFunction(pHandle, "hyprspace", "toggle", ::luaToggleOverview);
+    HyprlandAPI::addLuaFunction(pHandle, "hyprspace", "close", ::luaCloseOverview);
 
     g_pRenderHook = Event::bus()->m_events.render.stage.listen([](eRenderStage stage) { onRender(stage); });
 
