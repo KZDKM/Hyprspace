@@ -119,6 +119,55 @@ Refer to the [Hyprland wiki](https://wiki.hyprland.org/Nix/Hyprland-on-Home-Mana
 - Use `overview:close` to close the overview on current monitor if opened
 - Use `overview:open` to open the overview on current monitor if closed
 - Adding the `all` argument to these dispatchers would toggle / open / close overview on all monitors
+
+### Lua Configuration (Hyprland 0.55+)
+
+Starting with Hyprland 0.55+, the configuration format has transitioned to Lua as the default (`~/.config/hypr/hyprland.lua`).
+
+#### 1. Setting Config Options
+Plugin settings are structured nested within the `hl.config()` table under `plugin.overview`.
+
+```lua
+hl.config({
+    plugin = {
+        overview = {
+            panelColor = "#1e1e2e",
+            panelBorderColor = "#cba6f7",
+            workspaceActiveBackground = "rgba(49, 50, 68, 0.8)",
+            workspaceActiveBorder = "rgb(203, 166, 247)",
+            onBottom = false,
+            autoDrag = true,
+            -- Add other overview settings here
+        }
+    }
+})
+```
+
+#### 2. Using Lua Dispatchers
+To invoke dispatchers, Hyprspace registers Lua wrapper functions in the `hl.plugin.overview` namespace. These can be bound in your configuration, run inside callbacks, or executed from the command line.
+
+The following Lua functions are available:
+*   `hl.plugin.overview.toggle(arg)`: Toggles the overview on the current monitor.
+*   `hl.plugin.overview.open(arg)`: Opens the overview on the current monitor.
+*   `hl.plugin.overview.close(arg)`: Closes the overview on the current monitor.
+
+#### 3. Examples
+
+##### Keybindings in `hyprland.lua`:
+When binding Lua wrapper functions using `hl.bind`, you must wrap the call in a function definition:
+
+```lua
+-- Toggle overview on the current monitor using SUPER + TAB
+hl.bind("SUPER + TAB", function()
+    hl.plugin.overview.toggle()
+end, { description = "Toggle Hyprspace overview" })
+
+-- Toggle overview on all monitors
+hl.bind("SUPER + SHIFT + TAB", function()
+    hl.plugin.overview.toggle("all")
+end, { description = "Toggle Hyprspace overview on all monitors" })
+```
+
 ### Styling
 #### Colors
 - `plugin:overview:panelColor`
