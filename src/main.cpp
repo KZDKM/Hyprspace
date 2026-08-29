@@ -382,6 +382,22 @@ static SDispatchResult dispatchCloseOverview(std::string arg) {
     return SDispatchResult{};
 }
 
+// Lua-callable overview controls exposed as hl.plugin.hyprspace.{toggle,open,close}
+// hyprctl dispatch is broken for colon/space dispatcher names on Hyprland 0.56.2, so expose
+// these directly to the Lua config instead.
+static int luaToggleOverview(lua_State*) {
+    dispatchToggleOverview("");
+    return 0;
+}
+static int luaOpenOverview(lua_State*) {
+    dispatchOpenOverview("");
+    return 0;
+}
+static int luaCloseOverview(lua_State*) {
+    dispatchCloseOverview("");
+    return 0;
+}
+
 void* findFunctionBySymbol(HANDLE inHandle, const std::string func, const std::string sym) {
     // should return all functions
     auto funcSearch = HyprlandAPI::findFunctionsByName(inHandle, func);
@@ -546,6 +562,10 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
     HyprlandAPI::addDispatcherV2(pHandle, "overview:toggle", ::dispatchToggleOverview);
     HyprlandAPI::addDispatcherV2(pHandle, "overview:open", ::dispatchOpenOverview);
     HyprlandAPI::addDispatcherV2(pHandle, "overview:close", ::dispatchCloseOverview);
+
+    HyprlandAPI::addLuaFunction(pHandle, "hyprspace", "toggle", ::luaToggleOverview);
+    HyprlandAPI::addLuaFunction(pHandle, "hyprspace", "open", ::luaOpenOverview);
+    HyprlandAPI::addLuaFunction(pHandle, "hyprspace", "close", ::luaCloseOverview);
 
     g_pRenderHook = Event::bus()->m_events.render.stage.listen([](eRenderStage stage) { onRender(stage); });
 
