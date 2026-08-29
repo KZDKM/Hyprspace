@@ -1,4 +1,8 @@
 #include <hyprland/src/desktop/view/Window.hpp>
+#include <hyprland/src/state/WorkspaceState.hpp>
+#include <hyprland/src/state/MonitorState.hpp>
+#include <hyprland/src/desktop/state/ViewState.hpp>
+#include <hyprland/src/desktop/state/GlobalWindowController.hpp>
 
 #include "Overview.hpp"
 #include "Globals.hpp"
@@ -29,11 +33,11 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
         }
     }
 
-    auto targetWorkspace = g_pCompositor->getWorkspaceByID(targetWorkspaceID);
+    auto targetWorkspace = State::workspaceState()->query().id(targetWorkspaceID).run();
 
     // create new workspace
     if (targetWorkspace == nullptr && targetWorkspaceID >= SPECIAL_WORKSPACE_START) {
-        targetWorkspace = g_pCompositor->createNewWorkspace(targetWorkspaceID, getOwner()->m_id);
+        targetWorkspace = State::workspaceState()->create(targetWorkspaceID, (MONITORID)getOwner()->m_id);
     }
 
     // if the cursor is hovering over workspace, clicking should switch workspace instead of starting window drag
@@ -42,7 +46,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
             g_layoutManager->endDragTarget();
 
         if (pressed) {
-            const auto PWINDOW = g_pCompositor->vectorToWindowUnified(coords, Desktop::View::WINDOW_ONLY, nullptr);
+            const auto PWINDOW = Desktop::viewState()->hitTest().windowAt(coords, Desktop::View::WINDOW_ONLY);
             if (PWINDOW) {
                 const auto LT = PWINDOW->layoutTarget();
                 if (LT)
@@ -54,14 +58,13 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
 
     // release window on workspace to drop it in
     if (targetWindow && targetWorkspace != nullptr && !pressed) {
-        g_pCompositor->moveWindowToWorkspaceSafe(targetWindow, targetWorkspace);
+        Desktop::globalWindowController()->moveWindowToWorkspace(targetWindow, targetWorkspace);
         if (targetWindow->m_isFloating) {
             auto targetPos = getOwner()->m_position + (getOwner()->m_size / 2.) - (targetWindow->m_reportedSize / 2.);
-            targetWindow->m_position = targetPos;
-            *targetWindow->m_realPosition = targetPos;
+            targetWindow->positionAnimation()->setValueAndWarp(targetPos);
         }
         if (Config::switchOnDrop) {
-            g_pCompositor->getMonitorFromID(targetWorkspace->m_monitor->m_id)->changeWorkspace(targetWorkspace->m_id);
+            State::monitorState()->query().id(targetWorkspace->m_monitor->m_id).run()->changeWorkspace(targetWorkspace->m_id);
             if (Config::exitOnSwitch && active) hide();
         }
         updateLayout();
@@ -71,7 +74,7 @@ bool CHyprspaceWidget::buttonEvent(bool pressed, Vector2D coords) {
         if (targetWorkspace->m_isSpecialWorkspace)
             getOwner()->activeSpecialWorkspaceID() == targetWorkspaceID ? getOwner()->setSpecialWorkspace(nullptr) : getOwner()->setSpecialWorkspace(targetWorkspaceID);
         else {
-            g_pCompositor->getMonitorFromID(targetWorkspace->m_monitor->m_id)->changeWorkspace(targetWorkspace->m_id);
+            State::monitorState()->query().id(targetWorkspace->m_monitor->m_id).run()->changeWorkspace(targetWorkspace->m_id);
         }
         if (Config::exitOnSwitch && active) hide();
     }
@@ -97,16 +100,16 @@ bool CHyprspaceWidget::axisEvent(double delta, wl_pointer_axis axis, Vector2D co
     else if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
         if (delta < 0) {
             SWorkspaceIDName wsIDName = getWorkspaceIDNameFromString("r-1");
-            if (g_pCompositor->getWorkspaceByID(wsIDName.id) == nullptr) {
-                auto newWorkspace = g_pCompositor->createNewWorkspace(wsIDName.id, ownerID);
+            if (State::workspaceState()->query().id(wsIDName.id).run() == nullptr) {
+                auto newWorkspace = State::workspaceState()->create(wsIDName.id, (MONITORID)ownerID);
                 (void)newWorkspace;
             }
             getOwner()->changeWorkspace(wsIDName.id);
         }
         else {
             SWorkspaceIDName wsIDName = getWorkspaceIDNameFromString("r+1");
-            if (g_pCompositor->getWorkspaceByID(wsIDName.id) == nullptr) {
-                auto newWorkspace = g_pCompositor->createNewWorkspace(wsIDName.id, ownerID);
+            if (State::workspaceState()->query().id(wsIDName.id).run() == nullptr) {
+                auto newWorkspace = State::workspaceState()->create(wsIDName.id, (MONITORID)ownerID);
                 (void)newWorkspace;
             }
             getOwner()->changeWorkspace(wsIDName.id);
@@ -136,7 +139,7 @@ bool CHyprspaceWidget::updateSwipe(IPointer::SSwipeUpdateEvent e) {
     if (abs(e.delta.x) / abs(e.delta.y) < 1) {
         if (swiping && e.fingers == (uint32_t)fingers) {
 
-            float currentScaling = g_pCompositor->getMonitorFromCursor()->m_size.x / distance;
+            float currentScaling = State::monitorState()->query().vec(g_pInputManager->getMouseCoordsInternal()).run()->m_size.x / distance;
 
             double scrollDifferential = e.delta.y * (Config::reverseSwipe ? -1 : 1) * (Config::onBottom ? -1 : 1) * currentScaling;
 

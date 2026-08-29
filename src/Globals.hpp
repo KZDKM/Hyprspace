@@ -12,7 +12,7 @@
 #include <hyprland/src/render/types.hpp>
 #include <hyprland/src/managers/input/InputManager.hpp>
 #include <hyprland/src/layout/LayoutManager.hpp>
-#include <hyprland/src/managers/animation/AnimationManager.hpp>
+#include <hyprland/src/animation/AnimationManager.hpp>
 #include <hyprland/src/config/ConfigValue.hpp>
 #include <hyprland/src/helpers/time/Time.hpp>
 #include <hyprland/src/event/EventBus.hpp>
