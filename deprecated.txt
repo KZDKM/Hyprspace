@@ -1,7 +1,7 @@
 g++ -shared -fPIC --no-gnu-unique -Wall -g -DWLR_USE_UNSTABLE -std=c++2b -O2 `pkg-config --cflags pixman-1 libdrm hyprland pangocairo libinput libudev wayland-server xkbcommon` src/Input.cpp src/Layout.cpp src/main.cpp src/Overview.cpp src/Render.cpp -o Hyprspace.so
 src/Input.cpp: In member function ‘bool CHyprspaceWidget::updateSwipe(IPointer::SSwipeUpdateEvent)’:
-src/Input.cpp:139:76: warning: ‘Hyprlang::CConfigValue* HyprlandAPI::getConfigValue(void*, const std::string&)’ is deprecated [-Wdeprecated-declarations]
-  139 |     int distance = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_distance")->getValue());
+src/Input.cpp:144:76: warning: ‘Hyprlang::CConfigValue* HyprlandAPI::getConfigValue(void*, const std::string&)’ is deprecated [-Wdeprecated-declarations]
+  144 |     int distance = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_distance")->getValue());
       |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In file included from src/Globals.hpp:9,
                  from src/Input.cpp:8:
@@ -9,14 +9,14 @@ In file included from src/Globals.hpp:9,
   163 |     APICALL [[deprecated]] Hyprlang::CConfigValue* getConfigValue(HANDLE handle, const std::string& name);
       |                                                    ^~~~~~~~~~~~~~
 src/Input.cpp: In member function ‘bool CHyprspaceWidget::endSwipe(IPointer::SSwipeEndEvent)’:
-src/Input.cpp:187:87: warning: ‘Hyprlang::CConfigValue* HyprlandAPI::getConfigValue(void*, const std::string&)’ is deprecated [-Wdeprecated-declarations]
-  187 |         int swipeForceSpeed = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_min_speed_to_force")->getValue());
+src/Input.cpp:200:87: warning: ‘Hyprlang::CConfigValue* HyprlandAPI::getConfigValue(void*, const std::string&)’ is deprecated [-Wdeprecated-declarations]
+  200 |         int swipeForceSpeed = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_min_speed_to_force")->getValue());
       |                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /usr/include/hyprland/src/plugins/PluginAPI.hpp:163:52: note: declared here
   163 |     APICALL [[deprecated]] Hyprlang::CConfigValue* getConfigValue(HANDLE handle, const std::string& name);
       |                                                    ^~~~~~~~~~~~~~
-src/Input.cpp:188:87: warning: ‘Hyprlang::CConfigValue* HyprlandAPI::getConfigValue(void*, const std::string&)’ is deprecated [-Wdeprecated-declarations]
-  188 |         float cancelRatio = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_cancel_ratio")->getValue());
+src/Input.cpp:201:87: warning: ‘Hyprlang::CConfigValue* HyprlandAPI::getConfigValue(void*, const std::string&)’ is deprecated [-Wdeprecated-declarations]
+  201 |         float cancelRatio = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_cancel_ratio")->getValue());
       |                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /usr/include/hyprland/src/plugins/PluginAPI.hpp:163:52: note: declared here
   163 |     APICALL [[deprecated]] Hyprlang::CConfigValue* getConfigValue(HANDLE handle, const std::string& name);
@@ -273,57 +273,3 @@ src/main.cpp:537:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const s
 /usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
   141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
       |                                 ^~~~~~~~~~~~~~
-src/Overview.cpp: In constructor ‘CHyprspaceWidget::CHyprspaceWidget(uint64_t)’:
-src/Overview.cpp:19:5: error: ‘g_pAnimationManager’ was not declared in this scope; did you mean ‘g_pSeatManager’?
-   19 |     g_pAnimationManager->createAnimation(0.F, curYOffset, curAnimationConfig.pValues.lock(), AVARDAMAGE_ENTIRE);
-      |     ^~~~~~~~~~~~~~~~~~~
-      |     g_pSeatManager
-src/Overview.cpp: In member function ‘void CHyprspaceWidget::show()’:
-src/Overview.cpp:42:77: error: no matching function for call to ‘Fullscreen::CFullscreenController::getFullscreenWindow(const Hyprutils::Memory::CWeakPointer<CWorkspace>&)’
-   42 |                 const auto w = Fullscreen::controller()->getFullscreenWindow(ws);
-      |                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~
-  • there are 2 candidates
-In file included from src/Overview.hpp:3,
-                 from src/Overview.cpp:1:
-    • candidate 1: ‘PHLWINDOW Fullscreen::CFullscreenController::getFullscreenWindow(PHLWORKSPACE, std::optional<bool>)’
-      /usr/include/hyprland/src/managers/fullscreen/FullscreenController.hpp:59:19:
-         59 |         PHLWINDOW getFullscreenWindow(const PHLWORKSPACE workspace, const std::optional<bool> covering = true);
-            |                   ^~~~~~~~~~~~~~~~~~~
-      • no known conversion for argument 1 from ‘const Hyprutils::Memory::CWeakPointer<CWorkspace>’ to ‘PHLWORKSPACE’ {aka ‘Hyprutils::Memory::CSharedPointer<CWorkspace>’}
-        /usr/include/hyprland/src/managers/fullscreen/FullscreenController.hpp:59:58:
-           59 |         PHLWINDOW getFullscreenWindow(const PHLWORKSPACE workspace, const std::optional<bool> covering = true);
-              |                                       ~~~~~~~~~~~~~~~~~~~^~~~~~~~~
-    • candidate 2: ‘PHLWINDOW Fullscreen::CFullscreenController::getFullscreenWindow(PHLMONITOR, std::optional<bool>)’
-      /usr/include/hyprland/src/managers/fullscreen/FullscreenController.hpp:71:19:
-         71 |         PHLWINDOW getFullscreenWindow(const PHLMONITOR monitor, const std::optional<bool> covering = true);
-            |                   ^~~~~~~~~~~~~~~~~~~
-      • no known conversion for argument 1 from ‘const Hyprutils::Memory::CWeakPointer<CWorkspace>’ to ‘PHLMONITOR’ {aka ‘Hyprutils::Memory::CSharedPointer<Monitor::CMonitor>’}
-        /usr/include/hyprland/src/managers/fullscreen/FullscreenController.hpp:71:56:
-           71 |         PHLWINDOW getFullscreenWindow(const PHLMONITOR monitor, const std::optional<bool> covering = true);
-              |                                       ~~~~~~~~~~~~~~~~~^~~~~~~
-src/Overview.cpp:43:76: error: no matching function for call to ‘Fullscreen::CFullscreenController::hasFullscreen(const Hyprutils::Memory::CWeakPointer<CWorkspace>&)’
-   43 |                 if (w != nullptr && Fullscreen::controller()->hasFullscreen(ws)) {
-      |                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~
-  • there are 2 candidates
-    • candidate 1: ‘bool Fullscreen::CFullscreenController::hasFullscreen(PHLWORKSPACE, std::optional<bool>)’
-      /usr/include/hyprland/src/managers/fullscreen/FullscreenController.hpp:56:14:
-         56 |         bool hasFullscreen(const PHLWORKSPACE workspace, const std::optional<bool> covering = true);
-            |              ^~~~~~~~~~~~~
-      • no known conversion for argument 1 from ‘const Hyprutils::Memory::CWeakPointer<CWorkspace>’ to ‘PHLWORKSPACE’ {aka ‘Hyprutils::Memory::CSharedPointer<CWorkspace>’}
-        /usr/include/hyprland/src/managers/fullscreen/FullscreenController.hpp:56:47:
-           56 |         bool hasFullscreen(const PHLWORKSPACE workspace, const std::optional<bool> covering = true);
-              |                            ~~~~~~~~~~~~~~~~~~~^~~~~~~~~
-    • candidate 2: ‘bool Fullscreen::CFullscreenController::hasFullscreen(PHLMONITOR, std::optional<bool>)’
-      /usr/include/hyprland/src/managers/fullscreen/FullscreenController.hpp:68:14:
-         68 |         bool hasFullscreen(const PHLMONITOR monitor, const std::optional<bool> covering = true);
-            |              ^~~~~~~~~~~~~
-      • no known conversion for argument 1 from ‘const Hyprutils::Memory::CWeakPointer<CWorkspace>’ to ‘PHLMONITOR’ {aka ‘Hyprutils::Memory::CSharedPointer<Monitor::CMonitor>’}
-        /usr/include/hyprland/src/managers/fullscreen/FullscreenController.hpp:68:45:
-           68 |         bool hasFullscreen(const PHLMONITOR monitor, const std::optional<bool> covering = true);
-              |                            ~~~~~~~~~~~~~~~~~^~~~~~~
-src/Overview.cpp: In member function ‘void CHyprspaceWidget::updateConfig()’:
-src/Overview.cpp:145:5: error: ‘g_pAnimationManager’ was not declared in this scope; did you mean ‘g_pSeatManager’?
-  145 |     g_pAnimationManager->createAnimation(0.F, curYOffset, curAnimationConfig.pValues.lock(), AVARDAMAGE_ENTIRE);
-      |     ^~~~~~~~~~~~~~~~~~~
-      |     g_pSeatManager
-make: *** [Makefile:9: all] Error 1

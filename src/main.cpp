@@ -57,7 +57,7 @@ bool Config::showSpecialWorkspace = false;
 bool Config::disableGestures = false;
 bool Config::reverseSwipe = false;
 
-bool Config::disableBlur = false;
+bool Config::disableBlur = true;
 
 float Config::overrideAnimSpeed = 0;
 
@@ -117,6 +117,7 @@ void onRender(eRenderStage renderStage) {
     // refresh layout after scheduled recalculation on monitors were carried out in renderMonitor
     if (renderStage == eRenderStage::RENDER_PRE) {
         if (g_layoutNeedsRefresh) {
+            Log::logger->log(Log::WARN, "HYPRSPACE_DEBUG: refresh loop fired");
             refreshWidgets();
             g_layoutNeedsRefresh = false;
         }

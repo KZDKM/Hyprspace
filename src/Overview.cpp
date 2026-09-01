@@ -31,6 +31,7 @@ PHLMONITOR CHyprspaceWidget::getOwner() {
 }
 
 void CHyprspaceWidget::show() {
+    Log::logger->log(Log::WARN, "HYPRSPACE_DEBUG: show() called");
     auto owner = getOwner();
     if (!owner) return;
 
@@ -48,6 +49,11 @@ void CHyprspaceWidget::show() {
                     if (oMode == Fullscreen::FSMODE_FULLSCREEN) w->m_wantsInitialFullscreen = true;
                     prevFullscreen.emplace_back(std::make_tuple(PHLWINDOWREF(w), oMode));
                     Fullscreen::controller()->setFullscreenMode(w, Fullscreen::FSMODE_NONE, Fullscreen::FSMODE_NONE);
+                    // Without this, the window animates from its fullscreen box down to its tiled box
+                    // over ~200-300ms, and renderWindowStub (which reads the LIVE position/size
+                    // animation value) draws that shrink live inside the overview -> looks like a
+                    // full-screen "ghost" flickering over the panel while it opens.
+                    w->finishAnimation();
                 }
             }
         }
@@ -117,6 +123,9 @@ void CHyprspaceWidget::hide() {
         if (!w) continue;
         const auto oFullscreenMode = std::get<1>(fs);
         Fullscreen::controller()->setFullscreenMode(w, oFullscreenMode, oFullscreenMode);
+        // Same reasoning as in show(): snap instantly instead of animating back to fullscreen,
+        // so the growth isn't visible bleeding through the closing overview panel.
+        w->finishAnimation();
         if (oFullscreenMode == Fullscreen::FSMODE_FULLSCREEN) w->m_wantsInitialFullscreen = false;
     }
     prevFullscreen.clear();

@@ -141,7 +141,8 @@ bool CHyprspaceWidget::beginSwipe(IPointer::SSwipeBeginEvent e) {
 
 bool CHyprspaceWidget::updateSwipe(IPointer::SSwipeUpdateEvent e) {
     constexpr int fingers = 3;
-    int distance = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_distance")->getValue());
+    auto* pDistanceCfg = HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_distance");
+    int distance = pDistanceCfg ? std::any_cast<Hyprlang::INT>(pDistanceCfg->getValue()) : 300;
 
     // restrict swipe to a axis with the most significant movement to prevent misinput
     if (abs(e.delta.x) / abs(e.delta.y) < 1) {
@@ -197,8 +198,12 @@ bool CHyprspaceWidget::endSwipe(IPointer::SSwipeEndEvent e) {
         curSwipeOffset = -10.;
     }
     else if (const auto owner = getOwner(); owner) {
-        int swipeForceSpeed = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_min_speed_to_force")->getValue());
-        float cancelRatio = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_cancel_ratio")->getValue());
+        auto* pSpeedCfg = HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_min_speed_to_force");
+        int swipeForceSpeed = pSpeedCfg ? std::any_cast<Hyprlang::INT>(pSpeedCfg->getValue()) : 30;
+
+        auto* pRatioCfg = HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_cancel_ratio");
+        float cancelRatio = pRatioCfg ? std::any_cast<Hyprlang::FLOAT>(pRatioCfg->getValue()) : 0.5f;
+
         double swipeTravel = (Config::panelHeight + Config::reservedArea) * owner->m_scale;
         if (activeBeforeSwipe) {
             if ((curSwipeOffset < swipeTravel * cancelRatio) || avgSwipeSpeed < -swipeForceSpeed) {

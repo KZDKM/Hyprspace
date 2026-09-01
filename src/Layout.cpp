@@ -5,6 +5,7 @@
 
 // FIXME: preserve original workspace rules
 void CHyprspaceWidget::updateLayout() {
+    Log::logger->log(Log::WARN, "HYPRSPACE_DEBUG: updateLayout() called");
 
     if (!Config::affectStrut) return;
 
