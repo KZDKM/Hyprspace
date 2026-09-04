@@ -6,6 +6,8 @@
 #include <hyprland/src/debug/log/Logger.hpp>
 #include <hyprland/src/managers/SeatManager.hpp>
 #include <hyprland/src/desktop/view/Window.hpp>
+#include <hyprland/src/state/MonitorState.hpp>
+#include <hyprland/src/pointer/PointerController.hpp>
 #include <hyprutils/memory/SharedPtr.hpp>
 #include <any>
 #include "Overview.hpp"
@@ -55,7 +57,7 @@ bool Config::showSpecialWorkspace = false;
 bool Config::disableGestures = false;
 bool Config::reverseSwipe = false;
 
-bool Config::disableBlur = false;
+bool Config::disableBlur = true; // causes flickering
 
 float Config::overrideAnimSpeed = 0;
 
@@ -115,6 +117,7 @@ void onRender(eRenderStage renderStage) {
     // refresh layout after scheduled recalculation on monitors were carried out in renderMonitor
     if (renderStage == eRenderStage::RENDER_PRE) {
         if (g_layoutNeedsRefresh) {
+            Log::logger->log(Log::WARN, "HYPRSPACE_DEBUG: refresh loop fired");
             refreshWidgets();
             g_layoutNeedsRefresh = false;
         }
@@ -170,7 +173,7 @@ void onWorkspaceChange(PHLWORKSPACE pWorkspace) {
 
     if (!pWorkspace) return;
 
-    auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromID(pWorkspace->m_monitor->m_id));
+    auto widget = getWidgetForMonitor(State::monitorState()->query().id(pWorkspace->m_monitor->m_id).run());
     if (widget != nullptr)
         if (widget->isActive())
             widget->show();
@@ -185,7 +188,7 @@ void onMouseButton(const IPointer::SButtonEvent& event, SCallbackInfo& info) {
     if (event.button != BTN_LEFT) return;
 
     const auto pressed = event.state == WL_POINTER_BUTTON_STATE_PRESSED;
-    const auto pMonitor = g_pCompositor->getMonitorFromCursor();
+    const auto pMonitor = State::monitorState()->query().vec(g_pInputManager->getMouseCoordsInternal()).run();
     if (pMonitor) {
         const auto widget = getWidgetForMonitor(pMonitor);
         if (widget) {
@@ -200,7 +203,7 @@ void onMouseButton(const IPointer::SButtonEvent& event, SCallbackInfo& info) {
 // event hook for scrolling through panel and workspaces
 void onMouseAxis(const IPointer::SAxisEvent& event, SCallbackInfo& info) {
 
-    const auto pMonitor = g_pCompositor->getMonitorFromCursor();
+    const auto pMonitor = State::monitorState()->query().vec(g_pInputManager->getMouseCoordsInternal()).run();
     if (pMonitor) {
         const auto widget = getWidgetForMonitor(pMonitor);
         if (widget) {
@@ -217,7 +220,7 @@ void onSwipeBegin(const IPointer::SSwipeBeginEvent& event, SCallbackInfo& info) 
 
     if (Config::disableGestures) return;
 
-    const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
+    const auto widget = getWidgetForMonitor(State::monitorState()->query().vec(g_pInputManager->getMouseCoordsInternal()).run());
     if (widget != nullptr)
         widget->beginSwipe(event);
 
@@ -236,7 +239,7 @@ void onSwipeUpdate(const IPointer::SSwipeUpdateEvent& event, SCallbackInfo& info
 
     if (Config::disableGestures) return;
 
-    const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
+    const auto widget = getWidgetForMonitor(State::monitorState()->query().vec(g_pInputManager->getMouseCoordsInternal()).run());
     if (widget != nullptr)
         info.cancelled = !widget->updateSwipe(event);
 }
@@ -246,7 +249,7 @@ void onSwipeEnd(const IPointer::SSwipeEndEvent& event, SCallbackInfo& info) {
 
     if (Config::disableGestures) return;
 
-    const auto widget = getWidgetForMonitor(g_pCompositor->getMonitorFromCursor());
+    const auto widget = getWidgetForMonitor(State::monitorState()->query().vec(g_pInputManager->getMouseCoordsInternal()).run());
     if (widget != nullptr)
         widget->endSwipe(event);
 }
@@ -291,8 +294,8 @@ void onTouchDown(const ITouch::SDownEvent& event, SCallbackInfo& info) {
     if (!event.device)
         return;
 
-    auto targetMonitor = g_pCompositor->getMonitorFromName(!event.device->m_boundOutput.empty() ? event.device->m_boundOutput : "");
-    targetMonitor = targetMonitor ? targetMonitor : g_pCompositor->getMonitorFromCursor();
+    auto targetMonitor = State::monitorState()->query().name(!event.device->m_boundOutput.empty() ? event.device->m_boundOutput : "").run();
+    targetMonitor = targetMonitor ? targetMonitor : State::monitorState()->query().vec(g_pInputManager->getMouseCoordsInternal()).run();
 
     const auto widget = getWidgetForMonitor(targetMonitor);
     if (widget != nullptr && targetMonitor != nullptr) {
@@ -301,7 +304,7 @@ void onTouchDown(const ITouch::SDownEvent& event, SCallbackInfo& info) {
             info.cancelled = !widget->buttonEvent(true, pos);
             if (info.cancelled) {
                 g_pTouchedMonitor = targetMonitor;
-                g_pCompositor->warpCursorTo(pos);
+                Pointer::pointerController()->warpTo(pos);
                 g_pInputManager->refocus();
             }
         }
@@ -311,7 +314,7 @@ void onTouchDown(const ITouch::SDownEvent& event, SCallbackInfo& info) {
 void onTouchMove(const ITouch::SMotionEvent& event, SCallbackInfo& info) {
     if (g_pTouchedMonitor == nullptr) return;
 
-    g_pCompositor->warpCursorTo(g_pTouchedMonitor->m_position + g_pTouchedMonitor->m_size * event.pos);
+    Pointer::pointerController()->warpTo(g_pTouchedMonitor->m_position + g_pTouchedMonitor->m_size * event.pos);
     g_pInputManager->simulateMouseMovement();
 }
 
@@ -325,7 +328,7 @@ void onTouchUp(const ITouch::SUpEvent& event, SCallbackInfo& info) {
 }
 
 static SDispatchResult dispatchToggleOverview(std::string arg) {
-    auto currentMonitor = g_pCompositor->getMonitorFromCursor();
+    auto currentMonitor = State::monitorState()->query().vec(g_pInputManager->getMouseCoordsInternal()).run();
     auto widget = getWidgetForMonitor(currentMonitor);
     if (widget) {
         if (arg.contains("all")) {
@@ -357,7 +360,7 @@ static SDispatchResult dispatchOpenOverview(std::string arg) {
         }
     }
     else {
-        auto currentMonitor = g_pCompositor->getMonitorFromCursor();
+        auto currentMonitor = State::monitorState()->query().vec(g_pInputManager->getMouseCoordsInternal()).run();
         auto widget = getWidgetForMonitor(currentMonitor);
         if (widget)
             if (!widget->isActive()) widget->show();
@@ -372,7 +375,7 @@ static SDispatchResult dispatchCloseOverview(std::string arg) {
         }
     }
     else {
-        auto currentMonitor = g_pCompositor->getMonitorFromCursor();
+        auto currentMonitor = State::monitorState()->query().vec(g_pInputManager->getMouseCoordsInternal()).run();
         auto widget = getWidgetForMonitor(currentMonitor);
         if (widget)
             if (widget->isActive()) widget->hide();
@@ -479,7 +482,7 @@ void reloadConfig() {
 
 void registerMonitors() {
     // create a widget for each monitor
-    for (auto& m : g_pCompositor->m_monitors) {
+    for (auto& m : State::monitorState()->monitors()) {
         if (getWidgetForMonitor(m) != nullptr) continue;
         CHyprspaceWidget* widget = new CHyprspaceWidget(m->m_id);
         g_overviewWidgets.emplace_back(widget);

@@ -1,9 +1,11 @@
 #include "Overview.hpp"
 #include "Globals.hpp"
 #include <hyprland/src/config/legacy/ConfigManager.hpp>
+#include <hyprland/src/state/WorkspaceState.hpp>
 
 // FIXME: preserve original workspace rules
 void CHyprspaceWidget::updateLayout() {
+    Log::logger->log(Log::WARN, "HYPRSPACE_DEBUG: updateLayout() called");
 
     if (!Config::affectStrut) return;
 
@@ -42,7 +44,7 @@ void CHyprspaceWidget::updateLayout() {
         const auto oActiveWorkspace = pMonitor->m_activeWorkspace;
         if (!oActiveWorkspace) return;
 
-        for (auto& ws : g_pCompositor->getWorkspaces()) { // HACK: recalculate other workspaces without reserved area
+        for (auto& ws : State::workspaceState()->workspaces()) { // HACK: recalculate other workspaces without reserved area
             if (ws && ws->m_monitor && ws->m_monitor->m_id == ownerID && ws->m_id != oActiveWorkspace->m_id) {
                 pMonitor->m_activeWorkspace = ws.lock();
                 const auto curRules = std::to_string(pMonitor->activeWorkspaceID()) + ", gapsin:" + PGAPSIN->toString() + ", gapsout:" + PGAPSOUT->toString();
@@ -64,7 +66,7 @@ void CHyprspaceWidget::updateLayout() {
 
     }
     else {
-        for (auto& ws : g_pCompositor->getWorkspaces()) {
+        for (auto& ws : State::workspaceState()->workspaces()) {
             if (ws && ws->m_monitor && ws->m_monitor->m_id == ownerID) {
                 const auto curRules = std::to_string(ws->m_id) + ", gapsin:" + PGAPSIN->toString() + ", gapsout:" + PGAPSOUT->toString();
                 if (Config::overrideGaps) {

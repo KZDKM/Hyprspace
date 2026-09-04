@@ -1,0 +1,275 @@
+g++ -shared -fPIC --no-gnu-unique -Wall -g -DWLR_USE_UNSTABLE -std=c++2b -O2 `pkg-config --cflags pixman-1 libdrm hyprland pangocairo libinput libudev wayland-server xkbcommon` src/Input.cpp src/Layout.cpp src/main.cpp src/Overview.cpp src/Render.cpp -o Hyprspace.so
+src/Input.cpp: In member function ‘bool CHyprspaceWidget::updateSwipe(IPointer::SSwipeUpdateEvent)’:
+src/Input.cpp:144:76: warning: ‘Hyprlang::CConfigValue* HyprlandAPI::getConfigValue(void*, const std::string&)’ is deprecated [-Wdeprecated-declarations]
+  144 |     int distance = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_distance")->getValue());
+      |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from src/Globals.hpp:9,
+                 from src/Input.cpp:8:
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:163:52: note: declared here
+  163 |     APICALL [[deprecated]] Hyprlang::CConfigValue* getConfigValue(HANDLE handle, const std::string& name);
+      |                                                    ^~~~~~~~~~~~~~
+src/Input.cpp: In member function ‘bool CHyprspaceWidget::endSwipe(IPointer::SSwipeEndEvent)’:
+src/Input.cpp:200:87: warning: ‘Hyprlang::CConfigValue* HyprlandAPI::getConfigValue(void*, const std::string&)’ is deprecated [-Wdeprecated-declarations]
+  200 |         int swipeForceSpeed = std::any_cast<Hyprlang::INT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_min_speed_to_force")->getValue());
+      |                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:163:52: note: declared here
+  163 |     APICALL [[deprecated]] Hyprlang::CConfigValue* getConfigValue(HANDLE handle, const std::string& name);
+      |                                                    ^~~~~~~~~~~~~~
+src/Input.cpp:201:87: warning: ‘Hyprlang::CConfigValue* HyprlandAPI::getConfigValue(void*, const std::string&)’ is deprecated [-Wdeprecated-declarations]
+  201 |         float cancelRatio = std::any_cast<Hyprlang::FLOAT>(HyprlandAPI::getConfigValue(pHandle, "gestures:workspace_swipe_cancel_ratio")->getValue());
+      |                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:163:52: note: declared here
+  163 |     APICALL [[deprecated]] Hyprlang::CConfigValue* getConfigValue(HANDLE handle, const std::string& name);
+      |                                                    ^~~~~~~~~~~~~~
+src/main.cpp: In function ‘void onKeyPress(const IKeyboard::SKeyEvent&, SCallbackInfo&)’:
+src/main.cpp:265:52: warning: ‘Hyprlang::CConfigValue* HyprlandAPI::getConfigValue(void*, const std::string&)’ is deprecated [-Wdeprecated-declarations]
+  265 |     auto* pExitKeyCfg = HyprlandAPI::getConfigValue(pHandle, "plugin:overview:exitKey");
+      |                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/hyprland/src/plugins/PluginSystem.hpp:7,
+                 from src/main.cpp:1:
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:163:52: note: declared here
+  163 |     APICALL [[deprecated]] Hyprlang::CConfigValue* getConfigValue(HANDLE handle, const std::string& name);
+      |                                                    ^~~~~~~~~~~~~~
+src/main.cpp: In function ‘T getConfigValueOr(const std::string&, const T&)’:
+src/main.cpp:397:52: warning: ‘Hyprlang::CConfigValue* HyprlandAPI::getConfigValue(void*, const std::string&)’ is deprecated [-Wdeprecated-declarations]
+  397 |     const auto* value = HyprlandAPI::getConfigValue(pHandle, name);
+      |                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:163:52: note: declared here
+  163 |     APICALL [[deprecated]] Hyprlang::CConfigValue* getConfigValue(HANDLE handle, const std::string& name);
+      |                                                    ^~~~~~~~~~~~~~
+src/main.cpp: In function ‘void reloadConfig()’:
+src/main.cpp:473:78: warning: ‘Hyprlang::CConfigValue* HyprlandAPI::getConfigValue(void*, const std::string&)’ is deprecated [-Wdeprecated-declarations]
+  473 |     Hyprlang::CConfigValue* numWorkspacesConfig = HyprlandAPI::getConfigValue(pHandle, "plugin:hyprsplit:num_workspaces");
+      |                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:163:52: note: declared here
+  163 |     APICALL [[deprecated]] Hyprlang::CConfigValue* getConfigValue(HANDLE handle, const std::string& name);
+      |                                                    ^~~~~~~~~~~~~~
+src/main.cpp:475:58: warning: ‘Hyprlang::CConfigValue* HyprlandAPI::getConfigValue(void*, const std::string&)’ is deprecated [-Wdeprecated-declarations]
+  475 |         numWorkspacesConfig = HyprlandAPI::getConfigValue(pHandle, "plugin:split-monitor-workspaces:count");
+      |                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:163:52: note: declared here
+  163 |     APICALL [[deprecated]] Hyprlang::CConfigValue* getConfigValue(HANDLE handle, const std::string& name);
+      |                                                    ^~~~~~~~~~~~~~
+src/main.cpp: In function ‘PLUGIN_DESCRIPTION_INFO pluginInit(void*)’:
+src/main.cpp:496:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  496 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelColor", Hyprlang::INT{CHyprColor(0, 0, 0, 0).getAsHex()});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:497:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  497 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelBorderColor", Hyprlang::INT{CHyprColor(0, 0, 0, 0).getAsHex()});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:498:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  498 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceActiveBackground", Hyprlang::INT{CHyprColor(0, 0, 0, 0.25).getAsHex()});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:499:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  499 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceInactiveBackground", Hyprlang::INT{CHyprColor(0, 0, 0, 0.5).getAsHex()});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:500:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  500 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceActiveBorder", Hyprlang::INT{CHyprColor(1, 1, 1, 0.25).getAsHex()});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:501:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  501 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceInactiveBorder", Hyprlang::INT{CHyprColor(1, 1, 1, 0).getAsHex()});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:503:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  503 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelHeight", Hyprlang::INT{250});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:504:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  504 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:panelBorderWidth", Hyprlang::INT{2});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:505:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  505 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceMargin", Hyprlang::INT{12});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:506:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  506 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:workspaceBorderSize", Hyprlang::INT{1});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:507:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  507 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:reservedArea", Hyprlang::INT{0});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:508:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  508 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:adaptiveHeight", Hyprlang::INT{0});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:509:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  509 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:centerAligned", Hyprlang::INT{1});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:510:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  510 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:onBottom", Hyprlang::INT{0});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:511:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  511 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:hideBackgroundLayers", Hyprlang::INT{0});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:512:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  512 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:hideTopLayers", Hyprlang::INT{0});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:513:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  513 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:hideOverlayLayers", Hyprlang::INT{0});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:514:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  514 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:drawActiveWorkspace", Hyprlang::INT{1});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:515:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  515 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:hideRealLayers", Hyprlang::INT{1});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:516:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  516 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:affectStrut", Hyprlang::INT{1});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:518:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  518 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:overrideGaps", Hyprlang::INT{1});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:519:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  519 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:gapsIn", Hyprlang::INT{20});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:520:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  520 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:gapsOut", Hyprlang::INT{60});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:522:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  522 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:autoDrag", Hyprlang::INT{1});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:523:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  523 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:autoScroll", Hyprlang::INT{1});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:524:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  524 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:exitOnClick", Hyprlang::INT{1});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:525:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  525 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:switchOnDrop", Hyprlang::INT{0});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:526:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  526 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:exitOnSwitch", Hyprlang::INT{0});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:527:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  527 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:showNewWorkspace", Hyprlang::INT{1});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:528:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  528 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:showEmptyWorkspace", Hyprlang::INT{1});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:529:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  529 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:showSpecialWorkspace", Hyprlang::INT{0});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:531:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  531 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:disableGestures", Hyprlang::INT{1});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:532:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  532 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:reverseSwipe", Hyprlang::INT{0});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:534:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  534 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:disableBlur", Hyprlang::INT{0});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:535:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  535 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:overrideAnimSpeed", Hyprlang::FLOAT{0.0});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:536:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  536 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:dragAlpha", Hyprlang::FLOAT{0.2});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
+src/main.cpp:537:32: warning: ‘bool HyprlandAPI::addConfigValue(void*, const std::string&, const Hyprlang::CConfigValue&)’ is deprecated [-Wdeprecated-declarations]
+  537 |     HyprlandAPI::addConfigValue(pHandle, "plugin:overview:exitKey", Hyprlang::STRING{"Escape"});
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/hyprland/src/plugins/PluginAPI.hpp:141:33: note: declared here
+  141 |     APICALL [[deprecated]] bool addConfigValue(HANDLE handle, const std::string& name, const Hyprlang::CConfigValue& value);
+      |                                 ^~~~~~~~~~~~~~
