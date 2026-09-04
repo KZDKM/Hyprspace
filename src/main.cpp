@@ -57,7 +57,7 @@ bool Config::showSpecialWorkspace = false;
 bool Config::disableGestures = false;
 bool Config::reverseSwipe = false;
 
-bool Config::disableBlur = true;
+bool Config::disableBlur = true; // causes flickering
 
 float Config::overrideAnimSpeed = 0;
 
