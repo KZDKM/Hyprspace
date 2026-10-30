@@ -1,7 +1,19 @@
 #pragma once
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/managers/fullscreen/FullscreenController.hpp>
+#include <hyprland/src/workspace/AbstractWorkspace.hpp>
 #include <hyprutils/animation/AnimationConfig.hpp>
+
+namespace Render {
+    class CRenderContext;
+}
+
+// One tile in the overview strip. Numbered workspaces use `numbered` (from 1).
+// 0.57 special workspaces are a type, not a negative id.
+struct SOverviewWorkspace {
+    bool                            special  = false;
+    Workspace::WorkspaceIDContainer numbered = 0;
+};
 
 class CHyprspaceWidget {
 
@@ -15,7 +27,7 @@ class CHyprspaceWidget {
 
     // for checking mouse hover for workspace drag and move
     // modified on draw call, accessed on mouse click and release
-    std::vector<std::tuple<int, CBox>> workspaceBoxes;
+    std::vector<std::tuple<SOverviewWorkspace, CBox>> workspaceBoxes;
 
     // for storing the fullscreen state of windows prior to overview activation (which unfullscreens all windows)
     std::vector<std::tuple<PHLWINDOWREF, Fullscreen::eFullscreenMode>> prevFullscreen;
@@ -54,7 +66,7 @@ public:
     void updateConfig();
 
     // should be called active or not
-    void draw();
+    void draw(Render::CRenderContext& ctx);
 
     // reserves area on owner monitor
     void updateLayout();

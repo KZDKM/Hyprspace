@@ -1,5 +1,7 @@
 #include "Overview.hpp"
 #include "Globals.hpp"
+#include <hyprland/src/desktop/view/window/WindowPresentation.hpp>
+#include <hyprland/src/render/Context.hpp>
 #include <hyprland/src/helpers/memory/Memory.hpp>
 #include <hyprland/src/config/shared/complex/ComplexDataTypes.hpp>
 #include <hyprland/src/render/pass/RectPassElement.hpp>
@@ -14,11 +16,21 @@
 #include <climits>
 
 
+static Render::CRenderContext* g_overviewContext = nullptr;
+
+static Render::CRenderContext& overviewContext() {
+    return g_overviewContext ? *g_overviewContext : g_pHyprRenderer->context();
+}
+
+static Render::CRenderPass& overviewPass() {
+    return Render::IHyprRenderer::currentPass(overviewContext());
+}
+
 void renderRect(CBox box, CHyprColor color) {
     CRectPassElement::SRectData rectdata;
     rectdata.color = color;
     rectdata.box = box;
-    g_pHyprRenderer->m_renderPass.add(makeUnique<CRectPassElement>(rectdata));
+    overviewPass().add(makeUnique<CRectPassElement>(rectdata));
 }
 
 void renderRectWithBlur(CBox box, CHyprColor color) {
@@ -26,7 +38,7 @@ void renderRectWithBlur(CBox box, CHyprColor color) {
     rectdata.color = color;
     rectdata.box = box;
     rectdata.blur = true;
-    g_pHyprRenderer->m_renderPass.add(makeUnique<CRectPassElement>(rectdata));
+    overviewPass().add(makeUnique<CRectPassElement>(rectdata));
 }
 
 void renderBorder(CBox box, const Config::CGradientValueData& gradient, int size) {
@@ -36,12 +48,12 @@ void renderBorder(CBox box, const Config::CGradientValueData& gradient, int size
     data.round = 0;
     data.a = 1.f;
     data.borderSize = size;
-    g_pHyprRenderer->m_renderPass.add(makeUnique<CBorderPassElement>(data));
+    overviewPass().add(makeUnique<CBorderPassElement>(data));
 }
 
 void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWorkspaceOverride, CBox rectOverride, CBox clipBox, const Time::steady_tp& time) {
     if (!pWindow || !pMonitor || !pWorkspaceOverride) return;
-    if (!pWindow->m_isMapped || !pWindow->wlSurface() || !pWindow->wlSurface()->resource()) return;
+    if (!pWindow->mapped() || !pWindow->wlSurface() || !pWindow->wlSurface()->resource()) return;
 
     Render::SRenderModifData renderModif;
 
@@ -51,7 +63,7 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     const float    scaleMod = rectOverride.w / std::max(logicalW * pMonitor->m_scale, 5.F);
     if (!(scaleMod > 0.F) || !(rectOverride.w > 0 && rectOverride.h > 0)) return;
 
-    const Vector2D logicalTL = oRealPosition + pWindow->m_floatingOffset;
+    const Vector2D logicalTL = oRealPosition + pWindow->presentation().floatingOffset();
     const Vector2D scaledTL  = (logicalTL - pMonitor->m_position) * pMonitor->m_scale;
     const Vector2D translate = rectOverride.pos() / scaleMod - scaledTL;
 
@@ -59,15 +71,15 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     renderModif.modifs.push_back(std::make_pair(Render::SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, std::any(scaleMod)));
     renderModif.enabled = true;
 
-    g_pHyprRenderer->m_renderPass.add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{.renderModif = renderModif}));
+    overviewPass().add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{.renderModif = renderModif}));
     Hyprutils::Utils::CScopeGuard x([] {
-        g_pHyprRenderer->m_renderPass.add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{.renderModif = Render::SRenderModifData{}}));
+        overviewPass().add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{.renderModif = Render::SRenderModifData{}}));
     });
 
     g_pHyprRenderer->damageWindow(pWindow);
 
     CSurfacePassElement::SRenderData renderdata = {pMonitor, time};
-    renderdata.pos                  = oRealPosition + pWindow->m_floatingOffset;
+    renderdata.pos                  = oRealPosition + pWindow->presentation().floatingOffset();
     renderdata.w                    = std::max(oSize.x, 5.0);
     renderdata.h                    = std::max(oSize.y, 5.0);
     renderdata.surface              = pWindow->wlSurface()->resource();
@@ -75,8 +87,8 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
     renderdata.fadeAlpha            = 1.F;
     renderdata.alpha                = 0.999F;
     renderdata.decorate             = false;
-    renderdata.rounding             = renderdata.dontRound ? 0 : pWindow->rounding() * scaleMod * pMonitor->m_scale;
-    renderdata.roundingPower        = renderdata.dontRound ? 2.0F : pWindow->roundingPower();
+    renderdata.rounding             = renderdata.dontRound ? 0 : pWindow->presentation().rounding() * scaleMod * pMonitor->m_scale;
+    renderdata.roundingPower        = renderdata.dontRound ? 2.0F : pWindow->presentation().roundingPower();
     renderdata.blur                 = false;
     renderdata.pWindow              = pWindow;
     renderdata.clipBox              = clipBox;
@@ -96,7 +108,7 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
             renderdata.texture     = s->m_current.texture;
             renderdata.surface     = s;
             renderdata.mainSurface = s == pWindow->wlSurface()->resource();
-            g_pHyprRenderer->m_renderPass.add(makeUnique<CSurfacePassElement>(renderdata));
+            overviewPass().add(makeUnique<CSurfacePassElement>(renderdata));
             renderdata.surfaceCounter++;
         },
         nullptr);
@@ -105,7 +117,7 @@ void renderWindowStub(PHLWINDOW pWindow, PHLMONITOR pMonitor, PHLWORKSPACE pWork
 void renderLayerStub(PHLLS pLayer, PHLMONITOR pMonitor, CBox rectOverride, CBox clipBox, const Time::steady_tp& time) {
     if (!pLayer || !pMonitor) return;
 
-    if (!pLayer->m_mapped || !pLayer->m_layerSurface || !pLayer->wlSurface() || !pLayer->wlSurface()->resource()) return;
+    if (!pLayer->mapped() || !pLayer->m_layerSurface || !pLayer->wlSurface() || !pLayer->wlSurface()->resource()) return;
 
     Vector2D oRealPosition = pLayer->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
     Vector2D oSize = pLayer->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
@@ -119,9 +131,9 @@ void renderLayerStub(PHLLS pLayer, PHLMONITOR pMonitor, CBox rectOverride, CBox 
     renderModif.modifs.push_back(std::make_pair(Render::SRenderModifData::eRenderModifType::RMOD_TYPE_SCALE, std::any(curScaling)));
     renderModif.enabled = true;
 
-    g_pHyprRenderer->m_renderPass.add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{.renderModif = renderModif}));
+    overviewPass().add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{.renderModif = renderModif}));
     Hyprutils::Utils::CScopeGuard x([] {
-        g_pHyprRenderer->m_renderPass.add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{.renderModif = Render::SRenderModifData{}}));
+        overviewPass().add(makeUnique<CRendererHintsPassElement>(CRendererHintsPassElement::SData{.renderModif = Render::SRenderModifData{}}));
     });
 
     CSurfacePassElement::SRenderData renderdata = {pMonitor, time, oRealPosition};
@@ -148,14 +160,16 @@ void renderLayerStub(PHLLS pLayer, PHLMONITOR pMonitor, CBox rectOverride, CBox 
             renderdata.texture     = s->m_current.texture;
             renderdata.surface     = s;
             renderdata.mainSurface = s == pLayer->wlSurface()->resource();
-            g_pHyprRenderer->m_renderPass.add(makeUnique<CSurfacePassElement>(renderdata));
+            overviewPass().add(makeUnique<CSurfacePassElement>(renderdata));
             renderdata.surfaceCounter++;
         },
         &renderdata);
 }
 
 // NOTE: rects and clipbox positions are relative to the monitor, while damagebox and layers are not, what the fuck? xd
-void CHyprspaceWidget::draw() {
+void CHyprspaceWidget::draw(Render::CRenderContext& ctx) {
+    g_overviewContext = &ctx;
+    Hyprutils::Utils::CScopeGuard resetContext([] { g_overviewContext = nullptr; });
 
     workspaceBoxes.clear();
 
@@ -183,7 +197,7 @@ void CHyprspaceWidget::draw() {
     widgetBox.x -= owner->m_position.x;
     widgetBox.y -= owner->m_position.y;
 
-    g_pHyprRenderer->m_renderData.clipBox = monitorClip;
+    overviewContext().m_data.clipBox = monitorClip;
 
     if (!config.disableBlur->value()) {
         renderRectWithBlur(widgetBox, config.panelBaseColor->value());
@@ -212,24 +226,23 @@ void CHyprspaceWidget::draw() {
     g_pHyprRenderer->damageMonitor(owner);
 
     // the list of workspaces to show
-    std::vector<int> workspaces;
+    std::vector<SOverviewWorkspace> workspaces;
 
-    if (config.showSpecialWorkspace->value()) {
-        workspaces.push_back(SPECIAL_WORKSPACE_START);
-    }
+    if (config.showSpecialWorkspace->value())
+        workspaces.push_back({.special = true});
 
-    // find the lowest and highest workspace id to determine which empty workspaces to insert
+    // find the lowest and highest numbered id to determine which empty workspaces to insert
     int lowestID = INT_MAX;
     int highestID = 1;
     for (auto& ws : State::workspaceState()->workspaces()) {
-        if (!ws) continue;
-        // normal workspaces start from 1, special workspaces ends on -2
-        if (ws->m_id < 1) continue;
-        if (ws->m_monitor->m_id == ownerID) {
-            workspaces.push_back(ws->m_id);
-            if (highestID < ws->m_id) highestID = ws->m_id;
-            if (lowestID > ws->m_id) lowestID = ws->m_id;
-        }
+        if (!ws || !ws->m_monitor || ws->m_monitor->m_id != ownerID)
+            continue;
+        const auto id = ws->numberedID();
+        if (!id || *id < 1)
+            continue;
+        workspaces.push_back({.special = false, .numbered = *id});
+        if (highestID < static_cast<int>(*id)) highestID = static_cast<int>(*id);
+        if (lowestID > static_cast<int>(*id)) lowestID = static_cast<int>(*id);
     }
 
     // include empty workspaces that are between non-empty ones
@@ -244,21 +257,23 @@ void CHyprspaceWidget::draw() {
         }
 
         for (int i = wsIDStart; i <= wsIDEnd; i++) {
-            if (i == owner->activeSpecialWorkspaceID()) continue;
-            const auto pWorkspace = State::workspaceState()->query().id(i).run();
-            if (pWorkspace == nullptr)
-                workspaces.push_back(i);
+            if (findNumberedWorkspace(static_cast<Workspace::WorkspaceIDContainer>(i)) == nullptr)
+                workspaces.push_back({.special = false, .numbered = static_cast<Workspace::WorkspaceIDContainer>(i)});
         }
     }
 
     // add a new empty workspace at last
     if (config.showNewWorkspace->value()) {
-        // get the lowest empty workspce id after the highest id of current workspace
-        while (State::workspaceState()->query().id(highestID).run() != nullptr) highestID++;
-        workspaces.push_back(highestID);
+        while (findNumberedWorkspace(static_cast<Workspace::WorkspaceIDContainer>(highestID)) != nullptr)
+            highestID++;
+        workspaces.push_back({.special = false, .numbered = static_cast<Workspace::WorkspaceIDContainer>(highestID)});
     }
 
-    std::sort(workspaces.begin(), workspaces.end());
+    std::sort(workspaces.begin(), workspaces.end(), [](const SOverviewWorkspace& a, const SOverviewWorkspace& b) {
+        if (a.special != b.special)
+            return a.special;
+        return a.numbered < b.numbered;
+    });
 
     // render workspace boxes
     int wsCount = workspaces.size();
@@ -273,12 +288,13 @@ void CHyprspaceWidget::draw() {
     *workspaceScrollOffset = std::clamp<double>(workspaceScrollOffset->goal(), -workspaceOverflowSize, workspaceOverflowSize);
 
     if (!(workspaceBoxW > 0 && workspaceBoxH > 0)) return;
-    for (auto wsID : workspaces) {
-        const auto ws = State::workspaceState()->query().id(wsID).run();
+    for (const auto& tile : workspaces) {
+        const auto ws = tile.special ? findDefaultSpecialWorkspace() : findNumberedWorkspace(tile.numbered);
+        const bool activeTile = tile.special ? (ws && ws == owner->m_activeSpecialWorkspace) : (ws == owner->m_activeWorkspace);
         CBox curWorkspaceBox = {curWorkspaceRectOffsetX, curWorkspaceRectOffsetY, workspaceBoxW, workspaceBoxH};
 
         // workspace background rect (NOT background layer) and border
-        if (ws == owner->m_activeWorkspace) {
+        if (activeTile) {
             if (config.workspaceBorderSize->value() >= 1 && CHyprColor(config.workspaceActiveBorder->value()).a > 0) {
                 renderBorder(curWorkspaceBox, Config::CGradientValueData(config.workspaceActiveBorder->value()), config.workspaceBorderSize->value());
             }
@@ -336,7 +352,7 @@ void CHyprspaceWidget::draw() {
             // draw tiled windows
             for (auto& w : Desktop::windowState()->windows()) {
                 if (!w) continue;
-                if (w->m_workspace == ws && !w->m_isFloating) {
+                if (w->m_workspace == ws && !w->isFloating()) {
                     double wX = curWorkspaceRectOffsetX + ((w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT).x - owner->m_position.x) * monitorSizeScaleFactor * owner->m_scale);
                     double wY = curWorkspaceRectOffsetY + ((w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT).y - owner->m_position.y) * monitorSizeScaleFactor * owner->m_scale);
                     double wW = w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT).x * monitorSizeScaleFactor * owner->m_scale;
@@ -350,7 +366,7 @@ void CHyprspaceWidget::draw() {
             // draw floating windows
             for (auto& w : Desktop::windowState()->windows()) {
                 if (!w) continue;
-                if (w->m_workspace == ws && w->m_isFloating && ws->getLastFocusedWindow() != w) {
+                if (w->m_workspace == ws && w->isFloating() && ws->getLastFocusedWindow() != w) {
                     double wX = curWorkspaceRectOffsetX + ((w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT).x - owner->m_position.x) * monitorSizeScaleFactor * owner->m_scale);
                     double wY = curWorkspaceRectOffsetY + ((w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT).y - owner->m_position.y) * monitorSizeScaleFactor * owner->m_scale);
                     double wW = w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT).x * monitorSizeScaleFactor * owner->m_scale;
@@ -363,7 +379,7 @@ void CHyprspaceWidget::draw() {
             }
             // draw last focused floating window on top
             if (ws->getLastFocusedWindow())
-                if (ws->getLastFocusedWindow()->m_isFloating) {
+                if (ws->getLastFocusedWindow()->isFloating()) {
                     const auto w = ws->getLastFocusedWindow();
                     double wX = curWorkspaceRectOffsetX + ((w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT).x - owner->m_position.x) * monitorSizeScaleFactor * owner->m_scale);
                     double wY = curWorkspaceRectOffsetY + ((w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT).y - owner->m_position.y) * monitorSizeScaleFactor * owner->m_scale);
@@ -402,11 +418,11 @@ void CHyprspaceWidget::draw() {
 
         curWorkspaceBox.x += owner->m_position.x;
         curWorkspaceBox.y += owner->m_position.y;
-        workspaceBoxes.emplace_back(std::make_tuple(wsID, curWorkspaceBox));
+        workspaceBoxes.emplace_back(std::make_tuple(tile, curWorkspaceBox));
 
         // set the current position to the next workspace box
         curWorkspaceRectOffsetX += workspaceBoxW + config.workspaceMargin->value() * owner->m_scale;
     }
 
-    g_pHyprRenderer->m_renderData.clipBox = monitorClip;
+    overviewContext().m_data.clipBox = monitorClip;
 }

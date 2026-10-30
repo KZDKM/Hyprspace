@@ -22,6 +22,9 @@
 #include <hyprland/src/config/values/types/FloatValue.hpp>
 #include <hyprland/src/config/values/types/ColorValue.hpp>
 #include <hyprland/src/config/values/types/StringValue.hpp>
+#include <hyprland/src/state/WorkspaceState.hpp>
+#include <hyprland/src/workspace/WorkspaceUtils.hpp>
+#include <hyprland/src/render/WindowRenderPresentation.hpp>
 
 // Hyprland v0.54+: cancellable input uses Event::SCallbackInfo (not legacy CEvent*).
 using SCallbackInfo = Event::SCallbackInfo;
@@ -45,10 +48,48 @@ CHyprSignalListener listenCancellable(Signal& signal, std::function<void(const E
 
 inline HANDLE pHandle = NULL;
 
-typedef void (*tRenderWindow)(void*, PHLWINDOW, PHLMONITOR, const Time::steady_tp&, bool, Render::eRenderPassMode, bool, bool);
+// IHyprRenderer::renderWindow / renderLayer, 0.57: context and presentation are explicit arguments.
+typedef void (*tRenderWindow)(void*, Render::CRenderContext&, PHLWINDOW, PHLMONITOR, const Render::SWindowRenderPresentation&, const Time::steady_tp&, bool, Render::eRenderPassMode, bool, bool);
 extern void* pRenderWindow;
-typedef void (*tRenderLayer)(void*, PHLLS, PHLMONITOR, const Time::steady_tp&, bool, bool);
+typedef void (*tRenderLayer)(void*, Render::CRenderContext&, PHLLS, PHLMONITOR, const Time::steady_tp&, bool, bool, bool);
 extern void* pRenderLayer;
+
+inline PHLWORKSPACE findNumberedWorkspace(Workspace::WorkspaceIDContainer id) {
+    return State::workspaceState()->query().numbered(Workspace::SWorkspaceNumberedID{id}).run();
+}
+
+inline PHLWORKSPACE ensureNumberedWorkspace(Workspace::WorkspaceIDContainer id, PHLMONITOR monitor) {
+    if (auto existing = findNumberedWorkspace(id))
+        return existing;
+    if (!monitor || id < 1)
+        return nullptr;
+    return State::workspaceState()->createNumbered(Workspace::SWorkspaceNumberedID{id}, monitor);
+}
+
+inline PHLWORKSPACE findDefaultSpecialWorkspace() {
+    return State::workspaceState()->query().address(Workspace::specialWorkspaceAddressFromName("")).run();
+}
+
+inline PHLWORKSPACE ensureDefaultSpecialWorkspace(PHLMONITOR monitor) {
+    if (auto existing = findDefaultSpecialWorkspace())
+        return existing;
+    if (!monitor)
+        return nullptr;
+    return State::workspaceState()->createSpecial(Workspace::specialWorkspaceAddressFromName(""), monitor);
+}
+
+// "r+1" / "r-1": the next or previous numbered id on this monitor, created if missing.
+inline PHLWORKSPACE relativeNumberedWorkspace(PHLMONITOR monitor, int delta) {
+    if (!monitor || !monitor->m_activeWorkspace)
+        return nullptr;
+    const auto current = monitor->m_activeWorkspace->numberedID();
+    if (!current)
+        return nullptr;
+    const int next = static_cast<int>(*current) + delta;
+    if (next < 1)
+        return monitor->m_activeWorkspace;
+    return ensureNumberedWorkspace(static_cast<Workspace::WorkspaceIDContainer>(next), monitor);
+}
 
 struct SConfig {
     SP<Config::Values::CColorValue> panelBaseColor;
