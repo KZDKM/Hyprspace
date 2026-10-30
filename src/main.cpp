@@ -5,7 +5,8 @@
 #include <hyprland/src/devices/ITouch.hpp>
 #include <hyprland/src/debug/log/Logger.hpp>
 #include <hyprland/src/managers/SeatManager.hpp>
-#include <hyprland/src/desktop/view/Window.hpp>
+#include <hyprland/src/desktop/view/window/Window.hpp>
+#include <hyprland/src/desktop/view/window/WindowPresentation.hpp>
 #include <hyprland/src/state/MonitorState.hpp>
 #include <hyprland/src/pointer/PointerController.hpp>
 #include <hyprutils/memory/SharedPtr.hpp>
@@ -68,7 +69,8 @@ bool g_layoutNeedsRefresh = true;
 // for restroing dragged window's alpha value
 float g_oAlpha = -1;
 
-void onRender(eRenderStage renderStage) {
+void onRender(const Event::SRenderStageEvent& event) {
+    const auto renderStage = event.stage;
 
     // refresh layout after scheduled recalculation on monitors were carried out in renderMonitor
     if (renderStage == eRenderStage::RENDER_PRE) {
@@ -80,7 +82,7 @@ void onRender(eRenderStage renderStage) {
     else if (renderStage == eRenderStage::RENDER_PRE_WINDOWS) {
 
 
-        const auto widget = getWidgetForMonitor(g_pHyprRenderer->m_renderData.pMonitor);
+        const auto widget = getWidgetForMonitor(event.monitor);
         if (widget != nullptr)
             if (widget->getOwner()) {
                 //widget->draw();
@@ -88,8 +90,8 @@ void onRender(eRenderStage renderStage) {
                 const auto curWindow = dragTarget ? dragTarget->window() : nullptr;
                 if (curWindow) {
                     if (widget->isActive()) {
-                        g_oAlpha = curWindow->alpha(Desktop::View::WINDOW_ALPHA_ACTIVE)->goal();
-                        curWindow->alpha(Desktop::View::WINDOW_ALPHA_ACTIVE)->setValueAndWarp(0); // HACK: hide dragged window for the actual pass
+                        g_oAlpha = curWindow->presentation().alpha(Desktop::View::WINDOW_ALPHA_ACTIVE)->goal();
+                        curWindow->presentation().alpha(Desktop::View::WINDOW_ALPHA_ACTIVE)->setValueAndWarp(0); // HACK: hide dragged window for the actual pass
                     }
                 }
                 else g_oAlpha = -1;
@@ -100,21 +102,24 @@ void onRender(eRenderStage renderStage) {
     }
     else if (renderStage == eRenderStage::RENDER_POST_WINDOWS) {
 
-        const auto widget = getWidgetForMonitor(g_pHyprRenderer->m_renderData.pMonitor);
+        const auto widget = getWidgetForMonitor(event.monitor);
 
         if (widget != nullptr)
             if (widget->getOwner()) {
-                widget->draw();
+                if (!event.context)
+                    return;
+                auto& ctx = event.context->get();
+                widget->draw(ctx);
                 if (g_oAlpha != -1) {
                     const auto dragTarget = g_layoutManager->dragController()->target();
                     const auto curWindow = dragTarget ? dragTarget->window() : nullptr;
                     if (curWindow) {
-                        curWindow->alpha(Desktop::View::WINDOW_ALPHA_ACTIVE)->setValueAndWarp(config.dragAlpha->value());
+                        curWindow->presentation().alpha(Desktop::View::WINDOW_ALPHA_ACTIVE)->setValueAndWarp(config.dragAlpha->value());
                         curWindow->m_ruleApplicator->noBlur().unset(Desktop::Types::PRIORITY_SET_PROP);
                         const auto time = Time::steadyNow();
-                        (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), curWindow, widget->getOwner(), time, true, Render::RENDER_PASS_MAIN, false, false);
+                        (*(tRenderWindow)pRenderWindow)(g_pHyprRenderer.get(), ctx, curWindow, widget->getOwner(), curWindow->presentation().renderPresentation(), time, true, Render::RENDER_PASS_MAIN, false, false);
                         curWindow->m_ruleApplicator->noBlur().unset(Desktop::Types::PRIORITY_SET_PROP);
-                        curWindow->alpha(Desktop::View::WINDOW_ALPHA_ACTIVE)->setValueAndWarp(g_oAlpha);
+                        curWindow->presentation().alpha(Desktop::View::WINDOW_ALPHA_ACTIVE)->setValueAndWarp(g_oAlpha);
                     }
                 }
                 g_oAlpha = -1;
@@ -436,7 +441,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
 
     registerLuaBindings(pHandle);
 
-    g_pRenderHook = Event::bus()->m_events.render.stage.listen([](eRenderStage stage) { onRender(stage); });
+    g_pRenderHook = Event::bus()->m_events.render.stage.listen([](const Event::SRenderStageEvent& event) { onRender(event); });
 
     // refresh on layer change
     g_pOpenLayerHook = Event::bus()->m_events.layer.opened.listen([](PHLLS) { g_layoutNeedsRefresh = true; });

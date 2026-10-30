@@ -41,11 +41,10 @@ void CHyprspaceWidget::show() {
             if (ws && ws->m_monitor && ws->m_monitor->m_id == ownerID) {
                 const auto w = Fullscreen::controller()->getFullscreenWindow(ws);
                 if (w != nullptr && Fullscreen::controller()->getFullscreenModes(w).internal != Fullscreen::FSMODE_NONE) {
-                    // use fakefullscreenstate to preserve client's internal state
-                    // fixes youtube fullscreen not restoring properly
-                    if (Fullscreen::controller()->getFullscreenModes(w).internal == Fullscreen::FSMODE_FULLSCREEN) w->m_wantsInitialFullscreen = true;
+                    // Drop only the compositor's internal mode. FULLSCREEN_MUTATION_TRANSFER
+                    // leaves the client's own fullscreen state alone, so youtube can restore.
                     prevFullscreen.emplace_back(std::make_tuple(PHLWINDOWREF(w), Fullscreen::controller()->getFullscreenModes(w).internal));
-                    Fullscreen::controller()->setFullscreenMode(w, Fullscreen::FSMODE_NONE, Fullscreen::FSMODE_NONE);
+                    Fullscreen::controller()->setFullscreenMode(w, Fullscreen::FSMODE_NONE, std::nullopt, std::nullopt, Fullscreen::FULLSCREEN_MUTATION_TRANSFER);
                 }
             }
         }
@@ -85,7 +84,7 @@ void CHyprspaceWidget::hide() {
 
     // restore layer state
     for (auto& ls : owner->m_layerSurfaceLayers[2]) {
-        if (ls->m_mapped) {
+        if (ls->mapped()) {
             auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls;});
             if (oAlpha != oLayerAlpha.end()) {
                 *ls->alpha()[Desktop::View::LS_ALPHA_FADE] = std::get<1>(*oAlpha);
@@ -94,7 +93,7 @@ void CHyprspaceWidget::hide() {
         }
     }
     for (auto& ls : owner->m_layerSurfaceLayers[3]) {
-        if (ls->m_mapped) {
+        if (ls->mapped()) {
             auto oAlpha = std::find_if(oLayerAlpha.begin(), oLayerAlpha.end(), [&] (const auto& tuple) {return std::get<0>(tuple) == ls;});
             if (oAlpha != oLayerAlpha.end()) {
                 *ls->alpha()[Desktop::View::LS_ALPHA_FADE] = std::get<1>(*oAlpha);
@@ -109,8 +108,7 @@ void CHyprspaceWidget::hide() {
         const auto w = std::get<0>(fs).lock();
         if (!w) continue;
         const auto oFullscreenMode = std::get<1>(fs);
-        Fullscreen::controller()->setFullscreenMode(w, oFullscreenMode);
-        if (oFullscreenMode == Fullscreen::FSMODE_FULLSCREEN) w->m_wantsInitialFullscreen = false;
+        Fullscreen::controller()->setFullscreenMode(w, oFullscreenMode, std::nullopt, std::nullopt, Fullscreen::FULLSCREEN_MUTATION_TRANSFER);
     }
     prevFullscreen.clear();
 

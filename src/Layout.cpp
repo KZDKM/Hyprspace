@@ -3,18 +3,13 @@
 #include <hyprland/src/config/shared/workspace/WorkspaceRuleManager.hpp>
 #include <hyprland/src/state/WorkspaceState.hpp>
 
-static void applyGapsRule(const WORKSPACEID& id, const Config::CCssGapData& gapsIn, const Config::CCssGapData& gapsOut) {
+static void applyGapsRule(Workspace::WorkspaceIDContainer id, const Config::CCssGapData& gapsIn, const Config::CCssGapData& gapsOut) {
     Config::CWorkspaceRule rule;
 
-    // replaceOrAdd() and getWorkspaceRuleFor() match on m_workspaceString, so it has to
-    // be the same identifier text the old parser would have seen
-    rule.m_workspaceString            = std::to_string(id);
-    const auto& [wsID, wsName, auto_] = getWorkspaceIDNameFromString(rule.m_workspaceString);
-    rule.m_workspaceName              = wsName;
-    rule.m_workspaceId                = auto_ ? WORKSPACE_INVALID : wsID;
-
-    rule.m_gapsIn                     = gapsIn;
-    rule.m_gapsOut                    = gapsOut;
+    // replaceOrAdd() matches on m_workspaceString. 0.57 rules no longer store a parsed id.
+    rule.m_workspaceString = std::to_string(id);
+    rule.m_gapsIn          = gapsIn;
+    rule.m_gapsOut         = gapsOut;
 
     Config::workspaceRuleMgr()->replaceOrAdd(std::move(rule));
 }
@@ -58,30 +53,32 @@ void CHyprspaceWidget::updateLayout() {
     if (active) {
         const auto oActiveWorkspace = pMonitor->m_activeWorkspace;
         if (!oActiveWorkspace) return;
+        const auto oActiveID = oActiveWorkspace->numberedID();
 
         for (auto& ws : State::workspaceState()->workspaces()) { // HACK: recalculate other workspaces without reserved area
-            if (ws && ws->m_monitor && ws->m_monitor->m_id == ownerID && ws->m_id != oActiveWorkspace->m_id) {
+            const auto wsID = ws && ws->numberedID() ? ws->numberedID() : std::nullopt;
+            if (ws && wsID && ws->m_monitor && ws->m_monitor->m_id == ownerID && (!oActiveID || *wsID != *oActiveID)) {
                 pMonitor->m_activeWorkspace = ws.lock();
                 if (config.overrideGaps->value()) {
-                    applyGapsRule(pMonitor->activeWorkspaceID(), *PGAPSIN, *PGAPSOUT);
+                    applyGapsRule(*wsID, *PGAPSIN, *PGAPSOUT);
                 }
                 g_layoutManager->recalculateMonitor(pMonitor);
             }
         }
         pMonitor->m_activeWorkspace = oActiveWorkspace;
 
-        const auto curRules = std::to_string(pMonitor->activeWorkspaceID()) + ", gapsin:" + std::to_string(config.gapsIn->value()) + ", gapsout:" + std::to_string(config.gapsOut->value());
-        if (config.overrideGaps->value()) {
-            applyGapsRule(pMonitor->activeWorkspaceID(), config.gapsIn->value(), config.gapsOut->value());
+        if (config.overrideGaps->value() && oActiveID) {
+            applyGapsRule(*oActiveID, config.gapsIn->value(), config.gapsOut->value());
         }
         g_layoutManager->recalculateMonitor(pMonitor);
 
     }
     else {
         for (auto& ws : State::workspaceState()->workspaces()) {
-            if (ws && ws->m_monitor && ws->m_monitor->m_id == ownerID) {
+            const auto wsID = ws && ws->numberedID() ? ws->numberedID() : std::nullopt;
+            if (wsID && ws->m_monitor && ws->m_monitor->m_id == ownerID) {
                 if (config.overrideGaps->value()) {
-                    applyGapsRule(ws->m_id, *PGAPSIN, *PGAPSOUT);
+                    applyGapsRule(*wsID, *PGAPSIN, *PGAPSOUT);
                 }
             }
         }
